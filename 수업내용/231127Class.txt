@@ -1,0 +1,11 @@
+오늘 구현 내용
+기본 WIN_API
+
+더블버퍼링
+Swap-Chain이란?
+기존 더블 버퍼링과의 차이점
+
+
+버퍼뜻
+Device, Device Context 차이점
+

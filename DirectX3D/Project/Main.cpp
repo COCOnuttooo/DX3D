@@ -6,16 +6,37 @@
 
 #define MAX_LOADSTRING 100
 
+// 전역 변수:
+
+
+ID3D11Device*        device;        // 무언가를 만들 때 사용, CPU를 다루는 객체 - Create
+ID3D11DeviceContext* deviceContext; // 무언가를 그릴 때 사용, GPU를 다루는 객체 - Set
+
+
+IDXGISwapChain*         swapChain;       // SwapChain - Double Buffering 을 구현하는 객체
+ID3D11RenderTargetView* renderTargetView;// BackBuffer를 관리하는 객체
+
+
+void Initialize();
+
+void Render();
+
+void Release();
+
+/////////////////////////////
+
+
+
 HWND hWnd;
 
-Vector3 mousePos;
-
-// 전역 변수:
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름입니다.
 
+
+
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
+
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -44,27 +65,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_PROJECT));
 
-    MainGame* mainGame = new MainGame();
+    MSG msg = {};
 
-    MSG msg;
-
-    //// 기본 메시지 루프입니다:
-    //while (GetMessage(&msg, nullptr, 0, 0)) // 창을 계속 띄우기 위해 GetMessage가 true를 반환하도록 쓸데없는 message가 강제적을 계속 생성됨 -> 메모리 낭비
-    //{
-    //    if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-    //    {
-    //        TranslateMessage(&msg);
-    //        DispatchMessage(&msg);
-    //    }
-    //}
+    // 기본 메시지 루프입니다:
+    Initialize();
 
     while (true)
     {
-        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) // 실제로 메세지가 들어왔을 때만 true => 이때만 if문 실행 
+        if (msg.message == WM_QUIT)
+            break;
+        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
-            if (msg.message == WM_QUIT) // Quit Message가 왔을 때 while문 탈출
-                break;
-
             if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
             {
                 TranslateMessage(&msg);
@@ -73,16 +84,28 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
         else
         {
-            // TODO : Update, Render
-            mainGame->Update();
+            //TODO : Update, Render
+            Render();
 
-            mainGame->Render();
         }
-    };
+    }
 
-    delete mainGame;
-
+    Release();
     return (int) msg.wParam;
+}
+
+
+
+void Initialize()
+{
+}
+
+void Render()
+{
+}
+
+void Release()
+{
 }
 
 //
@@ -92,7 +115,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 //
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
-    WNDCLASSEXW wcex; // -> 구조체 : 매개변수를 모아놓은 것
+    WNDCLASSEXW wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
@@ -109,6 +132,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     return RegisterClassExW(&wcex);
+
+    //DX의 Descripter 와 같은 역할
+    // 
+    
 }
 
 //
@@ -121,12 +148,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        이 함수를 통해 인스턴스 핸들을 전역 변수에 저장하고
 //        주 프로그램 창을 만든 다음 표시합니다.
 //
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) // 인스턴스 초기화
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
-
-   RECT rect = { 0, 0, WIN_WIDTH, WIN_HEIGHT };
-
+   RECT rect = { 0 ,0, WIN_WIDTH, WIN_HEIGHT };
    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
    hWnd = CreateWindowW
@@ -134,13 +159,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) // 인스턴스 초기화
        szWindowClass, 
        szTitle, 
        WS_OVERLAPPEDWINDOW,
-       CW_USEDEFAULT, 0, //창 시작점
-       rect.right - rect.left, rect.bottom - rect.top, // 창 크기
+       CW_USEDEFAULT, 0, 
+       rect.right- rect.left, rect.bottom - rect.top, 
        nullptr, nullptr, hInstance, nullptr
    );
 
-   SetMenu(hWnd, nullptr); // 메뉴 만들지 않음, 어디서든 Alt는 메뉴키임
-
+   SetMenu(hWnd, nullptr);
    if (!hWnd)
    {
       return FALSE;
@@ -162,14 +186,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) // 인스턴스 초기화
 //  WM_DESTROY  - 종료 메시지를 게시하고 반환합니다.
 //
 //
-
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
-        return true;
-
     switch (message)
     {
     case WM_COMMAND:
@@ -197,12 +215,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             EndPaint(hWnd, &ps);
         }
         break;
-    case WM_MOUSEMOVE:
-        mousePos.x = LOWORD(lParam);
-        mousePos.y = HIWORD(lParam);
-        break;
     case WM_DESTROY:
-        PostQuitMessage(0); // Quit message를 보냄
+        PostQuitMessage(0);
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
