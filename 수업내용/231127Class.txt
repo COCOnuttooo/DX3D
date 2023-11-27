@@ -9,3 +9,6 @@ Swap-Chain이란?
 버퍼뜻
 Device, Device Context 차이점
 
+
+
+
