@@ -1,0 +1,39 @@
+rendertargetview, ~~view --> GPU or Rendering 관련
+descriptor
+
+DXGI Format
+
+SDK란?
+
+        D3D11CreateDeviceAndSwapChain
+        (
+            nullptr,
+            D3D_DRIVER_TYPE_HARDWARE,
+            0,
+            D3D11_CREATE_DEVICE_DEBUG,
+            nullptr,
+            0,
+            D3D11_SDK_VERSION,
+
+        );
+
+더블포인터가 나온다? 해당 변수에 저장한다
+
+렌더링 파이프라인
+IA(Input Assembler)
+VS(Vertex Shader)
+----추가----
+HS(Hull Shader)
+TS(Tesselation Stage)
+DS(Domain Shader)
+
+
+GS(Geometry Shader)
+------------
+RS(Rasterizer State)
+PS(Pixel Shader)
+OM(Output Merger)
+
+셰이더와 셰이더가 아닌 애들 구분. 왜?
+
+렌더타겟뷰는 OM에서 설정
