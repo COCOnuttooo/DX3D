@@ -7,6 +7,11 @@
 #define MAX_LOADSTRING 100
 
 // 전역 변수:
+struct Vertex
+{
+    XMFLOAT3 pos = {};
+
+};
 
 
 ID3D11Device*        device;        // 무언가를 만들 때 사용, CPU를 다루는 객체 - Create
@@ -23,6 +28,10 @@ ID3D11PixelShader* pixelShader;
 ID3D11InputLayout* inputLayout;
 
 ID3D11Buffer* vertexBuffer;
+ID3D11Buffer* indexBuffer;
+
+vector<Vertex> vertices;
+
 
 void Initialize();
 
@@ -107,8 +116,8 @@ void Initialize()
 {
     {
         DXGI_SWAP_CHAIN_DESC desc = {};
-        desc.BufferDesc.Width        = WIN_WIDTH;
-        desc.BufferDesc.Height       = WIN_HEIGHT;
+        //desc.BufferDesc.Width        = WIN_WIDTH;
+        //desc.BufferDesc.Height       = WIN_HEIGHT;
         desc.BufferDesc.RefreshRate.Numerator    = 60 ;
         desc.BufferDesc.RefreshRate.Denominator  = 1;
         desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -145,6 +154,72 @@ void Initialize()
     backBuffer->Release();
 
     deviceContext->OMSetRenderTargets(1, &renderTargetView, nullptr);
+
+
+    /////////////////ViewPort
+    D3D11_VIEWPORT viewPort;
+    viewPort.Width = WIN_WIDTH;
+    viewPort.Height = WIN_HEIGHT;
+    viewPort.TopLeftX = 0.0f;
+    viewPort.TopLeftY = 0.0f;
+    viewPort.MinDepth = 0.0f;
+    viewPort.MaxDepth = 1.0f;
+
+    deviceContext->RSSetViewports(1, &viewPort);
+
+    //Vertex Shader
+    {
+        DWORD flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
+        ID3DBlob* blob;
+
+        D3DCompileFromFile(L"_Shader/Tutorial.hlsl", nullptr, nullptr, "VS", "vs_5_0", flags, 0, &blob, nullptr);
+
+        device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
+        D3D11_INPUT_ELEMENT_DESC desc[1] = {};
+        desc[0].SemanticName         = "POSITION";
+        desc[0].SemanticIndex        = 0;
+        desc[0].Format               = DXGI_FORMAT_R32G32B32_FLOAT;
+        desc[0].InputSlot            = 0;
+        desc[0].AlignedByteOffset    = 0;
+        desc[0].InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
+        desc[0].InstanceDataStepRate = 0;
+
+        UINT layoutSize = ARRAYSIZE(desc);
+        device->CreateInputLayout
+        (
+            desc, 
+            layoutSize, 
+            blob->GetBufferPointer(), 
+            blob->GetBufferSize(), 
+            &inputLayout
+        );
+        blob->Release();
+        //deviceContext->IASetInputLayout(inputLayout);
+
+        //deviceContext->VSSetShader(vertexShader, nullptr, 1);
+
+    }
+    //pixelShader
+    {
+        DWORD flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
+
+        ID3DBlob* blob;
+        D3DCompileFromFile(L"_Shader/Tutorial.hlsl", nullptr, nullptr, "PS", "ps_5_0", flags, 0, &blob, nullptr);
+        device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pixelShader);
+
+
+        blob->Release();
+    }
+
+    //Vertex Buffer
+    {
+        D3D11_BUFFER_DESC desc = {};
+        desc.ByteWidth = sizeof(Vertex) * vertices.size();
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+    }
+
 }
 
 void Render()

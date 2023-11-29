@@ -1,0 +1,17 @@
+input assembler에 넘겨주는 데이터들은?
+
+vertex shader에서 해주는것? W * V * P matrix연산
+
+W V P matrix가 하는 일?
+
+vertex - 3D, pixel - 2D
+
+perspective, orthograpic 차이 : 시야각, 원근감
+
+레스터라이즈 스테이지에서 뷰포트 설정
+
+pixel shader의 return 값 : RGBA
+
+gpu : 병렬 연산을 잘한다
+
+vertex, pixel shader 셋팅 순서
