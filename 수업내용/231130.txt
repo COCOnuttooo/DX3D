@@ -1,0 +1,20 @@
+&vector[0], vector.data()의 차이점
+
+rendertargetview는 backbuffer를 관리하는 개체
+////////////////////
+render순서:
+
+
+clear rendertargetview
+
+그리기
+
+swapchain(backbuffer를 forntbuffer로)
+//////////////////////////
+primitive topology
+
+dx 에서 draw call이란?
+
+과제///
+
+사각형을 회전시키기

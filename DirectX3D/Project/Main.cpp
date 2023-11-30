@@ -9,8 +9,23 @@
 // 전역 변수:
 struct Vertex
 {
+    Vertex(XMFLOAT3 pos)
+        :pos(pos)
+    {
+
+    }
     XMFLOAT3 pos = {};
 
+};
+
+struct VertexColor
+{
+    VertexColor(XMFLOAT3 pos, XMFLOAT4 color)
+        :pos(pos), color(color)
+    {
+    }
+    XMFLOAT3 pos;
+    XMFLOAT4 color;
 };
 
 
@@ -30,7 +45,8 @@ ID3D11InputLayout* inputLayout;
 ID3D11Buffer* vertexBuffer;
 ID3D11Buffer* indexBuffer;
 
-vector<Vertex> vertices;
+vector<VertexColor> vertices;
+vector<UINT> indices; 
 
 
 void Initialize();
@@ -169,13 +185,16 @@ void Initialize()
 
     //Vertex Shader
     {
-        DWORD flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
         ID3DBlob* blob;
+        DWORD flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
 
         D3DCompileFromFile(L"_Shader/Tutorial.hlsl", nullptr, nullptr, "VS", "vs_5_0", flags, 0, &blob, nullptr);
 
         device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
-        D3D11_INPUT_ELEMENT_DESC desc[1] = {};
+
+        D3D11_INPUT_ELEMENT_DESC desc[2] = {};
+
+
         desc[0].SemanticName         = "POSITION";
         desc[0].SemanticIndex        = 0;
         desc[0].Format               = DXGI_FORMAT_R32G32B32_FLOAT;
@@ -183,6 +202,16 @@ void Initialize()
         desc[0].AlignedByteOffset    = 0;
         desc[0].InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
         desc[0].InstanceDataStepRate = 0;
+
+        desc[1].SemanticName         = "COLOR";
+        desc[1].SemanticIndex        = 0;
+        desc[1].Format               = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        desc[1].InputSlot            = 0;
+        desc[1].AlignedByteOffset    = 12;
+        desc[1].InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
+        desc[1].InstanceDataStepRate = 0;
+
+
 
         UINT layoutSize = ARRAYSIZE(desc);
         device->CreateInputLayout
@@ -210,22 +239,82 @@ void Initialize()
 
         blob->Release();
     }
+    //Create Vertex
+    
+    vertices =
+    {
+        {XMFLOAT3(-0.5f,+0.5f,0), XMFLOAT4(1.0f,0.0f,0.0f,1.0f)},
+        {XMFLOAT3(+0.5f,+0.5f,0), XMFLOAT4(0.0f,1.0f,0.0f,1.0f)},
+        {XMFLOAT3(-0.5f,-0.5f,0), XMFLOAT4(0.0f,0.0f,1.0f,1.0f)},
+        {XMFLOAT3(+0.5f,-0.5f,0), XMFLOAT4(1.0f,1.0f,1.0f,1.0f)},
+        //XMFLOAT3(+0.5f,+0.5f,0),
+        //XMFLOAT3(-0.5f,-0.5f,0),
 
+    };
+    //backfaceculling
+
+    indices =
+    {
+        0,1,2,
+        2,1,3
+    };
     //Vertex Buffer
     {
         D3D11_BUFFER_DESC desc = {};
-        desc.ByteWidth = sizeof(Vertex) * vertices.size();
+
+        desc.ByteWidth = sizeof(VertexColor) * vertices.size();
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
+        D3D11_SUBRESOURCE_DATA initData = {};
+
+        initData.pSysMem = vertices.data();
+
+        device->CreateBuffer(&desc, &initData, &vertexBuffer);
+
     }
+    //Index Buffer
+    {
+        D3D11_BUFFER_DESC desc = {};
+
+        desc.ByteWidth = sizeof(UINT) * indices.size();
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+
+        D3D11_SUBRESOURCE_DATA initData = {};
+
+        initData.pSysMem = indices.data();
+
+        device->CreateBuffer(&desc, &initData, &indexBuffer);
+
+    }
+
 
 }
 
 void Render()
 {
     float clearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f };
-    deviceContext->ClearRenderTargetView(renderTargetView, clearColor);
+    deviceContext->ClearRenderTargetView(renderTargetView, clearColor); //rendertargetview는 backbuffer를 관리하는 개체
+    ////////////////////////
+    
+    UINT stride = sizeof(VertexColor);
+    UINT offset = 0;
+
+    deviceContext->IASetInputLayout(inputLayout);
+    deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+    deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    
+    deviceContext->VSSetShader(vertexShader, nullptr, 0);
+    deviceContext->PSSetShader(pixelShader, nullptr, 0);
+
+    deviceContext->DrawIndexed(indices.size(),0,0);//Draw Call
+
+
+
+
+    ////////////////////////
 
     swapChain->Present(0, 0);
 }
@@ -237,6 +326,12 @@ void Release()
     deviceContext->Release(); // 무언가를 그릴 때 사용, GPU를 다루는 객체 - Set
     swapChain->Release();       // SwapChain - Double Buffering 을 구현하는 객체
     renderTargetView->Release();// BackBuffer를 관리하는 객체
+    vertexBuffer->Release();
+    vertexShader->Release();
+    pixelShader->Release();
+    inputLayout->Release();
+    indexBuffer->Release();
+
 }
 
 //
