@@ -7,53 +7,6 @@
 #define MAX_LOADSTRING 100
 
 // 전역 변수:
-struct Vertex
-{
-    Vertex(XMFLOAT3 pos)
-        :pos(pos)
-    {
-
-    }
-    XMFLOAT3 pos = {};
-
-};
-
-struct VertexColor
-{
-    VertexColor(XMFLOAT3 pos, XMFLOAT4 color)
-        :pos(pos), color(color)
-    {
-    }
-    XMFLOAT3 pos;
-    XMFLOAT4 color;
-};
-
-
-ID3D11Device*        device;        // 무언가를 만들 때 사용, CPU를 다루는 객체 - Create
-ID3D11DeviceContext* deviceContext; // 무언가를 그릴 때 사용, GPU를 다루는 객체 - Set
-
-
-IDXGISwapChain*         swapChain;       // SwapChain - Double Buffering 을 구현하는 객체
-ID3D11RenderTargetView* renderTargetView;// BackBuffer를 관리하는 객체
-
-
-ID3D11VertexShader* vertexShader;
-ID3D11PixelShader* pixelShader;
-
-ID3D11InputLayout* inputLayout;
-
-ID3D11Buffer* vertexBuffer;
-ID3D11Buffer* indexBuffer;
-
-vector<VertexColor> vertices;
-vector<UINT> indices; 
-
-
-void Initialize();
-
-void Render();
-
-void Release();
 
 /////////////////////////////
 
@@ -100,7 +53,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     MSG msg = {};
 
     // 기본 메시지 루프입니다:
-    Initialize();
+    MainGame* mainGame = new MainGame;
 
     while (true)
     {
@@ -117,222 +70,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         else
         {
             //TODO : Update, Render
-            Render();
+            mainGame->Update();
+            mainGame->PreRender();
+
+            //clear
+            mainGame->Render();
+            mainGame->PostRender();
+
+            //Present
 
         }
     }
 
-    Release();
+    delete mainGame;
     return (int) msg.wParam;
 }
 
 
 
-void Initialize()
-{
-    {
-        DXGI_SWAP_CHAIN_DESC desc = {};
-        //desc.BufferDesc.Width        = WIN_WIDTH;
-        //desc.BufferDesc.Height       = WIN_HEIGHT;
-        desc.BufferDesc.RefreshRate.Numerator    = 60 ;
-        desc.BufferDesc.RefreshRate.Denominator  = 1;
-        desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        desc.SampleDesc.Count = 1;
-        desc.SampleDesc.Quality   = 0;
-        desc.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT; //BackBuffer에대한
-        desc.BufferCount  = 1;//BackBuffer에대한
-        desc.OutputWindow = hWnd;
-        desc.Windowed     = true;
-        desc.SwapEffect   = DXGI_SWAP_EFFECT_DISCARD;
-        desc.Flags        = 0;
-        
-        D3D11CreateDeviceAndSwapChain
-        (
-            nullptr,
-            D3D_DRIVER_TYPE_HARDWARE,
-            0,
-            D3D11_CREATE_DEVICE_DEBUG,
-            nullptr,
-            0,
-            D3D11_SDK_VERSION,
-            &desc,
-            &swapChain,
-            &device,
-            nullptr,
-            &deviceContext
-        );
-    }
-    ID3D11Texture2D* backBuffer;
-    swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
 
-    device->CreateRenderTargetView(backBuffer, nullptr, &renderTargetView);
-
-    backBuffer->Release();
-
-    deviceContext->OMSetRenderTargets(1, &renderTargetView, nullptr);
-
-
-    /////////////////ViewPort
-    D3D11_VIEWPORT viewPort;
-    viewPort.Width = WIN_WIDTH;
-    viewPort.Height = WIN_HEIGHT;
-    viewPort.TopLeftX = 0.0f;
-    viewPort.TopLeftY = 0.0f;
-    viewPort.MinDepth = 0.0f;
-    viewPort.MaxDepth = 1.0f;
-
-    deviceContext->RSSetViewports(1, &viewPort);
-
-    //Vertex Shader
-    {
-        ID3DBlob* blob;
-        DWORD flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
-
-        D3DCompileFromFile(L"_Shader/Tutorial.hlsl", nullptr, nullptr, "VS", "vs_5_0", flags, 0, &blob, nullptr);
-
-        device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
-
-        D3D11_INPUT_ELEMENT_DESC desc[2] = {};
-
-
-        desc[0].SemanticName         = "POSITION";
-        desc[0].SemanticIndex        = 0;
-        desc[0].Format               = DXGI_FORMAT_R32G32B32_FLOAT;
-        desc[0].InputSlot            = 0;
-        desc[0].AlignedByteOffset    = 0;
-        desc[0].InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
-        desc[0].InstanceDataStepRate = 0;
-
-        desc[1].SemanticName         = "COLOR";
-        desc[1].SemanticIndex        = 0;
-        desc[1].Format               = DXGI_FORMAT_R32G32B32A32_FLOAT;
-        desc[1].InputSlot            = 0;
-        desc[1].AlignedByteOffset    = 12;
-        desc[1].InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
-        desc[1].InstanceDataStepRate = 0;
-
-
-
-        UINT layoutSize = ARRAYSIZE(desc);
-        device->CreateInputLayout
-        (
-            desc, 
-            layoutSize, 
-            blob->GetBufferPointer(), 
-            blob->GetBufferSize(), 
-            &inputLayout
-        );
-        blob->Release();
-        //deviceContext->IASetInputLayout(inputLayout);
-
-        //deviceContext->VSSetShader(vertexShader, nullptr, 1);
-
-    }
-    //pixelShader
-    {
-        DWORD flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
-
-        ID3DBlob* blob;
-        D3DCompileFromFile(L"_Shader/Tutorial.hlsl", nullptr, nullptr, "PS", "ps_5_0", flags, 0, &blob, nullptr);
-        device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pixelShader);
-
-
-        blob->Release();
-    }
-    //Create Vertex
-    
-    vertices =
-    {
-        {XMFLOAT3(-0.5f,+0.5f,0), XMFLOAT4(1.0f,0.0f,0.0f,1.0f)},
-        {XMFLOAT3(+0.5f,+0.5f,0), XMFLOAT4(0.0f,1.0f,0.0f,1.0f)},
-        {XMFLOAT3(-0.5f,-0.5f,0), XMFLOAT4(0.0f,0.0f,1.0f,1.0f)},
-        {XMFLOAT3(+0.5f,-0.5f,0), XMFLOAT4(1.0f,1.0f,1.0f,1.0f)},
-        //XMFLOAT3(+0.5f,+0.5f,0),
-        //XMFLOAT3(-0.5f,-0.5f,0),
-
-    };
-    //backfaceculling
-
-    indices =
-    {
-        0,1,2,
-        2,1,3
-    };
-    //Vertex Buffer
-    {
-        D3D11_BUFFER_DESC desc = {};
-
-        desc.ByteWidth = sizeof(VertexColor) * vertices.size();
-        desc.Usage = D3D11_USAGE_DEFAULT;
-        desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-        D3D11_SUBRESOURCE_DATA initData = {};
-
-        initData.pSysMem = vertices.data();
-
-        device->CreateBuffer(&desc, &initData, &vertexBuffer);
-
-    }
-    //Index Buffer
-    {
-        D3D11_BUFFER_DESC desc = {};
-
-        desc.ByteWidth = sizeof(UINT) * indices.size();
-        desc.Usage = D3D11_USAGE_DEFAULT;
-        desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-
-        D3D11_SUBRESOURCE_DATA initData = {};
-
-        initData.pSysMem = indices.data();
-
-        device->CreateBuffer(&desc, &initData, &indexBuffer);
-
-    }
-
-
-}
-
-void Render()
-{
-    float clearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f };
-    deviceContext->ClearRenderTargetView(renderTargetView, clearColor); //rendertargetview는 backbuffer를 관리하는 개체
-    ////////////////////////
-    
-    UINT stride = sizeof(VertexColor);
-    UINT offset = 0;
-
-    deviceContext->IASetInputLayout(inputLayout);
-    deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-    deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    
-    deviceContext->VSSetShader(vertexShader, nullptr, 0);
-    deviceContext->PSSetShader(pixelShader, nullptr, 0);
-
-    deviceContext->DrawIndexed(indices.size(),0,0);//Draw Call
-
-
-
-
-    ////////////////////////
-
-    swapChain->Present(0, 0);
-}
-
-void Release()
-{
-
-    device->Release();        // 무언가를 만들 때 사용, CPU를 다루는 객체 - Create
-    deviceContext->Release(); // 무언가를 그릴 때 사용, GPU를 다루는 객체 - Set
-    swapChain->Release();       // SwapChain - Double Buffering 을 구현하는 객체
-    renderTargetView->Release();// BackBuffer를 관리하는 객체
-    vertexBuffer->Release();
-    vertexShader->Release();
-    pixelShader->Release();
-    inputLayout->Release();
-    indexBuffer->Release();
-
-}
 
 //
 //  함수: MyRegisterClass()

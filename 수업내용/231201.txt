@@ -1,0 +1,12 @@
+constant buffer 에 넘겨주는 데이터는 16바이트 의 배수여야함
+
+update와 render의 차이?
+
+preRender의 활용방법
+
+
+
+/////////////////////////
+숙제
+class 쪼개보기
+

@@ -33,3 +33,8 @@ using namespace std;
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+
+
+#include "MainGame.h"
+
+extern HWND hWnd;
