@@ -72,13 +72,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             //TODO : Update, Render
             mainGame->Update();
             mainGame->PreRender();
-
+            Device::GetInstance()->ClearRTV();
             //clear
             mainGame->Render();
             mainGame->PostRender();
 
             //Present
-
+            Device::GetInstance()->Present();
         }
     }
 

@@ -1,0 +1,12 @@
+design pattern
+
+singleton? 쓰는 이유?
+
+directory : 파일 경로
+
+static? 쓰는 이유?
+
+friend class? 이유
+
+template 초기화 방법과 그 이유
+

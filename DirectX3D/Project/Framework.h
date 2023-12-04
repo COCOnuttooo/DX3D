@@ -26,6 +26,8 @@ using namespace std;
 
 #define WIN_HEIGHT	720.0f
 #define WIN_WIDTH	1280.0f
+#define DEVICE Device::GetInstance()->GetDevice()
+#define DC     Device::GetInstance()->GetDC()
 
 
 // C 런타임 헤더 파일입니다.
@@ -33,6 +35,9 @@ using namespace std;
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+
+#include "Utility/Singleton.h"
+#include "System/Device.h"
 
 
 #include "MainGame.h"
