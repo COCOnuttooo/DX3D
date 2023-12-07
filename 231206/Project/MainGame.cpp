@@ -1,5 +1,6 @@
 #include "Framework.h"
 #include "MainGame.h"
+#include "Scene/TutorialScene.h"
 
 MainGame::MainGame()
 {
@@ -15,41 +16,32 @@ void MainGame::Update()
 {
     ENVIRONMENT->Update();
 
-	
-
-
-
+    scene->Update();
 }
 
 void MainGame::Render()
 {
     ENVIRONMENT->Set();
-    cube->Render();
     /////////////////////////////////////
-
-
+    scene->Render();
 }
 
 void MainGame::PreRender()
 {
+    scene->PreRender();
 }
 
 void MainGame::PostRender()
 {
+    scene->PostRender();
 }
 
 void MainGame::Initialize()
 {
+    scene = new TutorialScene;
     Device::GetInstance();
     Environment::GetInstance();
-    cube = new Cube;
     //Create Vertex
-  
-
-
-
-
-
 }
 
 void MainGame::Release()
@@ -57,6 +49,5 @@ void MainGame::Release()
          Device::Delete();
     Environment::Delete();
          Shader::Delete();
-    delete cube;
-
+         delete scene;
 }

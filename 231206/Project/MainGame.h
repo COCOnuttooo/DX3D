@@ -17,5 +17,5 @@ private:
 	void Release();
 
 private:
-	Cube* cube;
+	Scene* scene;
 };

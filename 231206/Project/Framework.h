@@ -35,6 +35,7 @@ typedef XMMATRIX Matrix;
 
 
 #include "Utility/Singleton.h"
+#include "Utility/Vector3.h"
 
 #include "System/Device.h"
 #include "Render/Buffer/VertexLayout.h"
@@ -54,8 +55,12 @@ typedef XMMATRIX Matrix;
 #include "Render/Material.h"
 #include "Render/Mesh.h"
 
+#include "Object/Transform.h"
 #include "Object/GameObject.h"
 #include "Object/Basic/Cube.h"
+
+
+#include "Scene/Scene.h"
 
 #include "MainGame.h"
 

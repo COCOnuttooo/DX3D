@@ -1,6 +1,6 @@
 #pragma once
 template<typename T>
-class GameObject
+class GameObject : public Transform
 {
 public:
 	GameObject(wstring shaderFile);
@@ -18,21 +18,17 @@ protected:
 	Mesh* mesh;
 	Material* material;
 
-	Matrix worldMatrix;
-	MatrixBuffer* worldBuffer;
 };
 
 template<typename T>
 inline GameObject<T>::GameObject(wstring shaderFile)
 {
 	material = new Material(shaderFile);
-	worldBuffer = new MatrixBuffer;
 }
 
 template<typename T>
 inline GameObject<T>::~GameObject()
 {
-	delete worldBuffer;
 	delete mesh;
 	delete material;
 }
@@ -40,8 +36,7 @@ inline GameObject<T>::~GameObject()
 template<typename T>
 inline void GameObject<T>::Render()
 {
-	worldBuffer->SetData(worldMatrix);
-	worldBuffer->SetVSBuffer(0);
+	Transform::SetWorld();
 	mesh->IASet();
 	material->SetShader();
 

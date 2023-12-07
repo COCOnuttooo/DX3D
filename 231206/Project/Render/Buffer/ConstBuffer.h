@@ -14,6 +14,8 @@ private:
 	ID3D11Buffer* constantBuffer;
 
 	T& data;
+
+	D3D11_MAPPED_SUBRESOURCE subresource;
 };
 
 template<typename T>
@@ -23,9 +25,10 @@ inline ConstBuffer<T>::ConstBuffer(T& data)
 	D3D11_BUFFER_DESC desc = {};
 
 	desc.ByteWidth = sizeof(T);
-	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.Usage = D3D11_USAGE_DYNAMIC;
 	desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	
 	DEVICE->CreateBuffer(&desc, nullptr, &constantBuffer);
 }
 
@@ -54,6 +57,8 @@ inline void ConstBuffer<T>::SetPSBuffer(UINT slot)
 template<typename T>
 inline void ConstBuffer<T>::UpdateSubresource()
 {
-	DC->UpdateSubresource(constantBuffer, 0, nullptr, &data, 0, 0);
-
+	//DC->UpdateSubresource(constantBuffer, 0, nullptr, &data, 0, 0);
+	DC->Map(constantBuffer, 0, D3D11_MAP_WRITE_DISCARD,0, &subresource);
+	memcpy(subresource.pData, &data, sizeof(T));
+	DC->Unmap(constantBuffer, 0);
 }

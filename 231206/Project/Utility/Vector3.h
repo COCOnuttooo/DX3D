@@ -1,0 +1,66 @@
+#pragma once
+struct Vector3
+{
+	Vector3()
+	{
+
+	}
+	Vector3(float x, float y, float z)
+		:x(x), y(y),z(z)
+	{
+
+	}
+	XMVECTOR vector;
+	Vector3(XMFLOAT3 value)
+		:x(value.x), y(value.y), z(value.z)
+	{
+
+	}
+	Vector3(XMVECTOR value)
+	{
+		x = XMVectorGetX(value);
+		y = XMVectorGetY(value);
+		z = XMVectorGetZ(value);
+	}
+	operator XMFLOAT3()
+	{
+		return XMFLOAT3(x, y, z);
+	}
+	operator XMVECTOR()
+	{
+		return XMVectorSet(x, y, z, 0.0f);
+	}
+
+	float operator[](UINT index)
+	{
+		switch (index)
+		{
+		case 0:
+			return x;
+		case 1:
+			return y;
+		case 2:
+			return z;
+		default:
+			return 0;
+			break;
+		}
+	}
+	float Length()
+	{
+		return Vector3(XMVector3Length(*this)).x;
+	}
+
+	Vector3 GetNormalized()
+	{
+		return XMVector3Normalize(*this);
+	}
+
+	void Normalize()
+	{
+		*this = XMVector3Normalize(*this);
+	}
+	float x;
+	float y;
+	float z;
+};

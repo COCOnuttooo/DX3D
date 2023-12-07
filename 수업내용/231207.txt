@@ -1,0 +1,19 @@
+solid 원칙
+
+미리 컴파일된 헤더? 왜?
+
+framework (PCH) 에는 자주 수정하지 않을 애들만 모아놓아야 미리컴파일된 헤더 효율이 증가(안하면 수정할 때마다 모두 컴파일하게됨)
+
+D3D11_USAGE에 대해서 (챗gpt말고 원본 문서 참고해보기)
+/////////////////////////////////////////////////
+operator XMVECTOR()
+{
+	return XMVectorSet(x, y, z, 0.0f);
+}
+
+operator overloading
+////////////////////////////////////////////////
+
+쿼터니언 쓰는이유
+quarternion
+euler angle gimbal lock 현상
