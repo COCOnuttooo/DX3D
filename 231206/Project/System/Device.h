@@ -23,4 +23,6 @@ private:
 
     IDXGISwapChain*         swapChain;          // SwapChain - DoubleBuffering을 구현하는 객체
     ID3D11RenderTargetView* renderTargetView;   // 
+
+	ID3D11DepthStencilView* depthStencilView;
 };

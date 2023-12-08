@@ -15,6 +15,7 @@ public:
 	void PostRender() override;
 private:
 	Cube* cube;
+	Cube* cube2;
 
 
 

@@ -1,5 +1,5 @@
 #pragma once
-class Camera
+class Camera : public Transform
 {
 public:
 	Camera();
@@ -9,4 +9,7 @@ public:
 private:
 	Matrix        viewMatrix;
 	MatrixBuffer* viewBuffer;
+	float moveSpeed = 1.0f;
+
+	Vector3 oldPos;
 };

@@ -28,14 +28,25 @@ using namespace std;
 
 #define DEVICE Device::GetInstance()->GetDevice()
 #define DC     Device::GetInstance()->GetDC()
-#define ENVIRONMENT Environment::GetInstance()
 
+#define ENVIRONMENT Environment::GetInstance()
+#define KEYBOARD       Keyboard::GetInstance()
+#define TIME               Time::GetInstance()
+#define DELTA_TIME               Time::Delta()
+
+#define KEY_PRESS(p) Keyboard::GetInstance()->Press(p)
+#define KEY_DOWN(p)  Keyboard::GetInstance()->Down(p)
+#define KEY_UP(p)	 Keyboard::GetInstance()->Up(p)
 
 typedef XMMATRIX Matrix;
+typedef XMFLOAT2 Vector2;
+typedef XMFLOAT4 Vector4;
 
 
 #include "Utility/Singleton.h"
 #include "Utility/Vector3.h"
+#include "Utility/Time.h"
+#include "Utility/Keyboard.h"
 
 #include "System/Device.h"
 #include "Render/Buffer/VertexLayout.h"
@@ -49,19 +60,20 @@ typedef XMMATRIX Matrix;
 #include "Render/Shader/VertexShader.h"
 #include "Render/Shader/PixelShader.h"
 
+#include "Object/Transform.h"
 #include "System/Camera.h"
 #include "System/Environment.h"
 
 #include "Render/Material.h"
 #include "Render/Mesh.h"
 
-#include "Object/Transform.h"
 #include "Object/GameObject.h"
 #include "Object/Basic/Cube.h"
 
 
 #include "Scene/Scene.h"
-
 #include "MainGame.h"
 
+
 extern HWND hWnd;
+extern Vector3 mousePos;

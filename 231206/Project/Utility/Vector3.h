@@ -55,7 +55,18 @@ struct Vector3
 	{
 		return XMVector3Normalize(*this);
 	}
-
+	void operator+=(const Vector3 other)
+	{
+		this->x += other.x;
+		this->y += other.y;
+		this->z += other.z;
+	}
+	void operator-=(const Vector3 other)
+	{
+		this->x -= other.x;
+		this->y -= other.y;
+		this->z -= other.z;
+	}
 	void Normalize()
 	{
 		*this = XMVector3Normalize(*this);

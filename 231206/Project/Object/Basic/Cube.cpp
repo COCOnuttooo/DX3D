@@ -1,7 +1,7 @@
 #include "Framework.h"
 #include "Cube.h"
-Cube::Cube()
-	:GameObject<VertexType>(L"Tutorial")
+Cube::Cube(Vector4 color)
+	:GameObject<VertexType>(L"Tutorial"), color(color)
 {
     CreateMesh();
 
@@ -13,9 +13,9 @@ Cube::~Cube()
 
 void Cube::Render()
 {
-	static float angle = 0.0f;
-	angle += 1.0001f;
-	worldMatrix = XMMatrixRotationRollPitchYaw(angle, angle, 0);
+	//static float angle = 0.0f;
+	//angle += 1.0001f;
+	//world = XMMatrixRotationRollPitchYaw(angle, angle, 0);
 
 	GameObject::Render();
 }
@@ -24,15 +24,15 @@ void Cube::CreateMesh()
 {
     vertices =
     {
-        { XMFLOAT3(-0.5f, +0.5f, -0.5f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)}, //0
-        { XMFLOAT3(+0.5f, +0.5f, -0.5f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}, //1
-        { XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)}, //2
-        { XMFLOAT3(+0.5f, -0.5f, -0.5f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f)}, //3
+        { XMFLOAT3(-0.5f, +0.5f, -0.5f), color}, //0
+        { XMFLOAT3(+0.5f, +0.5f, -0.5f), color}, //1
+        { XMFLOAT3(-0.5f, -0.5f, -0.5f), color}, //2
+        { XMFLOAT3(+0.5f, -0.5f, -0.5f), color}, //3
 
-        { XMFLOAT3(-0.5f, +0.5f, +0.5f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)}, //4
-        { XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}, //5
-        { XMFLOAT3(-0.5f, -0.5f, +0.5f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)}, //6
-        { XMFLOAT3(+0.5f, -0.5f, +0.5f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f)}, //7
+        { XMFLOAT3(-0.5f, +0.5f, +0.5f), color}, //4
+        { XMFLOAT3(+0.5f, +0.5f, +0.5f), color}, //5
+        { XMFLOAT3(-0.5f, -0.5f, +0.5f), color}, //6
+        { XMFLOAT3(+0.5f, -0.5f, +0.5f), color}, //7
 
         //Back-Face Culling
     };

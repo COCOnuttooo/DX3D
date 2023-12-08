@@ -154,10 +154,12 @@
     <ClInclude Include="MainGame.h" />
     <ClInclude Include="Scene\TutorialScene.h" />
     <ClInclude Include="Object\Transform.h" />
+    <ClInclude Include="Utility\Keyboard.h" />
     <ClInclude Include="Utility\Singleton.h" />
     <ClInclude Include="Render\Buffer\VertexLayout.h" />
     <ClInclude Include="Render\Buffer\VertexBuffer.h" />
     <ClInclude Include="Render\Shader\VertexShader.h" />
+    <ClInclude Include="Utility\Time.h" />
     <ClInclude Include="Utility\Vector3.h" />
     <ClInclude Include="__Others\Resource.h" />
     <ClInclude Include="__Others\targetver.h" />
@@ -182,6 +184,8 @@
     <ClCompile Include="Render\Shader\VertexShader.cpp" />
     <ClCompile Include="Scene\TutorialScene.cpp" />
     <ClCompile Include="Object\Transform.cpp" />
+    <ClCompile Include="Utility\Keyboard.cpp" />
+    <ClCompile Include="Utility\Time.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc" />

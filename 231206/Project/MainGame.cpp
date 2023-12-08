@@ -15,7 +15,8 @@ MainGame::~MainGame()
 void MainGame::Update()
 {
     ENVIRONMENT->Update();
-
+    KEYBOARD->Update();
+    TIME->Update();
     scene->Update();
 }
 
@@ -49,5 +50,7 @@ void MainGame::Release()
          Device::Delete();
     Environment::Delete();
          Shader::Delete();
+           Time::Delete();
+       Keyboard::Delete();
          delete scene;
 }

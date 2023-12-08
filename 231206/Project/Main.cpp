@@ -3,6 +3,8 @@
 
 #define MAX_LOADSTRING 100
 
+Vector3 mousePos;
+
 HWND hWnd;
 
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
@@ -183,9 +185,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             EndPaint(hWnd, &ps);
         }
         break;
+    case WM_MOUSEMOVE:
+        mousePos.x = LOWORD(lParam);
+        mousePos.y = HIWORD(lParam);
+        break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+        
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
