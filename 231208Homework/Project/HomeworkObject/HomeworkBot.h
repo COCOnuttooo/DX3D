@@ -17,6 +17,7 @@ public:
 	void Update();
 	void KeyboardInput();
 	void Move();
+	Transform* GetCameraLookAt() { return cameraLookAt; }
 
 private:
 	float pressTime = 0;
@@ -24,5 +25,10 @@ private:
 	Vector3 oldPos;
 	float moveSpeed = 1.0f;
 	HomeworkBotState state = IDLE;
+	Cube* xAxis;
+	Cube* yAxis;
+	Cube* zAxis;
+
+	Transform* cameraLookAt;
 };
 

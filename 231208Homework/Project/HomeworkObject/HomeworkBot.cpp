@@ -10,13 +10,40 @@ HomeworkBot::~HomeworkBot()
 	for (pair<string,Cube*> i : robot)
 		delete i.second;
 	robot.clear();
+	delete xAxis;
+	delete yAxis;
+	delete zAxis;
+	delete cameraLookAt;
 }
 
 void HomeworkBot::Initialize()
 {
+	cameraLookAt = new Transform;
 	robot.emplace("Body", new Cube(Vector4(0.5, 0.5, 0.5, 1)));
 	robot["Body"]->scale.x = 0.8;
 	robot["Body"]->scale.z = 0.6;
+
+	cameraLookAt->SetParent(robot["Body"]);
+	//cameraLookAt->translation.z = -5;
+
+	xAxis = new Cube(Vector4(1, 0, 0, 1));
+	xAxis->scale.x = 3;
+	xAxis->scale.y = 0.1f;
+	xAxis->scale.z = 0.1f;
+	xAxis->SetParent(robot["Body"]);
+
+	yAxis = new Cube(Vector4(0, 1, 0, 1));
+	yAxis->scale.x = 0.1f;
+	yAxis->scale.y = 3;
+	yAxis->scale.z = 0.1f;
+	yAxis->SetParent(robot["Body"]);
+
+	zAxis = new Cube(Vector4(0, 0, 1, 1));
+	zAxis->scale.x = 0.1f;
+	zAxis->scale.y = 0.1f;
+	zAxis->scale.z = 3;
+	zAxis->SetParent(robot["Body"]);
+
 	robot.emplace("LArm", new Cube(Vector4(0.6,0.6,0.6,1)));
 	robot["LArm"]->scale.x = 0.2;
 	robot["LArm"]->scale.y = 0.5;
@@ -117,13 +144,19 @@ void HomeworkBot::Render()
 	{
 		i.second->Render();
 	}
+	xAxis->Render();
+	yAxis->Render();
+	zAxis->Render();
 }
 
 void HomeworkBot::Update()
 {
 	KeyboardInput();
 	Move();
-
+	xAxis->Update();
+	yAxis->Update();
+	zAxis->Update();
+	cameraLookAt->Update();
 	for (auto& i : robot)
 	{
 		i.second->Update();
@@ -185,6 +218,8 @@ void HomeworkBot::KeyboardInput()
 				Vector3 delta = oldPos - mousePos;
 
 				robot["Head"]->rotation.y += delta.x * DELTA_TIME * 5;
+				//cameraLookAt->rotation.y = robot["Head"]->rotation.y;
+
 
 			}
 			if (KEY_UP('A')|| KEY_UP('S')|| KEY_UP('W')|| KEY_UP('D'))
@@ -192,6 +227,18 @@ void HomeworkBot::KeyboardInput()
 				state = IDLE;
 				pressTime = 0;
 			}
+			if (KEY_PRESS(VK_CONTROL))
+			{
+				Vector3 delta = oldPos - mousePos;
+				cameraLookAt->rotation.y += delta.x * DELTA_TIME * 5;
+
+				cameraLookAt->rotation.x += delta.y * DELTA_TIME * 3;
+			}
+			if (KEY_UP(VK_CONTROL))
+			{
+				cameraLookAt->rotation = Vector3(0, 0, 0);
+			}
+
 
 		}
 	}
@@ -222,14 +269,17 @@ void HomeworkBot::Move()
 	case MOVEFORWARD:
 		robot["Body"]->rotation.x = abs(0.1 * sin(pressTime));
 
-		robot["LArm"]->rotation.x = 0.6 * sin(pressTime);
-		robot["LFArm"]->rotation.x = min(0.6 * sin(pressTime), 0);
-		robot["RFArm"]->rotation.x = min(0.6 * sin(-pressTime), 0);
-		robot["RArm"]->rotation.x = 0.6 * sin(-pressTime);
-		robot["LLeg"]->rotation.x = 0.6 * sin(-pressTime);
-		robot["LFLeg"]->rotation.x = abs(0.6 * sin(pressTime));
-		robot["RLeg"]->rotation.x = 0.6 * sin(pressTime);
-		robot["RFLeg"]->rotation.x = abs(0.6 * sin(pressTime));
+		robot["LArm"]->rotation.x = 0.6 * sin(2*pressTime);
+
+		robot["LFArm"]->rotation.x = min(0.6 * sin(2*pressTime), 0);
+		robot["RFArm"]->rotation.x = min(0.6 * sin(-2*pressTime), 0);
+
+		robot["RArm"]->rotation.x = 0.6 * sin(-2* pressTime);
+
+		robot["LLeg"]->rotation.x = 0.6 * sin(-2* pressTime);
+		robot["LFLeg"]->rotation.x = abs(0.6 * sin(2*pressTime));
+		robot["RLeg"]->rotation.x = 0.6 * sin(2*pressTime);
+		robot["RFLeg"]->rotation.x = abs(0.6 * sin(2* pressTime));
 		break;
 	case MOVELSIDE:
 		robot["LLeg"]->rotation.z = abs(0.2 * sin(-pressTime));

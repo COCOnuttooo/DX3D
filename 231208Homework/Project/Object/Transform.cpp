@@ -36,6 +36,7 @@ void Transform::UpdateWorldMatrix()
 
 	world = IP * S * IRP * R * RP * T * P;
 	worldNoScale = IP * IRP * R * RP *  T * P;
+
 	if (parent != nullptr)
 	{
 		world *= parent->worldNoScale;

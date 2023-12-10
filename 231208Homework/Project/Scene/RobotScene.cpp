@@ -4,6 +4,7 @@
 RobotScene::RobotScene()
 {
 	bot = new HomeworkBot;
+	//ENVIRONMENT->GetCamera()->SetParent(bot->GetCameraLookAt());
 }
 
 RobotScene::~RobotScene()
