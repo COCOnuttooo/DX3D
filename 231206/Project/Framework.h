@@ -23,6 +23,10 @@
 using namespace DirectX;
 using namespace std;
 
+#include "_Include/imgui.h"
+#include "_Include/imgui_impl_win32.h"
+#include "_Include/imgui_impl_dx11.h"
+
 #define WIN_WIDTH  1280.0f
 #define WIN_HEIGHT  720.0f
 
