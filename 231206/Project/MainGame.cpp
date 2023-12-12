@@ -1,7 +1,7 @@
 #include "Framework.h"
 #include "MainGame.h"
 #include "Scene/TutorialScene.h"
-
+#include "Scene/TextureScene.h"
 MainGame::MainGame()
 {
 	Initialize();
@@ -64,7 +64,7 @@ void MainGame::Initialize()
     ImGui_ImplDX11_Init(DEVICE, DC);
 
 
-    scene = new TutorialScene;
+    scene = new TextureScene;
     Device::GetInstance();
     Environment::GetInstance();
     //Create Vertex

@@ -106,11 +106,12 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Framework.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>../;./</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../;./;_Include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>_Library</AdditionalLibraryDirectories>
     </Link>
     <FxCompile>
       <EntryPointName>VS</EntryPointName>
@@ -154,6 +155,7 @@
     <ClInclude Include="MainGame.h" />
     <ClInclude Include="Scene\TutorialScene.h" />
     <ClInclude Include="Object\Transform.h" />
+    <ClInclude Include="Scene\TextureScene.h" />
     <ClInclude Include="Utility\Keyboard.h" />
     <ClInclude Include="Utility\Singleton.h" />
     <ClInclude Include="Render\Buffer\VertexLayout.h" />
@@ -161,6 +163,7 @@
     <ClInclude Include="Render\Shader\VertexShader.h" />
     <ClInclude Include="Utility\Time.h" />
     <ClInclude Include="Utility\Vector3.h" />
+    <ClInclude Include="_Include\DirectXTex.h" />
     <ClInclude Include="_Include\imconfig.h" />
     <ClInclude Include="_Include\imgui.h" />
     <ClInclude Include="_Include\imgui_impl_dx11.h" />
@@ -192,6 +195,7 @@
     <ClCompile Include="Render\Shader\VertexShader.cpp" />
     <ClCompile Include="Scene\TutorialScene.cpp" />
     <ClCompile Include="Object\Transform.cpp" />
+    <ClCompile Include="Scene\TextureScene.cpp" />
     <ClCompile Include="Utility\Keyboard.cpp" />
     <ClCompile Include="Utility\Time.cpp" />
     <ClCompile Include="_Include\imgui.cpp">
@@ -230,6 +234,9 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="_Include\DirectXTex.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

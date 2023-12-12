@@ -120,6 +120,12 @@
     <ClInclude Include="_Include\imstb_textedit.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="_Include\DirectXTex.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\TextureScene.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -200,6 +206,9 @@
     <ClCompile Include="_Include\imgui_widgets.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\TextureScene.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -216,5 +225,10 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="_Shader\Tutorial.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="_Include\DirectXTex.inl">
+      <Filter>헤더 파일</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -1,0 +1,7 @@
+UV Mapping
+
+생성자 종류 2가지
+
+복사(Copy) 생성자 / 이동(Move) 생성자
+
+Lvalue Rvalue 차이 (C++에서는?)
