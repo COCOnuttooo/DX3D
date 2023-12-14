@@ -13,6 +13,10 @@
 #include <map>
 #include <functional>
 
+#include "Shlwapi.h"
+
+#pragma comment(lib,"Shlwapi.lib")
+
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
@@ -20,38 +24,41 @@
 #include "DirectXTex.h"
 #include "DirectXTex.inl"
 
-#pragma comment(lib, "DirectXTex.lib")
-
+#pragma comment(lib,"DirectXTex.lib")
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dxguid.lib")
 
 using namespace DirectX;
 using namespace std;
+
+#define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 
-#define WIN_WIDTH  1280.0f
-#define WIN_HEIGHT  720.0f
+#define WIN_WIDTH	1280.0f
+#define WIN_HEIGHT	720.0f
 
 #define DEVICE Device::GetInstance()->GetDevice()
-#define DC     Device::GetInstance()->GetDC()
+#define DC Device::GetInstance()->GetDC()
 
 #define ENVIRONMENT Environment::GetInstance()
-#define KEYBOARD       Keyboard::GetInstance()
-#define TIME               Time::GetInstance()
-#define DELTA_TIME               Time::Delta()
+
+#define KEYBOARD	Keyboard::GetInstance()
+#define TIME			Time::GetInstance()
+
+#define DELTA_TIME Time::Delta()
 
 #define KEY_PRESS(p) Keyboard::GetInstance()->Press(p)
-#define KEY_DOWN(p)  Keyboard::GetInstance()->Down(p)
-#define KEY_UP(p)	 Keyboard::GetInstance()->Up(p)
+#define KEY_DOWN(p) Keyboard::GetInstance()->Down(p)
+#define KEY_UP(p) Keyboard::GetInstance()->Up(p)
 
 typedef XMMATRIX Matrix;
 typedef XMFLOAT2 Vector2;
 typedef XMFLOAT4 Vector4;
-
 
 #include "Utility/Singleton.h"
 #include "Utility/Vector3.h"
@@ -59,32 +66,36 @@ typedef XMFLOAT4 Vector4;
 #include "Utility/Keyboard.h"
 
 #include "System/Device.h"
+
 #include "Render/Buffer/VertexLayout.h"
+
 #include "Render/Buffer/VertexBuffer.h"
 #include "Render/Buffer/IndexBuffer.h"
 #include "Render/Buffer/ConstBuffer.h"
 #include "Render/Buffer/GlobalBuffer.h"
 
+#include "Object/Transform.h"
 
 #include "Render/Shader/Shader.h"
 #include "Render/Shader/VertexShader.h"
 #include "Render/Shader/PixelShader.h"
 
-#include "Object/Transform.h"
 #include "System/Camera.h"
 #include "System/Environment.h"
 
-#include "Render/Material.h"
+#include "Render/Texture/Texture.h"
+
 #include "Render/Mesh.h"
+#include "Render/Material.h"
 
 #include "Object/GameObject.h"
-#include "Object/Basic/Cube.h"
 
+#include "Object/Basic/Cube.h"
+#include "Object/Basic/Quad.h"
 
 #include "Scene/Scene.h"
 
-#include "MainGame.h"
-
+#include"MainGame.h"
 
 extern HWND hWnd;
 extern Vector3 mousePos;

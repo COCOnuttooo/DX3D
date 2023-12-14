@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -139,6 +139,7 @@
   <ItemGroup>
     <ClInclude Include="Object\Basic\Cube.h" />
     <ClInclude Include="Object\GameObject.h" />
+    <ClInclude Include="Object\Basic\Quad.h" />
     <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="System\Camera.h" />
     <ClInclude Include="System\Environment.h" />
@@ -156,6 +157,7 @@
     <ClInclude Include="Scene\TutorialScene.h" />
     <ClInclude Include="Object\Transform.h" />
     <ClInclude Include="Scene\TextureScene.h" />
+    <ClInclude Include="Render\Texture\Texture.h" />
     <ClInclude Include="Utility\Keyboard.h" />
     <ClInclude Include="Utility\Singleton.h" />
     <ClInclude Include="Render\Buffer\VertexLayout.h" />
@@ -178,6 +180,7 @@
   <ItemGroup>
     <ClCompile Include="Object\Basic\Cube.cpp" />
     <ClCompile Include="Object\GameObject.cpp" />
+    <ClCompile Include="Object\Basic\Quad.cpp" />
     <ClCompile Include="System\Camera.cpp" />
     <ClCompile Include="System\Environment.cpp" />
     <ClCompile Include="Render\Material.cpp" />
@@ -196,6 +199,7 @@
     <ClCompile Include="Scene\TutorialScene.cpp" />
     <ClCompile Include="Object\Transform.cpp" />
     <ClCompile Include="Scene\TextureScene.cpp" />
+    <ClCompile Include="Render\Texture\Texture.cpp" />
     <ClCompile Include="Utility\Keyboard.cpp" />
     <ClCompile Include="Utility\Time.cpp" />
     <ClCompile Include="_Include\imgui.cpp">
@@ -228,6 +232,12 @@
     <Image Include="__Others\small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="_Shader\01_Texture.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="_Shader\Tutorial.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>

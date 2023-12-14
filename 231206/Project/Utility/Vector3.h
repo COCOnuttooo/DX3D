@@ -3,14 +3,11 @@ struct Vector3
 {
 	Vector3()
 	{
-
 	}
 	Vector3(float x, float y, float z)
 		:x(x), y(y),z(z)
 	{
-
 	}
-	XMVECTOR vector;
 	Vector3(XMFLOAT3 value)
 		:x(value.x), y(value.y), z(value.z)
 	{
@@ -71,7 +68,8 @@ struct Vector3
 	{
 		*this = XMVector3Normalize(*this);
 	}
-	float x;
-	float y;
-	float z;
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
+
 };

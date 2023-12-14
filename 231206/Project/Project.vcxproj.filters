@@ -126,6 +126,12 @@
     <ClInclude Include="Scene\TextureScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Render\Texture\Texture.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Basic\Quad.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -209,6 +215,12 @@
     <ClCompile Include="Scene\TextureScene.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Render\Texture\Texture.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Basic\Quad.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -225,6 +237,7 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="_Shader\Tutorial.hlsl" />
+    <FxCompile Include="_Shader\01_Texture.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Include\DirectXTex.inl">

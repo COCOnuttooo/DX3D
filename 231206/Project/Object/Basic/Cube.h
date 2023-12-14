@@ -1,7 +1,7 @@
 #pragma once
-typedef VertexColor VertexType;
-class Cube : public GameObject<VertexType>
+class Cube : public GameObject<VertexColor>
 {
+	typedef VertexColor VertexType;
 public:
 	Cube(Vector4 color = Vector4(1,0,0,1));
 	~Cube();

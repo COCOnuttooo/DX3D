@@ -1,23 +1,25 @@
 #pragma once
-template<typename T>
+
+template <typename T>
 class GameObject : public Transform
 {
 public:
 	GameObject(wstring shaderFile);
 	virtual ~GameObject();
+
 	virtual void Render();
-	
+
+	Material* GetMaterial() { return material; }
 
 protected:
 	virtual void CreateMesh() = 0;
 
 protected:
-	vector<T>     vertices{};
-	vector<UINT>             indices{};
+	vector<T>    vertices;
+	vector<UINT>  indices;
 
 	Mesh* mesh;
 	Material* material;
-
 };
 
 template<typename T>
@@ -37,11 +39,13 @@ template<typename T>
 inline void GameObject<T>::Render()
 {
 	Transform::SetWorld();
+
 	mesh->IASet();
-	material->SetShader();
+	material->Set();
 
 	if (indices.size() > 0)
-		DC->DrawIndexed(indices.size(), 0, 0); //Draw Call
+		DC->DrawIndexed(indices.size(), 0, 0);
 	else
 		DC->Draw(vertices.size(), 0);
 }
+
