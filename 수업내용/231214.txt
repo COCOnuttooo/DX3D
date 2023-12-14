@@ -1,0 +1,4 @@
+리소스: Buffer, Texture
+
+samplerstate?
+
