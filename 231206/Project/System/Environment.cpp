@@ -34,3 +34,8 @@ void Environment::Set()
 	projBuffer->SetData(projMatrix);
 	projBuffer->SetVSBuffer(2);
 }
+
+void Environment::Debug()
+{
+	mainCamera->Debug();
+}

@@ -137,6 +137,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Render\State\SamplerState.h" />
+    <ClInclude Include="Render\State\StateManager.h" />
+    <ClInclude Include="Utility\BinaryReader.h" />
+    <ClInclude Include="Utility\BinaryWriter.h" />
     <ClInclude Include="Object\Basic\Cube.h" />
     <ClInclude Include="Object\GameObject.h" />
     <ClInclude Include="Object\Basic\Quad.h" />
@@ -178,6 +182,10 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Render\State\SamplerState.cpp" />
+    <ClCompile Include="Render\State\StateManager.cpp" />
+    <ClCompile Include="Utility\BinaryReader.cpp" />
+    <ClCompile Include="Utility\BinaryWriter.cpp" />
     <ClCompile Include="Object\Basic\Cube.cpp" />
     <ClCompile Include="Object\GameObject.cpp" />
     <ClCompile Include="Object\Basic\Quad.cpp" />

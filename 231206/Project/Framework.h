@@ -65,6 +65,9 @@ typedef XMFLOAT4 Vector4;
 #include "Utility/Time.h"
 #include "Utility/Keyboard.h"
 
+#include "Utility/BinaryWriter.h"
+#include "Utility/BinaryReader.h"
+
 #include "System/Device.h"
 
 #include "Render/Buffer/VertexLayout.h"
@@ -87,6 +90,10 @@ typedef XMFLOAT4 Vector4;
 
 #include "Render/Mesh.h"
 #include "Render/Material.h"
+
+#include "Render/State/SamplerState.h"
+
+#include "Render/State/StateManager.h"
 
 #include "Object/GameObject.h"
 

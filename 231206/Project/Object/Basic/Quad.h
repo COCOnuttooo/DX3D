@@ -13,7 +13,6 @@ private:
 	void CreateMesh() override;
 
 private:
-	ID3D11SamplerState* samplerState;
 
 	Vector2 size;
 

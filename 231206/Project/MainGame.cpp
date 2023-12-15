@@ -18,11 +18,13 @@ void MainGame::Update()
     KEYBOARD->Update();
     TIME->Update();
     scene->Update();
+
 }
 
 void MainGame::Render()
 {
     ENVIRONMENT->Set();
+  //  ENVIRONMENT->Debug();
     /////////////////////////////////////
     scene->Render();
 }
@@ -37,7 +39,7 @@ void MainGame::PostRender()
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-
+    ENVIRONMENT->Debug();
 
 
     scene->PostRender();
@@ -67,6 +69,7 @@ void MainGame::Initialize()
     scene = new TextureScene;
     Device::GetInstance();
     Environment::GetInstance();
+    StateManager::GetInstance();
     //Create Vertex
 }
 
@@ -81,5 +84,6 @@ void MainGame::Release()
          Shader::Delete();
            Time::Delete();
        Keyboard::Delete();
+       StateManager::Delete();
          delete scene;
 }

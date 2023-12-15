@@ -12,6 +12,8 @@ public:
 	void Update();
 	void Set();
 
+	void Debug();
+
 private:
 	Matrix        projMatrix;
 	MatrixBuffer* projBuffer;
