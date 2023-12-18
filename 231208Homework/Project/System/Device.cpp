@@ -13,6 +13,7 @@ Device::~Device()
        deviceContext->Release();   
            swapChain->Release();       
     renderTargetView->Release();
+    depthStencilView->Release();
 }
 
 void Device::CreateDeviceAndSwapChain()

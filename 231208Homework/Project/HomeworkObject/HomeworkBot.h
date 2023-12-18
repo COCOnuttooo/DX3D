@@ -7,6 +7,7 @@ enum HomeworkBotState
 	MOVERSIDE,
 	MOVEBACKWARD
 };
+
 class HomeworkBot
 {
 public:
