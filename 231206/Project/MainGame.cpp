@@ -5,11 +5,14 @@
 MainGame::MainGame()
 {
 	Initialize();
+    SCENE->Create("Start", new TextureScene);
+    SCENE->Add("Start");
 }
 
 MainGame::~MainGame()
 {
 	Release();
+    
 }
 
 void MainGame::Update()
@@ -17,7 +20,7 @@ void MainGame::Update()
     ENVIRONMENT->Update();
     KEYBOARD->Update();
     TIME->Update();
-    scene->Update();
+    SCENE->Update();
 
 }
 
@@ -26,12 +29,12 @@ void MainGame::Render()
     ENVIRONMENT->Set();
   //  ENVIRONMENT->Debug();
     /////////////////////////////////////
-    scene->Render();
+    SCENE->Render();
 }
 
 void MainGame::PreRender()
 {
-    scene->PreRender();
+    SCENE->PreRender();
 }
 
 void MainGame::PostRender()
@@ -42,7 +45,7 @@ void MainGame::PostRender()
     ENVIRONMENT->Debug();
 
 
-    scene->PostRender();
+    SCENE->PostRender();
     ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
@@ -66,7 +69,7 @@ void MainGame::Initialize()
     ImGui_ImplDX11_Init(DEVICE, DC);
 
 
-    scene = new TextureScene;
+    //scene = new TextureScene;
     Device::GetInstance();
     Environment::GetInstance();
     StateManager::GetInstance();
@@ -85,5 +88,6 @@ void MainGame::Release()
            Time::Delete();
        Keyboard::Delete();
        StateManager::Delete();
-         delete scene;
+       SceneManager::Delete();
+         //delete scene;
 }

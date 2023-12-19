@@ -14,7 +14,7 @@ public:
 
 private:
 	Quad* quad;
-	
+	TextureCube* cube;
 	// Scene을(를) 통해 상속됨
 
 };

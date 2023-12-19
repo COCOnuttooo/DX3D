@@ -20,6 +20,12 @@ public:
 	Vector3 GetUpVector() { return up; }
 	Vector3 GetForwardVector() { return forward; }
 
+	void Debug();
+	void SetName(string name);
+
+	void Save();
+	void Load();
+
 private:
 	void UpdateWorldMatrix();
 
@@ -41,6 +47,13 @@ protected:
 	Vector3	globalPosition;
 
 	Vector3 pivot;
+
+	string name;
+
+	static UINT index;
+
+	bool isActive = true;
+
 };
 
 

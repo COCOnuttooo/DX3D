@@ -46,11 +46,11 @@ using namespace std;
 #define DC Device::GetInstance()->GetDC()
 
 #define ENVIRONMENT Environment::GetInstance()
+#define KEYBOARD   	   Keyboard::GetInstance()
+#define TIME	   		   Time::GetInstance()
+#define SCENE      SceneManager::GetInstance()
 
-#define KEYBOARD	Keyboard::GetInstance()
-#define TIME			Time::GetInstance()
-
-#define DELTA_TIME Time::Delta()
+#define DELTA_TIME  Time::Delta()
 
 #define KEY_PRESS(p) Keyboard::GetInstance()->Press(p)
 #define KEY_DOWN(p) Keyboard::GetInstance()->Down(p)
@@ -99,8 +99,10 @@ typedef XMFLOAT4 Vector4;
 
 #include "Object/Basic/Cube.h"
 #include "Object/Basic/Quad.h"
+#include "Object/Basic/TextureCube.h"
 
 #include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
 
 #include"MainGame.h"
 

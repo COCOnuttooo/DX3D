@@ -17,5 +17,5 @@ private:
 	void Release();
 
 private:
-	Scene* scene;
+	//Scene* scene;
 };
