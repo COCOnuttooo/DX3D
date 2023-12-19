@@ -1,0 +1,3 @@
+code like me 유튜브 영상 원하는 장르 한번 따라해보기
+
+STL resize, reserve 차이
