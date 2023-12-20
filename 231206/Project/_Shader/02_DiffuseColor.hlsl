@@ -14,7 +14,7 @@ VertexOutput VS(VertexColorNormal input)
     output.pos = mul(output.pos, view);
     output.pos = mul(output.pos, proj);
     
-    output.normal = normalize(mul(input.normal, (float3x3) world));
+    output.normal = (mul(normalize(input.normal), (float3x3) world));
     
     output.color = input.color;
     return output;
