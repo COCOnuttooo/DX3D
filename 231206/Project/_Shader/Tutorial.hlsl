@@ -1,8 +1,4 @@
-struct VertexColor
-{
-    float4 pos   : POSITION;
-    float4 color : COLOR;
-};
+#include "Header.hlsli"
 
 struct VertexOutput
 {
@@ -10,19 +6,7 @@ struct VertexOutput
     float4 color : COLOR;
 };
 
-cbuffer World : register(b0)
-{
-    matrix world;
-};
-cbuffer View : register(b1)
-{
-    matrix  view;
-};
 
-cbuffer Projection : register(b2)
-{
-    matrix  proj;
-};
 
 VertexOutput VS(VertexColor input)
 {

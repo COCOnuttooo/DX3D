@@ -7,7 +7,7 @@ public:
 	GameObject(wstring shaderFile);
 	virtual ~GameObject();
 
-	virtual void Render();
+	virtual void Render(D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	Material* GetMaterial() { return material; }
 
@@ -36,11 +36,11 @@ inline GameObject<T>::~GameObject()
 }
 
 template<typename T>
-inline void GameObject<T>::Render()
+inline void GameObject<T>::Render(D3D11_PRIMITIVE_TOPOLOGY topology)
 {
 	Transform::SetWorld();
 
-	mesh->IASet();
+	mesh->IASet(topology);
 	material->Set();
 
 	if (indices.size() > 0)

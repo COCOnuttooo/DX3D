@@ -5,7 +5,7 @@ TutorialScene::TutorialScene()
     cube = new Cube;
     cube2 = new Cube(Vector4(0,1,0,1));
  /*   cube2->translation.z = 2.0f;*/
-    cube2->translation.x = 1.0f;
+    cube->translation.x = 2.0f;
     cube2->SetParent(cube);
     cube->SetPivot(Vector3(0.5f, 0.5f, 0.5f));
     cube2->SetPivot(Vector3(-0.5f, 0.5f, 0.5f));
@@ -38,11 +38,12 @@ void TutorialScene::PreRender()
 void TutorialScene::Render()
 {
     cube->Render();
-    cube2->Render();
+    //cube2->Render();
 
 }
 
 void TutorialScene::PostRender()
 {
     ImGui::Text("HelloWorld!");
+    cube->Debug();
 }

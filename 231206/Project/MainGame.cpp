@@ -2,11 +2,16 @@
 #include "MainGame.h"
 #include "Scene/TutorialScene.h"
 #include "Scene/TextureScene.h"
+#include "Scene/GridScene.h"
 MainGame::MainGame()
 {
 	Initialize();
     SCENE->Create("Start", new TextureScene);
+    SCENE->Create("Tutorial", new TutorialScene);
     SCENE->Add("Start");
+    SCENE->Create("Grid", new GridScene);
+    SCENE->Add("Grid");
+    SCENE->Add("Tutorial");
 }
 
 MainGame::~MainGame()

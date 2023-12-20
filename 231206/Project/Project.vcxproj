@@ -137,6 +137,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Object\Basic\Grid.h" />
+    <ClInclude Include="Scene\GridScene.h" />
     <ClInclude Include="Render\State\SamplerState.h" />
     <ClInclude Include="Render\State\StateManager.h" />
     <ClInclude Include="Object\Basic\TextureCube.h" />
@@ -184,6 +186,8 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Object\Basic\Grid.cpp" />
+    <ClCompile Include="Scene\GridScene.cpp" />
     <ClCompile Include="Render\State\SamplerState.cpp" />
     <ClCompile Include="Render\State\StateManager.cpp" />
     <ClCompile Include="Object\Basic\TextureCube.cpp" />
@@ -250,6 +254,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
+    <FxCompile Include="_Shader\02_DiffuseColor.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="_Shader\Tutorial.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
@@ -259,6 +269,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="_Include\DirectXTex.inl" />
+    <None Include="_Shader\Header.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,31 +1,11 @@
-struct VertexColor
-{
-    float4 pos : POSITION;
-    float2 uv : UV;
-};
+#include "Header.hlsli"
 
 struct VertexOutput
 {
     float4 pos : SV_POSITION;
     float2 uv : UV;
 };
-
-cbuffer World : register(b0)
-{
-    matrix world;
-}
-
-cbuffer View : register(b1)
-{
-    matrix view;
-}
-    
-cbuffer Projection : register(b2)
-{
-    matrix proj;
-}
-
-VertexOutput VS(VertexColor input)
+VertexOutput VS(VertexTexture input)
 {
     VertexOutput output;
     
@@ -38,8 +18,6 @@ VertexOutput VS(VertexColor input)
     return output;
 }
 
-Texture2D diffuseMap : register(t0);
-SamplerState samp : register(s0);
 
 float4 PS(VertexOutput input) : SV_TARGET
 {

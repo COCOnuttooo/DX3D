@@ -72,4 +72,13 @@ struct Vector3
 	float y = 0.0f;
 	float z = 0.0f;
 
+	static float Dot(const Vector3& v1, const Vector3& v2)
+	{
+		return Vector3(XMVector3Dot(const_cast<Vector3&>(v1), const_cast<Vector3&>(v2))).x;
+	}
+	static Vector3 Cross(const Vector3& v1, const Vector3& v2)
+	{
+		return XMVector3Cross(const_cast<Vector3&>(v1), const_cast<Vector3&>(v2));
+
+	}
 };

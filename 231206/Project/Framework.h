@@ -99,6 +99,7 @@ typedef XMFLOAT4 Vector4;
 
 #include "Object/Basic/Cube.h"
 #include "Object/Basic/Quad.h"
+#include "Object/Basic/Grid.h"
 #include "Object/Basic/TextureCube.h"
 
 #include "Scene/Scene.h"

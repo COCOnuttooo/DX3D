@@ -1,0 +1,12 @@
+Light : Dirctional Light, Point Light, Spot Light
+-----------------
+Direct Light
+-----------------
+Diffuse
+Specular
+-----------------
+Indirect Light
+-----------------
+Ambient
+
+shader header

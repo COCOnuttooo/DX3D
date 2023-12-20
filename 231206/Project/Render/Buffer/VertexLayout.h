@@ -32,3 +32,20 @@ struct VertexTexture
     Vector3 pos = {};
     Vector2 uv = {};
 };
+
+struct VertexTextureNormal
+{
+    Vector3 pos    = {};
+    Vector3 normal = {};
+    Vector2 uv     = {};
+};
+struct VertexColorNormal
+{
+    VertexColorNormal(XMFLOAT3 pos, XMFLOAT4 color)
+        :pos(pos), color(color) 
+    {
+    }
+    Vector3 pos = {};
+    Vector3 normal = {};
+    Vector4 color = {};
+};

@@ -150,6 +150,12 @@
     <ClInclude Include="Scene\SceneManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\GridScene.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Basic\Grid.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -257,6 +263,12 @@
     <ClCompile Include="Scene\SceneManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\GridScene.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Basic\Grid.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -274,10 +286,12 @@
   <ItemGroup>
     <FxCompile Include="_Shader\Tutorial.hlsl" />
     <FxCompile Include="_Shader\01_Texture.hlsl" />
+    <FxCompile Include="_Shader\02_DiffuseColor.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Include\DirectXTex.inl">
       <Filter>헤더 파일</Filter>
     </None>
+    <None Include="_Shader\Header.hlsli" />
   </ItemGroup>
 </Project>
