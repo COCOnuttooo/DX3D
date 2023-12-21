@@ -15,3 +15,41 @@ struct MatrixBuffer : public ConstBuffer<Matrix>
 	}
 	Matrix matrix;
 };
+
+struct ViewData
+{
+	Matrix view;
+	Matrix invView;
+};
+struct ViewBuffer : public ConstBuffer<ViewData>
+{
+
+	ViewBuffer()
+		:ConstBuffer(data)
+	{
+		data.view = XMMatrixIdentity();
+		data.invView = XMMatrixIdentity();
+	}
+
+	void SetData(Matrix view, Matrix invView)
+	{
+		data.view = XMMatrixTranspose(view);
+		data.invView = XMMatrixTranspose(invView);
+	}
+	ViewData data;
+};
+struct LightData
+{
+	Vector3 direction = Vector3(0, -1, 0);
+	float padding;
+};
+struct LightBuffer : public ConstBuffer<LightData>
+{
+	LightBuffer()
+		:ConstBuffer(data)
+	{
+	}
+	LightData data;
+
+
+};

@@ -29,12 +29,19 @@ cbuffer World : register(b0)
 cbuffer View : register(b1)
 {
     matrix view;
+    matrix invView;
 }
     
 cbuffer Projection : register(b2)
 {
     matrix proj;
 }
+//PS CBuffer
+cbuffer Light : register(b0)
+{
+    float3 lightDirection;
+}
 
 Texture2D diffuseMap : register(t0);
 SamplerState samp : register(s0);
+

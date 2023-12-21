@@ -2,7 +2,7 @@
 #include "Quad.h"
 
 Quad::Quad(Vector2 size)
-	:GameObject<VertexType>(L"01_Texture"), size(size)
+	:GameObject<VertexType>(L"04_Specular"), size(size)
 {
 	CreateMesh();
 
@@ -43,6 +43,21 @@ void Quad::CreateMesh()
 		0, 1, 2,
 		2, 1, 3
 	};
+	for (UINT i = 0; i < indices.size() / 3; i++)
+	{
+		UINT index0 = indices[i * 3 + 0];
+		UINT index1 = indices[i * 3 + 1];
+		UINT index2 = indices[i * 3 + 2];
+
+		Vector3 v01 = vertices[index1].pos - vertices[index0].pos;
+		Vector3 v02 = vertices[index2].pos - vertices[index0].pos;
+
+		Vector3 normal = Vector3::Cross(v01, v02);
+
+		vertices[index0].normal += normal;
+		vertices[index1].normal += normal;
+		vertices[index2].normal += normal;
+	}
 
 	mesh = new Mesh(vertices, indices);
 }

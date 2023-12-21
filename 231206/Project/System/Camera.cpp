@@ -3,7 +3,7 @@
 
 Camera::Camera()
 {
-	viewBuffer = new MatrixBuffer();
+	viewBuffer = new ViewBuffer();
 
 	translation.z = -5.0f;
 
@@ -64,7 +64,7 @@ void Camera::Set()
 {
 	viewMatrix = XMMatrixInverse(nullptr, world);
 
-	viewBuffer->SetData(viewMatrix);
+	viewBuffer->SetData(viewMatrix, world);
 	viewBuffer->SetVSBuffer(1);
 }
 

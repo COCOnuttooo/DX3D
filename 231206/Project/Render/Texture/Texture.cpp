@@ -42,6 +42,15 @@ Texture* Texture::Add(wstring file)
 	return textures[file];
 }
 
+void Texture::Delete()
+{
+	for (auto& pair : textures)
+	{
+		delete pair.second;
+	}
+	textures.clear();
+}
+
 void Texture::PSSetShaderResources(UINT slot)
 {
 	DC->PSSetShaderResources(slot, 1, &srv);

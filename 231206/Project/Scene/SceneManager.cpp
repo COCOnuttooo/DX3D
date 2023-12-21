@@ -9,6 +9,7 @@ SceneManager::~SceneManager()
 {
 	for (pair<string, Scene*> scene : scenes)
 		delete scene.second;
+
 	scenes.clear();
 }
 

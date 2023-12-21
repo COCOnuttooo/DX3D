@@ -12,7 +12,7 @@ public:
 	void LoadData();
 private:
 	Matrix        viewMatrix;
-	MatrixBuffer* viewBuffer;
+	ViewBuffer* viewBuffer;
 	float moveSpeed = 1.0f;
 	float rotateSpeed = 20.0f;
 

@@ -94,5 +94,6 @@ void MainGame::Release()
        Keyboard::Delete();
        StateManager::Delete();
        SceneManager::Delete();
+       Texture::Delete();
          //delete scene;
 }
