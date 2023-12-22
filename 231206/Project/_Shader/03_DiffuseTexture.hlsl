@@ -25,7 +25,7 @@ float4 PS(VertexOutput input) : SV_TARGET
 {
     float3 light = normalize(lightDirection);
     
-    float diffuseIntensity = (dot(input.normal, -light));
+    float diffuseIntensity = saturate(dot(input.normal, -light));
     
     float4 albedo = diffuseMap.Sample(samp, input.uv);
     

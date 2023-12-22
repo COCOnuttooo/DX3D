@@ -47,10 +47,16 @@ void MainGame::PostRender()
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-    ENVIRONMENT->Debug();
 
+    static bool isWireFrame = false;
+    ImGui::Checkbox("WireFrame", &isWireFrame);
+    if (isWireFrame)
+        STATE->EnableWireFrame();
+    else
+        STATE->DisableWireFrame();
 
     SCENE->PostRender();
+    ENVIRONMENT->Debug();
     ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 

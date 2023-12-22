@@ -156,6 +156,15 @@
     <ClInclude Include="Object\Basic\Grid.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Object\Sphere.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\Utility.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\State\RasterizerState.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -267,6 +276,15 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Object\Basic\Grid.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Sphere.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility\Utility.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\State\RasterizerState.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

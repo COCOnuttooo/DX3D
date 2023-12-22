@@ -28,17 +28,24 @@ VertexOutput VS(VertexTextureNormal input)
 
 float4 PS(VertexOutput input) : SV_TARGET
 {
+    //clamp, sturate
+    
     float3 light = normalize(lightDirection);
     
-    float diffuseIntensity = (dot(input.normal, -light));
-    
+    float diffuseIntensity = saturate(dot(input.normal, -light));
+   
     float4 albedo = diffuseMap.Sample(samp, input.uv);
     /////////////////////////////
     
     float3 reflection = reflect(light, input.normal);
     
-    float specularIntensity = dot(-reflection, input.viewDir);
+    float specularIntensity = saturate(dot(-reflection, input.viewDir));
     /////////////////////////////
     
-    return albedo * diffuseIntensity * specularIntensity;
+    float shininess = 16.0f;
+    specularIntensity = pow(specularIntensity, shininess);
+    
+    float4 specular = specularMap.Sample(samp, input.uv);
+    
+    return albedo * diffuseIntensity + specularIntensity * specular;
 }

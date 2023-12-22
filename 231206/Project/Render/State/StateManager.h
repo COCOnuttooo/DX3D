@@ -6,7 +6,14 @@ private:
 	StateManager();
 	~StateManager();
 	void CreateSampler();
+	void CreateRasterizer();
+
+public:
+	void EnableWireFrame();
+
+	void DisableWireFrame();
 private:
 	SamplerState* sampler;
+	vector<RasterizerState*> rs;
 };
 

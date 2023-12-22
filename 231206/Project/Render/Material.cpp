@@ -20,10 +20,18 @@ void Material::SetDiffuseMap(wstring file)
 	diffuseMap = Texture::Add(file);
 }
 
+void Material::SetSpecularMap(wstring file)
+{
+	specularMap = Texture::Add(file);
+}
+
 void Material::Set()
 {
 	vertexShader->SetShader();
 	 pixelShader->SetShader();
 	 if (diffuseMap != nullptr)
 		 diffuseMap->PSSetShaderResources(0);
+	 if (specularMap != nullptr)
+		 specularMap->PSSetShaderResources(1);
+
 }

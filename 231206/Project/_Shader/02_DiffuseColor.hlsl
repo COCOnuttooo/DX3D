@@ -24,7 +24,7 @@ VertexOutput VS(VertexColorNormal input)
 float4 PS(VertexOutput input) : SV_TARGET
 {
     float3 light = normalize(lightDirection);
-    float diffuseIntensity = (dot(input.normal, -light));
+    float diffuseIntensity = saturate(dot(input.normal, -light));
     
     return input.color * diffuseIntensity;
 }

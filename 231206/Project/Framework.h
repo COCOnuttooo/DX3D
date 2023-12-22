@@ -49,6 +49,9 @@ using namespace std;
 #define KEYBOARD   	   Keyboard::GetInstance()
 #define TIME	   		   Time::GetInstance()
 #define SCENE      SceneManager::GetInstance()
+#define STATE      StateManager::GetInstance()
+
+
 
 #define DELTA_TIME  Time::Delta()
 
@@ -67,6 +70,7 @@ typedef XMFLOAT4 Vector4;
 
 #include "Utility/BinaryWriter.h"
 #include "Utility/BinaryReader.h"
+#include "Utility/Utility.h"
 
 #include "System/Device.h"
 
@@ -92,6 +96,7 @@ typedef XMFLOAT4 Vector4;
 #include "Render/Material.h"
 
 #include "Render/State/SamplerState.h"
+#include "Render/State/RasterizerState.h"
 
 #include "Render/State/StateManager.h"
 
@@ -101,6 +106,7 @@ typedef XMFLOAT4 Vector4;
 #include "Object/Basic/Quad.h"
 #include "Object/Basic/Grid.h"
 #include "Object/Basic/TextureCube.h"
+#include "Object/Sphere.h"
 
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
