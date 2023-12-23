@@ -17,7 +17,7 @@ public:
 	void Render();
 	void Update();
 	void KeyboardInput();
-	void Move();
+	void Motion();
 	Transform* GetCameraLookAt() { return cameraLookAt; }
 
 private:

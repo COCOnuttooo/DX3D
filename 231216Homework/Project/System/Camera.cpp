@@ -81,7 +81,7 @@ void Camera::Debug()
 			scale = { 1,1,1 };
 			rotation = { 0,0,0 };
 			translation = { 0,0,-10 };
-		
+
 		}
 		ImGui::TreePop();
 	}

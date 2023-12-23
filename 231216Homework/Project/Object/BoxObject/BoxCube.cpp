@@ -9,19 +9,11 @@ BoxCube::BoxCube()
 		parts[i]->SetParent(mainBody);
 		parts[i]->GetMaterial()->SetDiffuseMap(L"Landscape/Box.png");
 		if (i < 4)
-		{
 			parts[i]->rotation.x = XM_PIDIV2 * i;
-			
-		}
 		else if (i == 4)
-		{
 			parts[i]->rotation.y = XM_PIDIV2;
-		}
 		else if (i == 5)
-		{
 			parts[i]->rotation.y = -XM_PIDIV2;
-		}
-		
 	}
 	parts[0]->translation.z = -0.5;
 	parts[1]->translation.y = 0.5;
@@ -35,33 +27,27 @@ BoxCube::BoxCube()
 	names.push_back(L"Landscape/Bricks_normal.png");
 	names.push_back(L"Landscape/Dirt.png"        ) ;
 	names.push_back(L"Landscape/Wall.png"        ) ;
-	boxCubeBounds.Center = mainBody->translation;
-	boxCubeBounds.Extents = XMFLOAT3(mainBody->scale.x * 0.5, mainBody->scale.y * 0.5, mainBody->scale.z * 0.5);
 }
 
 BoxCube::~BoxCube()
 {
-	for (auto& i : parts)
-	{
+	delete mainBody;
+	for (Quad* i : parts)
 		delete i;
-	}
 }
 
 void BoxCube::Render()
 {
-	for (auto& i : parts)
-	{
+	for (Quad* i : parts)
 		i->Render();
-	}
 }
 
 void BoxCube::Update()
 {
 	mainBody->Update();
-	for (auto& i : parts)
-	{
+	for (Quad* i : parts)
 		i->Update();
-	}
+
 }
 
 void BoxCube::Debug()
@@ -80,20 +66,16 @@ void BoxCube::Debug()
 			mainBody->scale = { 1,1,1 };
 			mainBody->rotation = { 0,0,0 };
 			mainBody->translation = { 0,0,0 };
+			SetTexture(names[0]);
 
 		}
 		for (int i = 0; i < names.size(); i++)
 		{
 			void* textureId = reinterpret_cast<void*>(Texture::Add(names[i])->GetSrv());
 			if (ImGui::ImageButton(textureId, ImVec2(128, 128)))
-			{
 				SetTexture(names[i]);
-			}
 			if (i%2 ==0)
-			{
 				ImGui::SameLine();
-
-			}
 		}
 	
 		ImGui::TreePop();
@@ -101,32 +83,30 @@ void BoxCube::Debug()
 }
 
 void BoxCube::SetTexture(wstring file)
-{
-	for (auto& i : parts)
-	{
+{ 
+	for (Quad* i : parts)
 		i->GetMaterial()->SetDiffuseMap(file);
-	}
 }
 
-void BoxCube::MouseInteraction()
-{
-	Vector3 oldPos;
-	if (mousePos.x < mainBody->translation.x + mainBody->scale.x * 0.5 - 0.5 * WIN_WIDTH)
-	{
-		if (mousePos.x> mainBody->translation.x - mainBody->scale.x *0.5 - 0.5 * WIN_WIDTH)
-		{
-			if (mousePos.y > mainBody->translation.y - mainBody->scale.y * 0.5 - 0.5 * WIN_HEIGHT)
-			{
-				if (mousePos.y < mainBody->translation.y + mainBody->scale.y * 0.5 - 0.5 * WIN_HEIGHT)
-				{
-					if (KEYBOARD->Press(VK_LBUTTON))
-					{
-						mainBody->translation.x = mousePos.x;
-						mainBody->translation.y = mousePos.y;
-					}
-					oldPos = mousePos;
-				}
-			}
-		}
-	}
-}
+//void BoxCube::MouseInteraction()
+//{
+//	Vector3 oldPos;
+//	if (mousePos.x < mainBody->translation.x + mainBody->scale.x * 0.5 - 0.5 * WIN_WIDTH)
+//	{
+//		if (mousePos.x> mainBody->translation.x - mainBody->scale.x *0.5 - 0.5 * WIN_WIDTH)
+//		{
+//			if (mousePos.y > mainBody->translation.y - mainBody->scale.y * 0.5 - 0.5 * WIN_HEIGHT)
+//			{
+//				if (mousePos.y < mainBody->translation.y + mainBody->scale.y * 0.5 - 0.5 * WIN_HEIGHT)
+//				{
+//					if (KEYBOARD->Press(VK_LBUTTON))
+//					{
+//						mainBody->translation.x = mousePos.x;
+//						mainBody->translation.y = mousePos.y;
+//					}
+//					oldPos = mousePos;
+//				}
+//			}
+//		}
+//	}
+//}

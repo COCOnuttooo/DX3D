@@ -15,5 +15,6 @@ private:
 	vector<Quad*> parts;
 	vector<wstring> names;
 	BoundingBox boxCubeBounds;
+
 };
 

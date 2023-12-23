@@ -19,5 +19,5 @@ public:
 private:
 	//Quad* quad;
 	BoxCube* box;
-	Cube* ray;
+	//Cube* ray;
 };

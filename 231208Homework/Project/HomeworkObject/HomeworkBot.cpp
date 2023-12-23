@@ -152,7 +152,7 @@ void HomeworkBot::Render()
 void HomeworkBot::Update()
 {
 	KeyboardInput();
-	Move();
+	Motion();
 	xAxis->Update();
 	yAxis->Update();
 	zAxis->Update();
@@ -246,7 +246,7 @@ void HomeworkBot::KeyboardInput()
 
 }
 
-void HomeworkBot::Move()
+void HomeworkBot::Motion()
 {
 	switch (state)
 	{
