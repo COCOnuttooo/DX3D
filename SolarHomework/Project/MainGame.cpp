@@ -13,6 +13,8 @@ MainGame::MainGame()
     SCENE->Create("Grid", new GridScene);
 
     SCENE->Add("Grid");
+    ImGuiIO& io= ImGui::GetIO();
+    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\malgun.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesKorean());
     //SCENE->Add("Tutorial");
 }
 
@@ -49,7 +51,7 @@ void MainGame::PostRender()
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-
+    ImGui::Begin("Window1");
     static bool isWireFrame = false;
     static bool isGridScene = true;
     ImGui::Checkbox("WireFrame", &isWireFrame);
@@ -66,12 +68,11 @@ void MainGame::PostRender()
             SCENE->Remove("Grid");
 
     }
-
+    ImGui::End();
     SCENE->PostRender();
     ENVIRONMENT->Debug();
     ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
 
 }
 

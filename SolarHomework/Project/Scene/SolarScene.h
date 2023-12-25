@@ -20,12 +20,20 @@ public:
 
 	void Debug();
 
+	void MouseEvent();
+
 private:
+	bool isClicked = false;
+	Transform* planetTest;
+	XMFLOAT2 mouseNDCtest;
+	float testB;
+	float testC;
 	vector<Planet*> planets;
 	ReverseSphere* background;
 	Disc* disc;
 	//SolarBackground* background;
 	float speed = 1;
+	Vector3 sunPos = {0,0,0};
 
 };
 

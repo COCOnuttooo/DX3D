@@ -22,7 +22,7 @@ void Environment::CreatePerspective()
 {
 	projBuffer = new MatrixBuffer();
 
-	projMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f);
+	projMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT, 0.1f, 2000.0f);
 }
 
 void Environment::Update()

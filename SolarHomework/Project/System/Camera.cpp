@@ -18,7 +18,7 @@ Camera::~Camera()
 
 void Camera::Update()
 {
-	Transform::Update();
+	Transform2::Update();
 
 	if (KEY_PRESS(VK_RBUTTON))
 	{

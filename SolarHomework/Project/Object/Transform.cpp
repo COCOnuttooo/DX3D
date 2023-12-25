@@ -90,6 +90,16 @@ void Transform::UpdateWorldMatrix()
 
 	if (parent != nullptr)
 		world *= parent->world;
+	/*{
+		Matrix temp = parent->TestGetWorld();
+		Matrix parentWorld = XMMatrixTranslation
+		(
+			temp.r[3].m128_f32[0],
+			temp.r[3].m128_f32[1],
+			temp.r[3].m128_f32[2]
+		);
+		world *= parentWorld;
+	}*/
 
 	XMFLOAT4X4 fWorld;
 
@@ -98,5 +108,10 @@ void Transform::UpdateWorldMatrix()
 	right = Vector3(fWorld._11, fWorld._12, fWorld._13).GetNormalized();
 	up = Vector3(fWorld._21, fWorld._22, fWorld._23).GetNormalized();
 	forward = Vector3(fWorld._31, fWorld._32, fWorld._33).GetNormalized();
+	globalPosition.x = world.r[3].m128_f32[0];
+	globalPosition.y = world.r[3].m128_f32[1];
+	globalPosition.z = world.r[3].m128_f32[2];
+		
+
 
 }

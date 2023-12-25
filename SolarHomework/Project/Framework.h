@@ -14,6 +14,8 @@
 #include <functional>
 #include <cstdlib> // srand, rand
 #include <ctime>   // time
+#include <locale>
+#include <codecvt>
 
 #include "Shlwapi.h"
 
@@ -84,6 +86,7 @@ typedef XMFLOAT4 Vector4;
 #include "Render/Buffer/GlobalBuffer.h"
 
 #include "Object/Transform.h"
+#include "Object/Transform2.h"
 
 #include "Render/Shader/Shader.h"
 #include "Render/Shader/VertexShader.h"

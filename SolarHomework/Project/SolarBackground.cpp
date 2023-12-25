@@ -4,7 +4,7 @@ SolarBackground::SolarBackground()
 {
 	background = new SolarBackgroundQuad;
 	background->scale = { 1500*10,1000 * 10, 1};
-	background->SetParent(ENVIRONMENT->GetCamera());
+	//background->SetParent(ENVIRONMENT->GetCamera());
 	background->translation.z = 10000;
 	background->GetMaterial()->SetDiffuseMap(L"SolarSystem/Universe3.jpg");
 }

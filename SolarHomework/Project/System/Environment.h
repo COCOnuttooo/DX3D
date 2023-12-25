@@ -13,6 +13,7 @@ public:
 
 	void Debug();
 	Camera* GetCamera() { return mainCamera; }
+	Matrix GetProjMatrix() { return projMatrix; }
 
 private:
 	Matrix        projMatrix;

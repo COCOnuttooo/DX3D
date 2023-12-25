@@ -21,7 +21,17 @@ public:
 	void SetSpecularMap(wstring file);
 	void SetOrbitSpeedScale(float value) { orbitSpeed /= value; }
 	void SetSpeedScale(float value) { orbitSpeedScale = value; }
+	bool isWire = false;
+	bool isTarget = false;
+	bool isTooltip = false;
+
+	void Description();
+	void SetName(string name) { this->name = name; }
+
 private:
+	int whichNum;
+	static int planetNum;
+	string name;
 	float orbitSpeedScale = 1;
 	Sphere* sphere;
 	LightBuffer* lightBuffer;

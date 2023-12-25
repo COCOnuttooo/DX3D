@@ -1,5 +1,5 @@
 #pragma once
-class Camera : public Transform
+class Camera : public Transform2
 {
 public:
 	Camera();
@@ -10,6 +10,7 @@ public:
 
 	void SaveData();
 	void LoadData();
+	Matrix GetviewMatrix() { return viewMatrix; }
 private:
 	Matrix        viewMatrix;
 	ViewBuffer* viewBuffer;

@@ -151,6 +151,7 @@
     <ClInclude Include="Scene\SolarScene.h" />
     <ClInclude Include="SolarBackground.h" />
     <ClInclude Include="Object\Basic\SolarBackgroundQuad.h" />
+    <ClInclude Include="Object\Transform2.h" />
     <ClInclude Include="Utility\Utility.h" />
     <ClInclude Include="Utility\BinaryReader.h" />
     <ClInclude Include="Utility\BinaryWriter.h" />
@@ -209,6 +210,7 @@
     <ClCompile Include="Scene\SolarScene.cpp" />
     <ClCompile Include="SolarBackground.cpp" />
     <ClCompile Include="Object\Basic\SolarBackgroundQuad.cpp" />
+    <ClCompile Include="Object\Transform2.cpp" />
     <ClCompile Include="Utility\Utility.cpp" />
     <ClCompile Include="Utility\BinaryReader.cpp" />
     <ClCompile Include="Utility\BinaryWriter.cpp" />
