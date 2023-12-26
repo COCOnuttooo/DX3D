@@ -145,6 +145,8 @@
     <ClInclude Include="Object\Basic\TextureCube.h" />
     <ClInclude Include="Scene\SceneManager.h" />
     <ClInclude Include="Object\Sphere.h" />
+    <ClInclude Include="Object\Landscape\Terrain.h" />
+    <ClInclude Include="Scene\TerrainScene.h" />
     <ClInclude Include="Utility\Utility.h" />
     <ClInclude Include="Utility\BinaryReader.h" />
     <ClInclude Include="Utility\BinaryWriter.h" />
@@ -197,6 +199,8 @@
     <ClCompile Include="Object\Basic\TextureCube.cpp" />
     <ClCompile Include="Scene\SceneManager.cpp" />
     <ClCompile Include="Object\Sphere.cpp" />
+    <ClCompile Include="Object\Landscape\Terrain.cpp" />
+    <ClCompile Include="Scene\TerrainScene.cpp" />
     <ClCompile Include="Utility\Utility.cpp" />
     <ClCompile Include="Utility\BinaryReader.cpp" />
     <ClCompile Include="Utility\BinaryWriter.cpp" />

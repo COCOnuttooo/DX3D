@@ -101,7 +101,7 @@ typedef XMFLOAT4 Vector4;
 #include "Render/State/StateManager.h"
 
 #include "Object/GameObject.h"
-
+#include "Object/Landscape/Terrain.h"
 #include "Object/Basic/Cube.h"
 #include "Object/Basic/Quad.h"
 #include "Object/Basic/Grid.h"

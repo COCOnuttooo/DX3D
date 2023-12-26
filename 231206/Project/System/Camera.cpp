@@ -93,6 +93,7 @@ void Camera::SaveData()
 	data.WriteData(scale);
 	data.WriteData(rotation);
 	data.WriteData(translation);
+	data.WriteData(moveSpeed);
 }
 
 void Camera::LoadData()
@@ -103,4 +104,5 @@ void Camera::LoadData()
 	scale = data.ReadVector3();
 	rotation = data.ReadVector3();
 	translation = data.ReadVector3();
+	moveSpeed = data.ReadFloat();
 }
