@@ -45,7 +45,11 @@ float4 PS(VertexOutput input) : SV_TARGET
     float shininess = 16.0f;
     specularIntensity = pow(specularIntensity, shininess);
     
-    float4 specular = specularMap.Sample(samp, input.uv);
+    float4 diffuse = albedo * diffuseIntensity;
     
-    return albedo * diffuseIntensity + specularIntensity * specular;
+    float4 specular = specularMap.Sample(samp, input.uv) * specularIntensity;
+    
+    float4 ambient = albedo * float4(0.1f, 0.1f, 0.1f, 0.1f);
+    
+    return diffuse + specular + ambient; // phong shading
 }

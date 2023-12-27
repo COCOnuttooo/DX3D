@@ -171,6 +171,9 @@
     <ClInclude Include="Scene\TerrainScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Utility\GameMath.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -297,6 +300,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Scene\TerrainScene.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility\GameMath.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

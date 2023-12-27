@@ -59,6 +59,8 @@ using namespace std;
 #define KEY_DOWN(p) Keyboard::GetInstance()->Down(p)
 #define KEY_UP(p) Keyboard::GetInstance()->Up(p)
 
+#define LERP(s,e,t) ((e-s) * t + s)
+
 typedef XMMATRIX Matrix;
 typedef XMFLOAT2 Vector2;
 typedef XMFLOAT4 Vector4;
@@ -67,6 +69,10 @@ typedef XMFLOAT4 Vector4;
 #include "Utility/Vector3.h"
 #include "Utility/Time.h"
 #include "Utility/Keyboard.h"
+#include "Utility/GameMath.h"
+
+//using namespace Utility;
+using namespace GameMath;
 
 #include "Utility/BinaryWriter.h"
 #include "Utility/BinaryReader.h"

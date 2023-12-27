@@ -11,6 +11,52 @@ Terrain::~Terrain()
 {
 }
 
+float Terrain::GetHeight(Vector3 position)
+{
+	//position -= translation;
+	//position.x /= scale.x;
+	//position.z /= scale.z;
+	position = XMVector3TransformCoord(position, XMMatrixInverse(nullptr, world));
+
+
+	int x = position.x;
+	int z = position.z;
+	UINT index[4];
+	if (x <0 || x >= width -1)
+		return 0.0f;
+	if (z < 0 || z >= height - 1)
+		return 0.0f;
+	index[0] = (x + 0) + width * (z + 0);
+	index[1] = (x + 1) + width * (z + 0);
+	index[2] = (x + 0) + width * (z + 1);
+	index[3] = (x + 1) + width * (z + 1);
+
+	Vector3 vertex[4];
+	for (UINT i = 0; i < 4; i++)
+	{
+		vertex[i] = vertices[index[i]].pos;
+	}
+	float u = position.x - vertex[0].x;
+	float v = position.z - vertex[0].z;
+
+	Vector3 result;
+
+	if (u + v <= 1.0f)
+	{
+		result = vertex[0] + (vertex[2] - vertex[0]) * u + (vertex[1] - vertex[0]) * v;
+		//0,1,2
+	}
+	else
+	{
+		result = vertex[3] + (vertex[2] - vertex[3]) * u + (vertex[1] - vertex[3]) * v;
+
+		//1,2,3
+	}
+
+
+	return result.y;
+}
+
 
 
 void Terrain::CreateMesh()

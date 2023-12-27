@@ -14,7 +14,7 @@ public:
 	void PostRender() override;
 private:
 	Terrain* terrain;
-
+	Cube* cube;
 	// Scene을(를) 통해 상속됨
 
 };

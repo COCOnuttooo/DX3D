@@ -5,7 +5,7 @@ class Terrain : public GameObject<VertexTextureNormal>
 public:
 	Terrain(wstring heightMapFile);
 	~Terrain();
-
+	float GetHeight(Vector3 position);
 private:
 	void CreateMesh() override;
 

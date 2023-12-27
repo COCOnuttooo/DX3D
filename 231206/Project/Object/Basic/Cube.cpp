@@ -1,7 +1,7 @@
 #include "Framework.h"
 #include "Cube.h"
 Cube::Cube(Vector4 color)
-	:GameObject<VertexType>(L"02_DiffuseColor"), color(color)
+	:GameObject<VertexType>(L"Tutorial"), color(color)
 {
     CreateMesh();
 

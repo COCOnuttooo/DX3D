@@ -137,6 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Utility\GameMath.h" />
     <ClInclude Include="Object\Basic\Grid.h" />
     <ClInclude Include="Render\State\RasterizerState.h" />
     <ClInclude Include="Scene\GridScene.h" />
@@ -191,6 +192,7 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Utility\GameMath.cpp" />
     <ClCompile Include="Object\Basic\Grid.cpp" />
     <ClCompile Include="Render\State\RasterizerState.cpp" />
     <ClCompile Include="Scene\GridScene.cpp" />
