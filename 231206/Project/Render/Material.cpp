@@ -25,6 +25,11 @@ void Material::SetSpecularMap(wstring file)
 	specularMap = Texture::Add(file);
 }
 
+void Material::SetNormalMap(wstring file)
+{
+	normalMap = Texture::Add(file);
+}
+
 void Material::Set()
 {
 	vertexShader->SetShader();
@@ -33,5 +38,7 @@ void Material::Set()
 		 diffuseMap->PSSetShaderResources(0);
 	 if (specularMap != nullptr)
 		 specularMap->PSSetShaderResources(1);
+	 if (specularMap != nullptr)
+		 normalMap->PSSetShaderResources(2);
 
 }

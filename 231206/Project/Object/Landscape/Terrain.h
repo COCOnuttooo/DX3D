@@ -1,14 +1,14 @@
 #pragma once
-class Terrain : public GameObject<VertexTextureNormal>
+class Terrain : public GameObject<VertexTextureNormalTangent>
 {
-	typedef VertexTextureNormal VertexType;
+	typedef VertexTextureNormalTangent VertexType;
 public:
 	Terrain(wstring heightMapFile);
 	~Terrain();
 	float GetHeight(Vector3 position);
 private:
 	void CreateMesh() override;
-
+	void CalculateTangent();
 private:
 	UINT width = 10, height = 10;
 	

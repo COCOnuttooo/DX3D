@@ -325,6 +325,8 @@
     <FxCompile Include="_Shader\02_DiffuseColor.hlsl" />
     <FxCompile Include="_Shader\03_DiffuseTexture.hlsl" />
     <FxCompile Include="_Shader\04_Specular.hlsl" />
+    <FxCompile Include="_Shader\05_NormalMapping.hlsl" />
+    <FxCompile Include="_Shader\Test.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Include\DirectXTex.inl">

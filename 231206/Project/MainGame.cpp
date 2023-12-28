@@ -8,6 +8,7 @@ MainGame::MainGame()
 {
 	Initialize();
     SCENE->Create("Start", new TerrainScene);
+    //SCENE->Create("Start", new TextureScene);
     //SCENE->Create("Tutorial", new TutorialScene);
     SCENE->Add("Start");
     SCENE->Create("Grid", new GridScene);
