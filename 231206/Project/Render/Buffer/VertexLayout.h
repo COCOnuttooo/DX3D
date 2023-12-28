@@ -30,7 +30,7 @@ struct VertexTexture
     }
 
     Vector3 pos = {};
-    Vector2 uv = {};
+    Vector2 uv  = {};
 };
 
 struct VertexTextureNormal
@@ -50,7 +50,20 @@ struct VertexColorNormal
         :pos(pos), color(color) 
     {
     }
-    Vector3 pos = {};
+    Vector3 pos    = {};
     Vector3 normal = {};
-    Vector4 color = {};
+    Vector4 color  = {};
+};
+
+struct VertexTextureNormalTangent
+{
+    VertexTextureNormalTangent() {};
+    VertexTextureNormalTangent(Vector3 pos, Vector2 uv)
+        :pos(pos), uv(uv)
+    {
+    }
+    Vector3 pos     = {};
+    Vector2 uv      = {};
+    Vector3 normal  = {};
+    Vector3 tangent = {};
 };
