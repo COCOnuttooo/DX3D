@@ -8,6 +8,7 @@ public:
 	float GetHeight(float x, float z);
 	float GetWidth() { return width; }
 	float GetHeight() { return height; }
+
 private:
 	void CreateMesh() override;
 

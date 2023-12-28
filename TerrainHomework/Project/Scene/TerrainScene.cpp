@@ -37,4 +37,5 @@ void TerrainScene::Render()
 
 void TerrainScene::PostRender()
 {
+	bot->Debug();
 }

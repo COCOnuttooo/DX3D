@@ -5,7 +5,11 @@ TerrainScene::TerrainScene()
 {
 	terrain = new Terrain(L"HeightMap/HeightMap.png");
 	terrain->GetMaterial()->SetDiffuseMap(L"Landscape/Dirt3.png");
+	terrain->translation.y = -0.1;
 	cube = new Cube;
+	ENVIRONMENT->GetCamera()->SetParent(cube);
+	ENVIRONMENT->GetCamera()->translation = Vector3(0, 20, 0);
+	ENVIRONMENT->GetCamera()->rotation = Vector3(XM_PIDIV2, 0, 0);
 }
 
 TerrainScene::~TerrainScene()
@@ -35,7 +39,7 @@ void TerrainScene::Update()
 		cube->rotation.y += DELTA_TIME;
 
 	}
-	cube->translation.y = LERP(cube->translation.y, terrain->GetHeight(cube->translation), 10* DELTA_TIME) ;
+	cube->translation.y = terrain->GetHeight(cube->translation) +0.5; //LERP(cube->translation.y, terrain->GetHeight(cube->translation), 10* DELTA_TIME) ;
 }
 
 void TerrainScene::PreRender()

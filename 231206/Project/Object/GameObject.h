@@ -6,7 +6,7 @@ class GameObject : public Transform
 public:
 	GameObject(wstring shaderFile);
 	virtual ~GameObject();
-
+	
 	virtual void Render(D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	Material* GetMaterial() { return material; }

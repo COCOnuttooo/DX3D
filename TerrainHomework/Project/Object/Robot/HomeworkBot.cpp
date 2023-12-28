@@ -145,9 +145,7 @@ void HomeworkBot::Render()
 	{
 		i.second->Render();
 	}
-	xAxis->Render();
-	yAxis->Render();
-	zAxis->Render();
+
 }
 
 void HomeworkBot::Update()
@@ -159,10 +157,8 @@ void HomeworkBot::Update()
 	else
 		robot["Body"]->translation.y = heightPivot;
 	KeyboardInput();
-	//Motion();
-	xAxis->Update();
-	yAxis->Update();
-	zAxis->Update();
+	Motion();
+
 	cameraLookAt->Update();
 	for (auto& i : robot)
 	{
@@ -216,7 +212,7 @@ void HomeworkBot::KeyboardInput()
 
 				Vector3 delta = oldPos - mousePos;
 
-				robot["Body"]->rotation.y += delta.x * DELTA_TIME * 5;
+				robot["Body"]->rotation.y -= delta.x * DELTA_TIME * 5;
 				robot["Head"]->rotation.y = 0;
 				//robot["Body"]->rotation.x += delta.y * DELTA_TIME * 5;
 			}
@@ -274,7 +270,7 @@ void HomeworkBot::Motion()
 		}
 		break;
 	case MOVEFORWARD:
-		robot["Body"]->rotation.x = abs(0.1 * sin(pressTime));
+		//robot["Body"]->rotation.x = abs(0.1 * sin(pressTime));
 
 		robot["LArm"]->rotation.x = 0.6 * sin(2 * pressTime);
 
@@ -290,14 +286,14 @@ void HomeworkBot::Motion()
 		break;
 	case MOVELSIDE:
 		robot["LLeg"]->rotation.z = abs(0.2 * sin(-pressTime));
-		robot["Body"]->rotation.z = abs(0.2 * sin(-pressTime));
+		//robot["Body"]->rotation.z = abs(0.2 * sin(-pressTime));
 		//robot["LFLeg"]->rotation.z = abs(0.6 * sin(pressTime));
 		robot["RLeg"]->rotation.z = -abs(0.5 * sin(pressTime));
 		//robot["RFLeg"]->rotation.z = abs(0.6 * sin(pressTime));
 		break;
 	case MOVERSIDE:
 		robot["LLeg"]->rotation.z = abs(0.5 * sin(-pressTime));
-		robot["Body"]->rotation.z = -abs(0.2 * sin(-pressTime));
+		//robot["Body"]->rotation.z = -abs(0.2 * sin(-pressTime));
 
 		//robot["LFLeg"]->rotation.z = abs(0.6 * sin(pressTime));
 		robot["RLeg"]->rotation.z = -abs(0.2 * sin(pressTime));
@@ -312,9 +308,22 @@ void HomeworkBot::Motion()
 		robot["LFLeg"]->rotation.x = -min(0.6 * sin(pressTime), 0);
 		robot["RLeg"]->rotation.x = 0.6 * sin(pressTime);
 		robot["RFLeg"]->rotation.x = -min(0.6 * sin(-pressTime), 0);
-		robot["Body"]->rotation.x = -abs(0.1 * sin(pressTime));
+		//robot["Body"]->rotation.x = -abs(0.1 * sin(pressTime));
 		break;
 	default:
 		break;
+	}
+}
+
+void HomeworkBot::Debug()
+{
+	if (ImGui::TreeNode("Bot"))
+	{
+
+		//ImGui::DragFloat3("Scale", (float*)&scale, 0.01f, 0.01f, 100.0f);
+		//ImGui::DragFloat3("Rotation", (float*)&rotation, 0.01f, -2 * XM_PI, 2 * XM_PI);
+		ImGui::Text("Translattion: %.2f, %.2f, %.2f", robot["Body"]->translation.x, robot["Body"]->translation.y, robot["Body"]->translation.z);
+		//ImGui::Text("Translattion: %.2f, %.2f, %.2f", );
+		ImGui::TreePop();
 	}
 }

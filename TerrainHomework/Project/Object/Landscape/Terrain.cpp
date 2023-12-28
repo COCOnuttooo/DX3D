@@ -13,8 +13,45 @@ Terrain::~Terrain()
 
 float Terrain::GetHeight(float x, float z)
 {
-	UINT index = x + width * z;
-	return vertices[index].pos.y;
+	UINT index = (int)x + (int)z * height;
+	UINT upIndex = (int)x + ((int)z +1) * (height);
+	UINT downIndex = (int)x + ((int)z-1) * (height);
+	UINT leftIndex = (int)x + (int)z * height - 1;
+	UINT rightIndex = (int)x + (int)z * height + 1;
+	float interpolatedHeight;
+	float curHeight;
+	float upHeight;
+	float downHeight;
+	float leftHeight;
+	float rightHeight;
+	if (upIndex > vertices.size() || upIndex < 0)
+		upHeight = 0;
+	else
+		upHeight = vertices[upIndex].pos.y;
+
+	if (downIndex > vertices.size() || downIndex < 0)
+		downHeight = 0;
+	else
+		downHeight = vertices[downIndex].pos.y;
+
+	if (leftIndex > vertices.size() || leftIndex < 0)
+		leftHeight = 0;
+	else
+		leftHeight = vertices[leftIndex].pos.y;
+
+	if (rightIndex > vertices.size() || rightIndex < 0)
+		rightHeight = 0;
+	else
+		rightHeight = vertices[rightIndex].pos.y;
+	float percentX = x - (int)x;
+	float percentZ = z - (int)z;
+	// 선형 보간 수식 필요
+	float xInterpolated = leftHeight * (1 - percentX) + rightHeight * percentX;
+	float zInterpolated = downHeight * (1 - percentZ) + upHeight * percentZ;
+
+	interpolatedHeight = (xInterpolated + zInterpolated) / 2.0f;
+	//return vertices[index].pos.y;
+	return interpolatedHeight;
 }
 
 

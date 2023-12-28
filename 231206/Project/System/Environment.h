@@ -9,6 +9,7 @@ private:
 	void CreatePerspective();
 
 public:
+	Camera* GetCamera() { return mainCamera; }
 	void Update();
 	void Set();
 
