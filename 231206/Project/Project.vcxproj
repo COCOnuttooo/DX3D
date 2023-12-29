@@ -180,8 +180,11 @@
     <ClInclude Include="Utility\Time.h" />
     <ClInclude Include="Utility\Vector3.h" />
     <ClInclude Include="_Include\DirectXTex.h" />
+    <ClInclude Include="_Include\dirent\dirent.h" />
     <ClInclude Include="_Include\imconfig.h" />
     <ClInclude Include="_Include\imgui.h" />
+    <ClInclude Include="_Include\ImGuiFileDialog.h" />
+    <ClInclude Include="_Include\ImGuiFileDialogConfig.h" />
     <ClInclude Include="_Include\imgui_impl_dx11.h" />
     <ClInclude Include="_Include\imgui_impl_win32.h" />
     <ClInclude Include="_Include\imgui_internal.h" />
@@ -231,6 +234,9 @@
     <ClCompile Include="Utility\Keyboard.cpp" />
     <ClCompile Include="Utility\Time.cpp" />
     <ClCompile Include="_Include\imgui.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="_Include\ImGuiFileDialog.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="_Include\imgui_demo.cpp">

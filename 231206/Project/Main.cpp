@@ -5,6 +5,8 @@
 
 Vector3 mousePos;
 
+string projectDir;
+
 HWND hWnd;
 
 HINSTANCE hInst;                                // 현재 인스턴스입니다.

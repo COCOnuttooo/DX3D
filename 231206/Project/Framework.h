@@ -38,6 +38,8 @@ using namespace std;
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
+#include "ImGuiFileDialog.h"
+
 
 #define WIN_WIDTH	1280.0f
 #define WIN_HEIGHT	720.0f
@@ -51,6 +53,8 @@ using namespace std;
 #define SCENE      SceneManager::GetInstance()
 #define STATE      StateManager::GetInstance()
 
+
+#define DIALOG ImGuiFileDialog::Instance()
 
 
 #define DELTA_TIME  Time::Delta()
@@ -70,8 +74,9 @@ typedef XMFLOAT4 Vector4;
 #include "Utility/Time.h"
 #include "Utility/Keyboard.h"
 #include "Utility/GameMath.h"
+#include "Utility/Utility.h"
 
-//using namespace Utility;
+using namespace Utility;
 using namespace GameMath;
 
 #include "Utility/BinaryWriter.h"
@@ -97,6 +102,7 @@ using namespace GameMath;
 #include "System/Environment.h"
 
 #include "Render/Texture/Texture.h"
+#define NOIMAGE Texture::Add(L"NoImage.png")
 
 #include "Render/Mesh.h"
 #include "Render/Material.h"
@@ -121,3 +127,4 @@ using namespace GameMath;
 
 extern HWND hWnd;
 extern Vector3 mousePos;
+extern string projectDir;

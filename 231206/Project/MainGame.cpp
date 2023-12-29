@@ -6,6 +6,9 @@
 #include "Scene/TerrainScene.h"
 MainGame::MainGame()
 {
+    char path[128];
+    GetCurrentDirectoryA(128, path);
+    projectDir = path;
 	Initialize();
     SCENE->Create("Start", new TerrainScene);
     //SCENE->Create("Start", new TextureScene);
@@ -14,6 +17,7 @@ MainGame::MainGame()
     SCENE->Create("Grid", new GridScene);
     SCENE->Add("Grid");
     //SCENE->Add("Tutorial");
+    Texture::Add(L"NoImage.jpg");
 }
 
 MainGame::~MainGame()

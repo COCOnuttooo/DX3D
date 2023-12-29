@@ -11,12 +11,14 @@ public:
 	vector<Vector4> ReadPixels();
 
 	Vector2 GetSize() { return Vector2(image.GetMetadata().width, image.GetMetadata().height); }
+
+	ID3D11ShaderResourceView* GetSRV() { return srv; }
 private:
 	static map<wstring, Texture*> textures;
 
 	ScratchImage image;
 
-	ID3D11ShaderResourceView* srv;
+	ID3D11ShaderResourceView* srv = nullptr;
 
 
 };

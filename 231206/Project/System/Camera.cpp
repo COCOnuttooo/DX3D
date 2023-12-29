@@ -74,14 +74,13 @@ void Camera::Debug()
 	{
 		ImGui::Text("Pos : %d, %d, %d", (int)translation.x, (int)translation.y, (int)translation.z);
 		ImGui::Text("Rot : %.2f, %.2f, %.2f", rotation.x,rotation.y,rotation.z);
-		ImGui::SliderFloat("Move Speed",     &moveSpeed, 1.0f, 50.0f);
-		ImGui::SliderFloat("Rotate Speed", &rotateSpeed, 1.0f, 50.0f);
+		ImGui::SliderFloat("Move Speed",     &moveSpeed, 1.0f, 150.0f);
+		ImGui::SliderFloat("Rotate Speed", &rotateSpeed, 1.0f, 150.0f);
 		if (ImGui::Button("Set Default"))
 		{
 			scale = { 1,1,1 };
 			rotation = { 0,0,0 };
 			translation = { 0,0,-10 };
-		
 		}
 		ImGui::TreePop();
 	}
@@ -94,6 +93,7 @@ void Camera::SaveData()
 	data.WriteData(rotation);
 	data.WriteData(translation);
 	data.WriteData(moveSpeed);
+	data.WriteData(rotateSpeed);
 }
 
 void Camera::LoadData()
@@ -105,4 +105,5 @@ void Camera::LoadData()
 	rotation = data.ReadVector3();
 	translation = data.ReadVector3();
 	moveSpeed = data.ReadFloat();
+	rotateSpeed = data.ReadFloat();
 }
