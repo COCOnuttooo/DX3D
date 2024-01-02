@@ -14,7 +14,7 @@ public:
 
 	void Debug();
 
-	void SelectMap(Texture** texture, string mapType);
+	void SelectMap(Texture** texture, string mapType, wstring clearFile);
 private:
 	VertexShader* vertexShader;
 	PixelShader*   pixelShader;

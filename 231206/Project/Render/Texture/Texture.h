@@ -5,6 +5,7 @@ public:
 	Texture(ID3D11ShaderResourceView* srv, ScratchImage& image);
 	~Texture();
 	static Texture* Add(wstring file);
+	static Texture* Add(wstring file, wstring key);
 	static void Delete();
 
 	void PSSetShaderResources(UINT slot);

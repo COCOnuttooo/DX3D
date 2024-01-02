@@ -37,59 +37,62 @@ void Material::Debug()
 {
 	if (ImGui::TreeNode(name.c_str()))
 	{
-		ImTextureID textureID;
-		if (diffuseMap != nullptr)
-		{
+		SelectMap(&diffuseMap, "DiffuseMap", L"Solid/White.png");
+		SelectMap(&specularMap, "SpecularMap", L"Solid/Black.png");
+		SelectMap(&normalMap, "NormalMap", L"Solid/White.png");
+		//ImTextureID textureID;
+		//if (diffuseMap != nullptr)
+		//{
 
-			textureID = diffuseMap->GetSRV();
-			ImGui::TextColored(ImVec4(0.0f, 0.0f, 0.952f, 1), "DiffuseMap");
-			if (ImGui::ImageButton(textureID, ImVec2(50,50)))
-				DIALOG->OpenDialog("DiffuseMap", "DiffuseMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
-		}
-		else
-		{
-			textureID = NOIMAGE->GetSRV();
-			ImGui::TextColored(ImVec4(0.0f, 0.0f, 0.952f, 1), "DiffuseMap");
-			if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
-				DIALOG->OpenDialog("DiffuseMap", "DiffuseMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
-		}
+		//	textureID = diffuseMap->GetSRV();
+		//	ImGui::TextColored(ImVec4(0.0f, 0.0f, 0.952f, 1), "DiffuseMap");
+		//	if (ImGui::ImageButton(textureID, ImVec2(50,50)))
+		//		DIALOG->OpenDialog("DiffuseMap", "DiffuseMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
+		//}
+		//else
+		//{
+		//	textureID = NOIMAGE->GetSRV();
+		//	ImGui::TextColored(ImVec4(0.0f, 0.0f, 0.952f, 1), "DiffuseMap");
+		//	if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
+		//		DIALOG->OpenDialog("DiffuseMap", "DiffuseMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
+		//}
 
-		if (specularMap != nullptr)
-		{
+		//if (specularMap != nullptr)
+		//{
 
-			textureID = specularMap->GetSRV();
-			ImGui::TextColored(ImVec4(0.0f, 0.f, 0.952f, 1), "SpecularMap");
+		//	textureID = specularMap->GetSRV();
+		//	ImGui::TextColored(ImVec4(0.0f, 0.f, 0.952f, 1), "SpecularMap");
 
-			if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
-				DIALOG->OpenDialog("SpecularMap", "SpecularMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
-		}
-		else
-		{
-			textureID = NOIMAGE->GetSRV();
-			ImGui::TextColored(ImVec4(0.f, 0.f, 0.952f, 1), "SpecularMap");
+		//	if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
+		//		DIALOG->OpenDialog("SpecularMap", "SpecularMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
+		//}
+		//else
+		//{
+		//	textureID = NOIMAGE->GetSRV();
+		//	ImGui::TextColored(ImVec4(0.f, 0.f, 0.952f, 1), "SpecularMap");
 
-			if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
-				DIALOG->OpenDialog("SpecularMap", "SpecularMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
-		}
+		//	if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
+		//		DIALOG->OpenDialog("SpecularMap", "SpecularMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
+		//}
 
-		if (normalMap != nullptr)
-		{
+		//if (normalMap != nullptr)
+		//{
 
-			textureID = normalMap->GetSRV();
-			ImGui::TextColored(ImVec4(0.f, 0.f, 0.952f, 1), "NormalMap");
+		//	textureID = normalMap->GetSRV();
+		//	ImGui::TextColored(ImVec4(0.f, 0.f, 0.952f, 1), "NormalMap");
 
-			if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
-				DIALOG->OpenDialog("NormalMap", "NormalMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
-		}
-		else
-		{
-			textureID = NOIMAGE->GetSRV();
-			ImGui::TextColored(ImVec4(0.f,0.f,0.f,1),"NormalMap");
+		//	if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
+		//		DIALOG->OpenDialog("NormalMap", "NormalMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
+		//}
+		//else
+		//{
+		//	textureID = NOIMAGE->GetSRV();
+		//	ImGui::TextColored(ImVec4(0.f,0.f,0.f,1),"NormalMap");
 
-			if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
-				DIALOG->OpenDialog("NormalMap", "NormalMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
+		//	if (ImGui::ImageButton(textureID, ImVec2(50, 50)))
+		//		DIALOG->OpenDialog("NormalMap", "NormalMap", ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
 
-		}
+		//}
 		ImGui::TreePop();
 	}
 	if (DIALOG->Display("DiffuseMap",32, ImVec2(300,100))|| DIALOG->Display("SpecularMap", 32, ImVec2(300, 100)) || DIALOG->Display("NormalMap",32,ImVec2(300,100)))
@@ -110,9 +113,18 @@ void Material::Debug()
 	}
 }
 
-void Material::SelectMap(Texture** texture, string mapType)
+void Material::SelectMap(Texture** texture, string mapType, wstring clearFile)
 {
-
+	ImTextureID textureID = nullptr;
+	if (*texture)
+		textureID = (*texture)->GetSRV();
+	ImGui::TextColored(ImVec4(0.611f, 0.862f, 0.952f, 1.0f), mapType.c_str());
+	if (ImGui::ImageButton(textureID, ImVec2(50,50)))
+		DIALOG->OpenDialog(mapType, mapType, ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
+	ImGui::SameLine();
+	textureID = Texture::Add(L"Miscellaneous/X_Image.png", ToWString(mapType) + L"X_Image")->GetSRV();
+	if (ImGui::ImageButton(textureID,ImVec2(20,20)))
+		*texture = Texture::Add(clearFile);
 }
 
 void Material::Set()

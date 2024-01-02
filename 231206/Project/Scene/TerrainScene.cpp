@@ -9,7 +9,7 @@ TerrainScene::TerrainScene()
 	terrain = new Terrain(L"HeightMap/HeightMap256.png");
 	
 	terrain->GetMaterial()->SetDiffuseMap(L"Landscape/Dirt2.png");
-	//terrain->GetMaterial()->SetSpecularMap(L"Landscape/Wall_specular.png");
+	terrain->GetMaterial()->SetSpecularMap(L"Landscape/Wall_specular.png");
 	terrain->GetMaterial()->SetNormalMap(L"Landscape/Wall_normal.png");
 	//cube = new Cube;
 	//ENVIRONMENT->GetCamera()->SetParent(cube);
