@@ -14,15 +14,15 @@ Environment::Environment()
 Environment::~Environment()
 {
 	delete lightBuffer;
-	delete projBuffer;
+	delete persBuffer;
 	delete mainCamera;
 }
 
 void Environment::CreatePerspective()
 {
-	projBuffer = new MatrixBuffer();
+	persBuffer = new MatrixBuffer();
 
-	projMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f);
+	persMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f);
 }
 
 void Environment::Update()
@@ -34,8 +34,8 @@ void Environment::Set()
 {
 	mainCamera->Set();
 
-	projBuffer->SetData(projMatrix);
-	projBuffer->SetVSBuffer(2);
+	persBuffer->SetData(persMatrix);
+	persBuffer->SetVSBuffer(2);
 
 	lightBuffer->SetPSBuffer(0);
 }

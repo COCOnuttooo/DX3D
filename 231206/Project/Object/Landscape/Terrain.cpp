@@ -80,7 +80,8 @@ void Terrain::CreateMesh()
 			vertex.uv.y = 1.0f - (float)z / (height - 1);
 
 			UINT index = x + width * z;
-			vertex.pos.y = colors[index].x * HEIGHT_SCALE;
+			if (!colors.empty())
+				vertex.pos.y = colors[index].x * HEIGHT_SCALE;
 			vertices.emplace_back(vertex);
 		}
 	}

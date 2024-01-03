@@ -28,7 +28,7 @@ VertexOutput VS(VertexTerrain input)
     output.pos = mul(output.pos, proj);
     
     output.normal = (mul(normalize(input.normal), (float3x3) world));
-    
+    output.alpha = input.alpha;
     output.uv = input.uv;
     return output;
 }
@@ -37,27 +37,7 @@ VertexOutput VS(VertexTerrain input)
 float4 PS(VertexOutput input) : SV_TARGET
 {
     //clamp, sturate
+    float4 baseColor = diffuseMap.Sample(samp, input.uv);
     
-    float3 light = normalize(lightDirection);
-    
-    float diffuseIntensity = saturate(dot(input.normal, -light));
-   
-    float4 albedo = diffuseMap.Sample(samp, input.uv);
-    /////////////////////////////
-    
-    float3 reflection = reflect(light, input.normal);
-    
-    float specularIntensity = saturate(dot(-reflection, input.viewDir));
-    /////////////////////////////
-    
-    float shininess = 16.0f;
-    specularIntensity = pow(specularIntensity, shininess);
-    
-    float4 diffuse = albedo * diffuseIntensity;
-    
-    float4 specular = specularMap.Sample(samp, input.uv) * specularIntensity;
-    
-    float4 ambient = albedo * float4(0.1f, 0.1f, 0.1f, 0.1f);
-    
-    return diffuse + specular + ambient; // phong shading
+    return baseColor; // phong shading
 }

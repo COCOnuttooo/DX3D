@@ -115,16 +115,18 @@ void Material::Debug()
 
 void Material::SelectMap(Texture** texture, string mapType, wstring clearFile)
 {
-	ImTextureID textureID = nullptr;
+	ImTextureID textureID = Texture::Add(clearFile, ToWString(mapType) + clearFile)->GetSRV();
 	if (*texture)
 		textureID = (*texture)->GetSRV();
+
+
 	ImGui::TextColored(ImVec4(0.611f, 0.862f, 0.952f, 1.0f), mapType.c_str());
 	if (ImGui::ImageButton(textureID, ImVec2(50,50)))
 		DIALOG->OpenDialog(mapType, mapType, ".png,.jpg, .tga,.dds,.TGA,.JPG,.PNG,.DDS", "_Texture/");
 	ImGui::SameLine();
 	textureID = Texture::Add(L"Miscellaneous/X_Image.png", ToWString(mapType) + L"X_Image")->GetSRV();
 	if (ImGui::ImageButton(textureID,ImVec2(20,20)))
-		*texture = Texture::Add(clearFile);
+		*texture = Texture::Add(clearFile, ToWString(mapType) + clearFile);
 }
 
 void Material::Set()
@@ -135,7 +137,7 @@ void Material::Set()
 		 diffuseMap->PSSetShaderResources(0);
 	 if (specularMap != nullptr)
 		 specularMap->PSSetShaderResources(1);
-	 if (specularMap != nullptr)
+	 if (normalMap != nullptr)
 		 normalMap->PSSetShaderResources(2);
 
 }

@@ -52,8 +52,8 @@ void Camera::Update()
 		}
 		Vector3 delta = mousePos - oldPos;
 
-		rotation.y += delta.x * rotateSpeed * DELTA_TIME;
-		rotation.x += delta.y * rotateSpeed * DELTA_TIME;
+		rotation.y += delta.x * rotateSpeed;// * DELTA_TIME;
+		rotation.x += delta.y * rotateSpeed;// * DELTA_TIME;
 
 	}
 	oldPos = mousePos;
@@ -75,7 +75,7 @@ void Camera::Debug()
 		ImGui::Text("Pos : %d, %d, %d", (int)translation.x, (int)translation.y, (int)translation.z);
 		ImGui::Text("Rot : %.2f, %.2f, %.2f", rotation.x,rotation.y,rotation.z);
 		ImGui::SliderFloat("Move Speed",     &moveSpeed, 1.0f, 150.0f);
-		ImGui::SliderFloat("Rotate Speed", &rotateSpeed, 1.0f, 150.0f);
+		ImGui::SliderFloat("Rotate Speed", &rotateSpeed, 0.01f, 150.0f);
 		if (ImGui::Button("Set Default"))
 		{
 			scale = { 1,1,1 };
@@ -106,4 +106,31 @@ void Camera::LoadData()
 	translation = data.ReadVector3();
 	moveSpeed = data.ReadFloat();
 	rotateSpeed = data.ReadFloat();
+}
+
+Ray Camera::ScreenPointToRay(Vector3 screenPoint)
+{
+	Vector3 screenSize(WIN_WIDTH, WIN_HEIGHT, 1.0f);
+	Vector3 point;
+
+	//Inv Viewport
+	point.x = (screenPoint.x / screenSize.x) * 2 - 1.0f;
+	point.y = (screenPoint.y / screenSize.y)* 2 - 1.0f;
+	point.y *= -1;
+	point.z = 1.f;
+	//Inv Projection
+	Matrix invProj = XMMatrixInverse(nullptr, ENVIRONMENT->GetPersMatrix());
+
+	point = XMVector3TransformCoord(point, invProj);
+	 
+	//XMFLOAT4X4 projection;
+
+	//XMStoreFloat4x4(&projection, XMMatrixInverse(nullptr,ENVIRONMENT->GetPersMatrix()));
+	//Inv View
+	//Matrix invView = XMMatrixInverse(nullptr, world);
+	point = XMVector3TransformCoord(point, world);
+	Ray ray;
+	ray.origin = globalPosition;
+	ray.direction = Vector3(point - globalPosition).GetNormalized();
+	return ray;
 }

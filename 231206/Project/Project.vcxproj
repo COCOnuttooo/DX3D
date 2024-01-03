@@ -137,7 +137,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="TerrainEditor.h" />
+    <ClInclude Include="Object\Landscape\TerrainEditor.h" />
+    <ClInclude Include="Scene\TerrainEditorScene.h" />
     <ClInclude Include="Utility\GameMath.h" />
     <ClInclude Include="Object\Basic\Grid.h" />
     <ClInclude Include="Render\State\RasterizerState.h" />
@@ -196,7 +197,8 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TerrainEditor.cpp" />
+    <ClCompile Include="Object\Landscape\TerrainEditor.cpp" />
+    <ClCompile Include="Scene\TerrainEditorScene.cpp" />
     <ClCompile Include="Utility\GameMath.cpp" />
     <ClCompile Include="Object\Basic\Grid.cpp" />
     <ClCompile Include="Render\State\RasterizerState.cpp" />

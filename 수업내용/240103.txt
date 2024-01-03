@@ -1,0 +1,5 @@
+raycasting
+
+뷰포트 변환 --> 역으로
+
+XMVector3Transform normal, coord 차이

@@ -15,9 +15,12 @@ public:
 
 	void Debug();
 
+	Matrix GetPersMatrix() { return persMatrix; }
+	Camera* GetMainCamera() { return mainCamera; }
+
 private:
-	Matrix        projMatrix;
-	MatrixBuffer* projBuffer;
+	Matrix        persMatrix;
+	MatrixBuffer* persBuffer;
 	LightBuffer* lightBuffer;
 	Camera* mainCamera;
 };

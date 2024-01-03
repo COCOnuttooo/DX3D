@@ -4,13 +4,14 @@
 #include "Scene/TextureScene.h"
 #include "Scene/GridScene.h"
 #include "Scene/TerrainScene.h"
+#include "Scene/TerrainEditorScene.h"
 MainGame::MainGame()
 {
     char path[128];
     GetCurrentDirectoryA(128, path);
     projectDir = path;
 	Initialize();
-    SCENE->Create("Start", new TerrainScene);
+    SCENE->Create("Start", new TerrainEditorScene);
     //SCENE->Create("Start", new TextureScene);
     //SCENE->Create("Tutorial", new TutorialScene);
     SCENE->Add("Start");
@@ -53,7 +54,7 @@ void MainGame::PostRender()
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-
+    TIME->Render();
     static bool isWireFrame = false;
     static bool isGridScene = true;
     ImGui::Checkbox("WireFrame", &isWireFrame);

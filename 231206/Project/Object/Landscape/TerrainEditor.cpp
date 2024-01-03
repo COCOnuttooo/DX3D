@@ -4,10 +4,54 @@
 TerrainEditor::TerrainEditor()
 	:GameObject(L"06_TerrainEditor")
 {
+	CreateMesh();
 }
 
 TerrainEditor::~TerrainEditor()
 {
+}
+
+void TerrainEditor::Picking()
+{
+	Ray ray = CAMERA->ScreenPointToRay(mousePos);
+	for (UINT z = 0; z < height - 1; z++)
+	{
+		for (UINT x = 0; x < width -1; x++)
+		{
+			UINT index[4];
+			index[0] = (x + 0) + (z + 0) * width;
+			index[1] = (x + 1) + (z + 0) * width;
+			index[2] = (x + 0) + (z + 1) * width;
+			index[3] = (x + 1) + (z + 1) * width;
+
+			Vector3 pos[4];
+			for (UINT i = 0; i < 4; i++)
+			{
+				pos[i] = vertices[index[i]].pos;
+			}
+			float distance = 0.0f;
+			if (TriangleTests::Intersects(ray.origin, ray.direction, pos[0], pos[1],pos[2], distance))
+			{
+				pickedPos = ray.origin + ray.direction * distance;
+				return;
+			}
+			if (TriangleTests::Intersects(ray.origin, ray.direction, pos[2], pos[1], pos[3], distance))
+			{
+				pickedPos = ray.origin + ray.direction * distance;
+				return;
+			}
+		}
+	}
+
+}
+
+void TerrainEditor::Debug()
+{
+	if (ImGui::TreeNode("Terrain Editor Option"))
+	{
+		ImGui::Text("Picked Pos : %.1f, %.1f, %.1f", pickedPos.x, pickedPos.y, pickedPos.z);
+		ImGui::TreePop();
+	}
 }
 
 void TerrainEditor::CreateMesh()
@@ -30,7 +74,8 @@ void TerrainEditor::CreateMesh()
 			vertex.uv.y = 1.0f - (float)z / (height - 1);
 
 			UINT index = x + width * z;
-			vertex.pos.y = colors[index].x * HEIGHT_SCALE;
+			if (!colors.empty())
+				vertex.pos.y = colors[index].x * HEIGHT_SCALE;
 			vertices.emplace_back(vertex);
 		}
 	}

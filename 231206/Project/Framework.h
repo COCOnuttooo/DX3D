@@ -20,12 +20,13 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 
 #include "DirectXTex.h"
 #include "DirectXTex.inl"
 
 #pragma comment(lib,"DirectXTex.lib")
-
+//#pragma comment(lib, "DirectXCollision.lib")
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -52,6 +53,7 @@ using namespace std;
 #define TIME	   		   Time::GetInstance()
 #define SCENE      SceneManager::GetInstance()
 #define STATE      StateManager::GetInstance()
+#define CAMERA		Environment::GetInstance()->GetMainCamera()
 
 
 #define DIALOG ImGuiFileDialog::Instance()
@@ -114,6 +116,7 @@ using namespace GameMath;
 
 #include "Object/GameObject.h"
 #include "Object/Landscape/Terrain.h"
+#include "Object/Landscape/TerrainEditor.h"
 #include "Object/Basic/Cube.h"
 #include "Object/Basic/Quad.h"
 #include "Object/Basic/Grid.h"

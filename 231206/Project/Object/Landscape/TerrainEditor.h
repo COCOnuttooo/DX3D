@@ -14,9 +14,10 @@ public:
 	TerrainEditor();
 	~TerrainEditor();
 
+	void Picking();	 // Mouse Picking
+	void Debug();
 private:
 	void CreateMesh() override;
-
 private:
 	const float MAX_HEIGHT = 20.0f;
 	const UINT  MAX_SIZE   = 256;
@@ -24,7 +25,7 @@ private:
 	UINT width = MAX_SIZE, height = MAX_SIZE;
 
 	Texture* heightMap;
-
+	Vector3 pickedPos = {};
 	const float HEIGHT_SCALE = 20.0f;
 
 };

@@ -99,4 +99,11 @@ void Transform::UpdateWorldMatrix()
 	up = Vector3(fWorld._21, fWorld._22, fWorld._23).GetNormalized();
 	forward = Vector3(fWorld._31, fWorld._32, fWorld._33).GetNormalized();
 
+	XMVECTOR outS, outR, outT;
+
+	XMMatrixDecompose(&outS, &outR, &outT, world);
+	globalScale    = outS;
+	globalRotation = outR;
+	globalPosition = outT;
+
 }
