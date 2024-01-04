@@ -82,8 +82,7 @@ void TerrainEditor::ComputePicking()
 	rayBuffer->data.direction   = ray.direction;
 	rayBuffer->data.plygonCount = polygonCount;
 	rayBuffer->SetCSBuffer(0);
-
-	
+	structuredBuffer->Copy(&output, polygonCount);
 }
 
 void TerrainEditor::Debug()
