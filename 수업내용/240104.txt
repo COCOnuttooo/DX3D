@@ -1,0 +1,10 @@
+Thread (쓰레드)
+
+CPU -> 연산장치
+
+process  
+program 차이 오늘 적기
+
+constant buffer, d3d11 usage  바꿔적용하는법
+
+structured buffer 단순화?

@@ -8,6 +8,7 @@ public:
 	virtual  ~ConstBuffer();
 	void SetVSBuffer(UINT slot);
 	void SetPSBuffer(UINT slot);
+	void SetCSBuffer(UINT slot);
 
 	void UpdateSubresource();
 private:
@@ -53,7 +54,13 @@ inline void ConstBuffer<T>::SetPSBuffer(UINT slot)
 	DC->PSSetConstantBuffers(slot, 1, &constantBuffer);
 
 }
+template<typename T>
+inline void ConstBuffer<T>::SetCSBuffer(UINT slot)
+{
+	UpdateSubresource();
+	DC->CSSetConstantBuffers(slot, 1, &constantBuffer);
 
+}
 template<typename T>
 inline void ConstBuffer<T>::UpdateSubresource()
 {

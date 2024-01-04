@@ -15,6 +15,7 @@ public:
 	~TerrainEditor();
 
 	void Picking();	 // Mouse Picking
+	void ComputePicking();
 	void Debug();
 private:
 	void CreateMesh() override;
@@ -28,4 +29,22 @@ private:
 	Vector3 pickedPos = {};
 	const float HEIGHT_SCALE = 20.0f;
 
+	struct InputDesc
+	{
+		Vector3 v0, v1, v2;
+	};
+	struct OutputDesc
+	{
+		int isPicked = false;
+		float distance = 0;
+	};
+	vector<InputDesc> input;
+	vector<OutputDesc> output;
+
+	UINT polygonCount = 0;
+
+	StructuredBuffer* structuredBuffer;
+	RayBuffer* rayBuffer;
+
+	ComputeShader* computeShader;
 };

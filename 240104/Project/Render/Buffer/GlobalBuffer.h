@@ -53,3 +53,22 @@ struct LightBuffer : public ConstBuffer<LightData>
 
 
 };
+
+struct RayData
+{
+	Vector3 origin = {};
+	UINT plygonCount;
+
+	Vector3 direction = {};
+	float padding;
+};
+struct RayBuffer : public ConstBuffer<RayData>
+{
+	RayBuffer()
+		:ConstBuffer(data)
+	{
+	}
+	RayData data;
+
+
+};

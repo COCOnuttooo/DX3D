@@ -5,15 +5,45 @@ TerrainEditor::TerrainEditor()
 	:GameObject(L"06_TerrainEditor")
 {
 	CreateMesh();
+
+
+	polygonCount = indices.size() / 3;
+
+	input.resize(polygonCount);
+	output.resize(polygonCount);
+	for (UINT i = 0; i < polygonCount; i++)
+	{
+		UINT index0 = indices[i * 3 + 0];
+		UINT index1 = indices[i * 3 + 1];
+		UINT index2 = indices[i * 3 + 2];
+
+		input[i].v0 = vertices[index0].pos;
+		input[i].v1 = vertices[index1].pos;
+		input[i].v2 = vertices[index2].pos;
+
+	}
+
+	computeShader = Shader::AddCS(L"07_ComputePicking");
+
+	rayBuffer = new RayBuffer();
+	structuredBuffer = new StructuredBuffer(input.data(), sizeof(InputDesc),input.size(),sizeof(OutputDesc), output.size());
+
 }
 
 TerrainEditor::~TerrainEditor()
 {
+	delete rayBuffer;
+	delete structuredBuffer;
 }
 
 void TerrainEditor::Picking()
 {
 	Ray ray = CAMERA->ScreenPointToRay(mousePos);
+	rayBuffer->data.origin = ray.origin;
+	rayBuffer->data.direction = ray.direction;
+	rayBuffer->data.plygonCount = polygonCount;
+	rayBuffer->SetCSBuffer(0);
+	//DC->CSSetConstantBuffers(0, 1, &rayBuffer);
 	for (UINT z = 0; z < height - 1; z++)
 	{
 		for (UINT x = 0; x < width -1; x++)
@@ -43,6 +73,17 @@ void TerrainEditor::Picking()
 		}
 	}
 
+}
+
+void TerrainEditor::ComputePicking()
+{
+	Ray ray = CAMERA->ScreenPointToRay(mousePos);
+	rayBuffer->data.origin      = ray.origin;
+	rayBuffer->data.direction   = ray.direction;
+	rayBuffer->data.plygonCount = polygonCount;
+	rayBuffer->SetCSBuffer(0);
+
+	
 }
 
 void TerrainEditor::Debug()
