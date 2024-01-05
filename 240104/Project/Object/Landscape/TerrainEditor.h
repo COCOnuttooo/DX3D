@@ -17,8 +17,12 @@ public:
 	void Picking();	 // Mouse Picking
 	void ComputePicking();
 	void Debug();
+
+	void Render(D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST) override;
+	void Update();
 private:
 	void CreateMesh() override;
+	void AdjustHeight();
 private:
 	const float MAX_HEIGHT = 20.0f;
 	const UINT  MAX_SIZE   = 256;
@@ -28,7 +32,8 @@ private:
 	Texture* heightMap;
 	Vector3 pickedPos = {};
 	const float HEIGHT_SCALE = 20.0f;
-
+	float adjustValue = 10.0f;
+	UINT pickedIndex = 0;
 	struct InputDesc
 	{
 		Vector3 v0, v1, v2;
@@ -47,4 +52,6 @@ private:
 	RayBuffer* rayBuffer;
 
 	ComputeShader* computeShader;
+
+	BrushBuffer* brushBuffer;
 };

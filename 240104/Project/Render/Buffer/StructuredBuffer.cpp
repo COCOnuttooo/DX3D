@@ -47,6 +47,7 @@ void StructuredBuffer::CreateInput()
 	desc.ByteWidth = inputStride * inputCount;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	desc.StructureByteStride = inputStride;
 
 	D3D11_SUBRESOURCE_DATA data = {};
 	data.pSysMem = inputData;

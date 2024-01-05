@@ -1,7 +1,7 @@
 
 cbuffer RayBuffer : register(b0)
 {
-    float origin;
+    float3 origin;
     uint polygonCount;
     
     float3 direction;

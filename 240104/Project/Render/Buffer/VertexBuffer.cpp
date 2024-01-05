@@ -14,3 +14,8 @@ void VertexBuffer::IASetBuffer(D3D11_PRIMITIVE_TOPOLOGY topology)
 	DC->IASetPrimitiveTopology(topology);
 }
 
+void VertexBuffer::UpdateVertex(void* vertices, UINT count)
+{
+	DC->UpdateSubresource(vertexBuffer, 0, nullptr, vertices, stride, count);
+}
+

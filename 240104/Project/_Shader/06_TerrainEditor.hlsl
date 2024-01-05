@@ -14,7 +14,18 @@ struct VertexOutput
     float4 alpha  : ALPHA;
     
     float3 viewDir : CAMERADIR;
+    
+    float3 worldPos : WORLDPOS;
 };
+
+
+cbuffer BrushBuffer : register(b1)
+{
+    int type;
+    float3 pickedPos;
+    float range;
+    float3 color;
+}
 VertexOutput VS(VertexTerrain input)
 {
     VertexOutput output;
@@ -23,6 +34,7 @@ VertexOutput VS(VertexTerrain input)
     
     
     output.pos = mul(input.pos, world);
+    output.worldPos = output.pos;
     output.viewDir = normalize(output.pos.xyz - cameraPos);
     output.pos = mul(output.pos, view);
     output.pos = mul(output.pos, proj);
@@ -38,6 +50,13 @@ float4 PS(VertexOutput input) : SV_TARGET
 {
     //clamp, sturate
     float4 baseColor = diffuseMap.Sample(samp, input.uv);
+    float4 brushColor = float4(0, 0, 0, 0);
+    float2 direction = input.worldPos.xz - pickedPos.xz;
+    float distance = sqrt(pow(direction.x, 2) + pow(direction.y, 2));
     
-    return baseColor; // phong shading
+    if(distance < range)
+    {
+        brushColor = float4(color,1.0f);
+    }
+    return baseColor + brushColor; // phong shading
 }

@@ -28,10 +28,13 @@ TerrainEditor::TerrainEditor()
 	rayBuffer = new RayBuffer();
 	structuredBuffer = new StructuredBuffer(input.data(), sizeof(InputDesc),input.size(),sizeof(OutputDesc), output.size());
 
+	brushBuffer = new BrushBuffer;
+
 }
 
 TerrainEditor::~TerrainEditor()
 {
+	delete brushBuffer;
 	delete rayBuffer;
 	delete structuredBuffer;
 }
@@ -82,7 +85,38 @@ void TerrainEditor::ComputePicking()
 	rayBuffer->data.direction   = ray.direction;
 	rayBuffer->data.plygonCount = polygonCount;
 	rayBuffer->SetCSBuffer(0);
-	structuredBuffer->Copy(&output, polygonCount);
+	DC->CSSetShaderResources(0, 1, &structuredBuffer->GetSRV());
+	DC->CSSetUnorderedAccessViews(0, 1, &structuredBuffer->GetUAV(), nullptr);
+	computeShader->SetShader();
+	UINT x = ceilf(polygonCount/64.0f);
+	DC->Dispatch(x, 1, 1);
+
+	structuredBuffer->Copy(output.data(), sizeof(OutputDesc) * polygonCount);
+	float minDistance = FLT_MAX;
+	int minIndex = -1;
+	UINT index = 0;
+
+
+	for (auto& data : output)
+	{
+		if (data.isPicked)
+		{
+			//break;
+			if (minDistance > data.distance)
+			{
+				minDistance = data.distance;
+				minIndex = index;
+			}
+		}
+		index++;
+	}
+
+	if (minIndex >= 0)
+	{
+		pickedPos = ray.origin + ray.direction * minDistance;
+	}
+	brushBuffer->data.pickedPos = pickedPos;
+
 }
 
 void TerrainEditor::Debug()
@@ -90,7 +124,31 @@ void TerrainEditor::Debug()
 	if (ImGui::TreeNode("Terrain Editor Option"))
 	{
 		ImGui::Text("Picked Pos : %.1f, %.1f, %.1f", pickedPos.x, pickedPos.y, pickedPos.z);
+
+
+		ImGui::DragFloat("Brush Radius", &brushBuffer->data.range, 1.0f, 1.0f, 30.0f);
+
+		ImGui::DragFloat("Adjust Value", &adjustValue, 1.0f, -30.f, 30.0f);
+
+
 		ImGui::TreePop();
+	}
+}
+
+void TerrainEditor::Render(D3D11_PRIMITIVE_TOPOLOGY topology)
+{
+	brushBuffer->SetPSBuffer(1);
+
+	GameObject::Render(topology);
+}
+
+void TerrainEditor::Update()
+{
+	GameObject::Update();
+	ComputePicking();
+	if (KEY_PRESS(VK_LBUTTON))
+	{
+		AdjustHeight();
 	}
 }
 
@@ -150,5 +208,59 @@ void TerrainEditor::CreateMesh()
 		vertices[index2].normal += normal;
 	}
 	mesh = new Mesh(vertices, indices);
+}
+
+void TerrainEditor::AdjustHeight()
+{
+	switch (brushBuffer->data.type)
+	{
+	case 0:
+		for (VertexType& vertex : vertices)
+		{
+			Vector3 p1 = Vector3(vertex.pos.x, 0.0f, vertex.pos.z);
+			Vector3 p2 = Vector3(pickedPos.x, 0.0f, pickedPos.z);
+
+			float distance = Vector3(p1 - p2).Length();
+
+			float value = adjustValue;
+
+			if (distance <= brushBuffer->data.range)
+			{
+				vertex.pos.y += value * Time::Delta();
+				//vertex.pos.y;
+				//continue;
+			}
+
+			vertex.pos.y = Clamp(vertex.pos.y, 0.0f, MAX_HEIGHT);
+			vertex.normal = Vector3();
+		}
+		break;
+	default:
+		break;
+	}
+	
+	for (UINT i = 0; i < indices.size() / 3; i++)
+	{
+		UINT index0 = indices[i * 3 + 0];
+		UINT index1 = indices[i * 3 + 1];
+		UINT index2 = indices[i * 3 + 2];
+
+		Vector3 v01 = vertices[index1].pos - vertices[index0].pos;
+		Vector3 v02 = vertices[index2].pos - vertices[index0].pos;
+
+		Vector3 normal = Vector3::Cross(v01, v02).GetNormalized();
+
+		vertices[index0].normal += normal;
+		vertices[index1].normal += normal;
+		vertices[index2].normal += normal;
+		//update input
+		input[i].v0 = vertices[index0].pos;
+		input[i].v1 = vertices[index1].pos;
+		input[i].v2 = vertices[index2].pos;
+	}
+	
+	
+	mesh->UpdateVertex(vertices.data(), vertices.size());
+	structuredBuffer->UpdateInput(input.data());
 }
 

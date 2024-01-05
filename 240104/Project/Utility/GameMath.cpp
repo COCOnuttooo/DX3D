@@ -3,7 +3,7 @@
 
 float GameMath::Clamp(const float& value, float minValue, float maxValue)
 {
-    return min(minValue, min(maxValue, value));
+    return max(minValue, min(maxValue, value));
 }
 
 float GameMath::Saturate(const float& value)

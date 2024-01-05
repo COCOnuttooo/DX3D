@@ -72,3 +72,27 @@ struct RayBuffer : public ConstBuffer<RayData>
 
 
 };
+
+
+struct BrushData
+{
+	int type =  0 ;
+	Vector3 pickedPos = {};
+
+	float range = 10.0f;
+	Vector3 color = { 0,1,0 };
+
+
+};
+struct BrushBuffer : public ConstBuffer<BrushData>
+{
+	BrushBuffer()
+		:ConstBuffer(data)
+	{
+	}
+	BrushData data;
+
+
+};
+
+

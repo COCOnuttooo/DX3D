@@ -13,10 +13,15 @@ TerrainEditorScene::~TerrainEditorScene()
 void TerrainEditorScene::Update()
 {
 	editor->Update();
-	if (KEY_PRESS(VK_LBUTTON))
-	{
-		editor->Picking();
-	}
+	//editor->ComputePicking();
+	//if (KEY_DOWN('Z'))
+	//{
+	//	editor.
+	//}
+	//if (KEY_PRESS(VK_LBUTTON))
+	//{
+	//	editor->Picking();
+	//}
 }
 
 void TerrainEditorScene::PreRender()
