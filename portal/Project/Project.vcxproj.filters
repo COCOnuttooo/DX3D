@@ -195,6 +195,12 @@
     <ClInclude Include="Render\Shader\ComputeShader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Object\PortalQuad.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\PortalScene.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -339,6 +345,12 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Render\Shader\ComputeShader.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\PortalQuad.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\PortalScene.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -19,6 +19,8 @@ public:
 
 	Matrix GetPersMatrix() { return persMatrix; }
 	Camera* GetMainCamera() { return mainCamera; }
+	Camera* GetP1Camera() { return p1Camera; }
+	Camera* GetP2Camera() { return p2Camera; }
 
 private:
 	Matrix        persMatrix;

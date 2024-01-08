@@ -42,7 +42,7 @@ void Transform::Debug()
 
 		ImGui::DragFloat3("Scale",       (float*)&scale,       0.01f, 0.01f, 100.0f);
 		ImGui::DragFloat3("Rotation",    (float*)&rotation,    0.01f,-2* XM_PI, 2* XM_PI);
-		ImGui::DragFloat3("Translation", (float*)&translation, 10.0f, -2000.0f, 2000.0f);
+		ImGui::DragFloat3("Translation", (float*)&translation, 0.1f, -2000.0f, 2000.0f);
 		if (ImGui::Button("Save"))
 			Save();
 		if (ImGui::Button("Load"))

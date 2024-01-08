@@ -63,13 +63,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         else
         {
             mainGame->Update();
+            Device::GetInstance()->ClearPreRTV();
 
-            ///////////////////////
-
+            /////////////////////
             mainGame->PreRender();
 
-            Device::GetInstance()->ClearRTV();
 
+            Device::GetInstance()->ClearRTV();
             mainGame->Render();
             mainGame->PostRender();
 
@@ -78,7 +78,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     delete mainGame;
-
+    //delete p1Texture;
+    //delete p2Texture;
     return (int) msg.wParam;
 }
 

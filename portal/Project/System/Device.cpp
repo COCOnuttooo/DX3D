@@ -15,6 +15,12 @@ Device::~Device()
     renderTargetView->Release();
 
     depthStencilView->Release();
+    p1RTV->Release();
+    p2RTV->Release();
+    p1DepthStencilView->Release();
+    p2DepthStencilView->Release();
+    p1Texture->Release();
+    p2Texture->Release();
 }
 
 void Device::CreateDeviceAndSwapChain()
@@ -67,17 +73,19 @@ void Device::CreateRenderTargetView()
     texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // 예시 포맷
     texDesc.SampleDesc.Count = 1;
     texDesc.Usage = D3D11_USAGE_DEFAULT;
-    texDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
     device->CreateTexture2D(&texDesc, nullptr, &p1Texture);
     device->CreateTexture2D(&texDesc, nullptr, &p2Texture);
 
-    device->CreateRenderTargetView(backBuffer, nullptr, &renderTargetView);
     device->CreateRenderTargetView(p1Texture, nullptr, &p1RTV);
     device->CreateRenderTargetView(p2Texture, nullptr, &p2RTV);
+    device->CreateRenderTargetView(backBuffer, nullptr, &renderTargetView);
 
     backBuffer->Release();
 
     ID3D11Texture2D* depthBuffer;
+    ID3D11Texture2D* p1depthBuffer;
+    ID3D11Texture2D* p2depthBuffer;
 
     D3D11_TEXTURE2D_DESC depthDesc = {};
 
@@ -94,6 +102,8 @@ void Device::CreateRenderTargetView()
     depthDesc.MiscFlags = 0;
 
     device->CreateTexture2D(&depthDesc, nullptr, &depthBuffer);
+    device->CreateTexture2D(&depthDesc, nullptr, &p1depthBuffer);
+    device->CreateTexture2D(&depthDesc, nullptr, &p2depthBuffer);
 
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 
@@ -101,10 +111,16 @@ void Device::CreateRenderTargetView()
     dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
     device->CreateDepthStencilView(depthBuffer, &dsvDesc, &depthStencilView);
+    device->CreateDepthStencilView(p1depthBuffer, &dsvDesc, &p1DepthStencilView);
+    device->CreateDepthStencilView(p2depthBuffer, &dsvDesc, &p2DepthStencilView);
 
     depthBuffer->Release();
+    p1depthBuffer->Release();
+    p2depthBuffer->Release();
 
     deviceContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
+    deviceContext->OMSetRenderTargets(1, &p1RTV, p1DepthStencilView);
+    deviceContext->OMSetRenderTargets(1, &p2RTV, p2DepthStencilView);
 
     //////////
 
@@ -127,6 +143,15 @@ void Device::ClearRTV()
     deviceContext->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
+void Device::ClearPreRTV()
+{
+    float clearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f };
+    deviceContext->ClearRenderTargetView(p1RTV, clearColor);
+    deviceContext->ClearDepthStencilView(p1DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    deviceContext->ClearRenderTargetView(p2RTV, clearColor);
+    deviceContext->ClearDepthStencilView(p2DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+}
+
 void Device::Present()
 {
     swapChain->Present(0, 0);
@@ -140,12 +165,12 @@ void Device::SetMainRTV()
 
 void Device::SetP1RTV()
 {
-    deviceContext->OMSetRenderTargets(1, &p1RTV, depthStencilView);
+    deviceContext->OMSetRenderTargets(1, &p1RTV, p1DepthStencilView);
 
 }
 
 void Device::SetP2RTV()
 {
-    deviceContext->OMSetRenderTargets(1, &p2RTV, depthStencilView);
+    deviceContext->OMSetRenderTargets(1, &p2RTV, p2DepthStencilView);
 
 }

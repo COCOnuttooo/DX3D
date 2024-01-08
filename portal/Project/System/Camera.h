@@ -18,6 +18,8 @@ public:
 
 	Ray ScreenPointToRay(Vector3 screenPoint);
 private:
+	int thisCount;
+	static int cameraCount;
 	Matrix        viewMatrix;
 	ViewBuffer* viewBuffer;
 	float moveSpeed = 1.0f;

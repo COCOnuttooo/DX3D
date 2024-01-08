@@ -3,9 +3,11 @@ class Texture
 {
 public:
 	Texture(ID3D11ShaderResourceView* srv, ScratchImage& image);
+	Texture(ID3D11ShaderResourceView* srv);
 	~Texture();
 	static Texture* Add(wstring file);
 	static Texture* Add(wstring file, wstring key);
+	static Texture* Add(ID3D11Texture2D** texture, wstring key);
 	static void Delete();
 
 	void PSSetShaderResources(UINT slot);

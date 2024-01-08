@@ -137,6 +137,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Object\PortalQuad.h" />
+    <ClInclude Include="Scene\PortalScene.h" />
     <ClInclude Include="Render\Shader\ComputeShader.h" />
     <ClInclude Include="Object\Landscape\TerrainEditor.h" />
     <ClInclude Include="Scene\TerrainEditorScene.h" />
@@ -199,6 +201,8 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Object\PortalQuad.cpp" />
+    <ClCompile Include="Scene\PortalScene.cpp" />
     <ClCompile Include="Render\Shader\ComputeShader.cpp" />
     <ClCompile Include="Object\Landscape\TerrainEditor.cpp" />
     <ClCompile Include="Scene\TerrainEditorScene.cpp" />

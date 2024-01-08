@@ -7,6 +7,12 @@ Environment::Environment()
 	CreatePerspective();
 
 	mainCamera = new Camera();
+	p1Camera = new Camera();
+	p2Camera = new Camera();
+	p1Camera->translation = Vector3(0, 0, 0);
+	p2Camera->translation = Vector3(0, 0, 0);
+	p1Camera->rotation = Vector3(0, 0, 0);
+	p2Camera->rotation = Vector3(0, 0, 0);
 
 	lightBuffer = new LightBuffer;
 }
@@ -16,6 +22,8 @@ Environment::~Environment()
 	delete lightBuffer;
 	delete persBuffer;
 	delete mainCamera;
+	delete p1Camera;
+	delete p2Camera;
 }
 
 void Environment::CreatePerspective()
@@ -28,6 +36,10 @@ void Environment::CreatePerspective()
 void Environment::Update()
 {
 	mainCamera->Update();
+	p1Camera->Update();
+	p2Camera->Update();
+	//p1Camera->rotation = Vector3(mainCamera->GetGlobalPosition() - p1Camera->GetGlobalPosition()).GetNormalized();
+	//p2Camera->rotation = Vector3(mainCamera->GetGlobalPosition() - p2Camera->GetGlobalPosition()).GetNormalized();
 }
 
 void Environment::Set()

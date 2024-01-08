@@ -1,6 +1,6 @@
 #include "Framework.h"
 #include "Camera.h"
-
+int Camera::cameraCount = 0;
 Camera::Camera()
 {
 	viewBuffer = new ViewBuffer();
@@ -8,6 +8,7 @@ Camera::Camera()
 	translation.z = -5.0f;
 
 	LoadData();
+	thisCount = cameraCount++;
 }
 
 Camera::~Camera()
@@ -19,7 +20,10 @@ Camera::~Camera()
 void Camera::Update()
 {
 	Transform::Update();
-
+	if (thisCount!= 0)
+	{
+		return;
+	}
 	if (KEY_PRESS(VK_RBUTTON))
 	{
 		if (KEY_PRESS('A'))

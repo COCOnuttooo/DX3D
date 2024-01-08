@@ -23,6 +23,11 @@ void Material::SetDiffuseMap(wstring file)
 	diffuseMap = Texture::Add(file);
 }
 
+void Material::SetDiffuseMap(ID3D11Texture2D** texture, wstring key)
+{
+	diffuseMap = Texture::Add(texture, key);
+}
+
 void Material::SetSpecularMap(wstring file)
 {
 	specularMap = Texture::Add(file);

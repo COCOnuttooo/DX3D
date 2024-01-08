@@ -5,13 +5,14 @@
 #include "Scene/GridScene.h"
 #include "Scene/TerrainScene.h"
 #include "Scene/TerrainEditorScene.h"
+#include "Scene/PortalScene.h"
 MainGame::MainGame()
 {
     char path[128];
     GetCurrentDirectoryA(128, path);
     projectDir = path;
 	Initialize();
-    SCENE->Create("Start", new TerrainEditorScene);
+    SCENE->Create("Start", new PortalScene);
     //SCENE->Create("Start", new TextureScene);
     //SCENE->Create("Tutorial", new TutorialScene);
     SCENE->Add("Start");
@@ -39,13 +40,13 @@ void MainGame::Update()
 void MainGame::Render()
 {
     ENVIRONMENT->Set();
-  //  ENVIRONMENT->Debug();
-    /////////////////////////////////////
+
     SCENE->Render();
 }
 
 void MainGame::PreRender()
 {
+
     Device::GetInstance()->SetP1RTV();
     ENVIRONMENT->SetP1();
     SCENE->PreRender();

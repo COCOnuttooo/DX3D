@@ -12,6 +12,7 @@ private:
 
 public:
 	void ClearRTV();
+	void ClearPreRTV();
 	void Present();
 	void SetMainRTV();
 	void SetP1RTV();
@@ -30,4 +31,6 @@ private:
 	ID3D11RenderTargetView* p2RTV;   // 
 
 	ID3D11DepthStencilView* depthStencilView;
+	ID3D11DepthStencilView* p1DepthStencilView;
+	ID3D11DepthStencilView* p2DepthStencilView;
 };

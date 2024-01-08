@@ -54,6 +54,8 @@ using namespace std;
 #define SCENE      SceneManager::GetInstance()
 #define STATE      StateManager::GetInstance()
 #define CAMERA		Environment::GetInstance()->GetMainCamera()
+#define P1CAMERA		Environment::GetInstance()->GetP1Camera()
+#define P2CAMERA		Environment::GetInstance()->GetP2Camera()
 
 
 #define DIALOG ImGuiFileDialog::Instance()
@@ -121,6 +123,7 @@ using namespace GameMath;
 #include "Object/Landscape/TerrainEditor.h"
 #include "Object/Basic/Cube.h"
 #include "Object/Basic/Quad.h"
+#include "Object/PortalQuad.h"
 #include "Object/Basic/Grid.h"
 #include "Object/Basic/TextureCube.h"
 #include "Object/Sphere.h"

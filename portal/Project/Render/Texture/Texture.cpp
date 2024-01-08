@@ -8,6 +8,11 @@ Texture::Texture(ID3D11ShaderResourceView* srv, ScratchImage& image)
 	
 }
 
+Texture::Texture(ID3D11ShaderResourceView* srv)
+	:srv(srv)
+{
+}
+
 Texture::~Texture()
 {
 	srv->Release();
@@ -85,6 +90,26 @@ Texture* Texture::Add(wstring file, wstring key)
 
 
 
+	return textures[key];
+}
+
+Texture* Texture::Add(ID3D11Texture2D** texture, wstring key)
+{
+	if (textures.count(key) > 0)
+	{
+		return textures[key];
+	}
+	D3D11_TEXTURE2D_DESC tempDesc;
+	(*texture)->GetDesc(&tempDesc);
+	ID3D11ShaderResourceView* tempSRV;
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = tempDesc.Format; // texture의 포맷에 맞게 설정
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = -1;
+	DEVICE->CreateShaderResourceView(*texture, &srvDesc, &tempSRV);
+
+	textures.emplace(key, new Texture(tempSRV));
 	return textures[key];
 }
 

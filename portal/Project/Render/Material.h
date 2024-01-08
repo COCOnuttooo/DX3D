@@ -9,6 +9,7 @@ public:
 	void CreateShader(wstring file);
 
 	void SetDiffuseMap(wstring file);
+	void SetDiffuseMap(ID3D11Texture2D** texture, wstring key);
 	void SetSpecularMap(wstring file);
 	void SetNormalMap(wstring file);
 
