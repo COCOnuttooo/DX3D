@@ -40,4 +40,6 @@ float4 PS(VertexOutput input) : SV_TARGET
     float4 baseColor = diffuseMap.Sample(samp, input.uv);
     
     return baseColor; // phong shading
+
+    
 }

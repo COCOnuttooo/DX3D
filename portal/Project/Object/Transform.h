@@ -11,7 +11,7 @@ public:
 
 	void SetParent(Transform* parent) { this->parent = parent; }
 	void SetPivot(Vector3 pivot) { this->pivot = pivot; }
-
+	void SetWorld(Matrix world) { this->world = world; }
 	Vector3 GetGlobalScale() { return globalScale; }
 	Vector3	GetGlobalRotation() { return globalRotation; }
 	Vector3	GetGlobalPosition() { return globalPosition; }
@@ -19,7 +19,7 @@ public:
 	Vector3 GetRightVector() { return right; }
 	Vector3 GetUpVector() { return up; }
 	Vector3 GetForwardVector() { return forward; }
-
+	Matrix GetWorld() { return world; }
 	void Debug();
 	void SetName(string name);
 

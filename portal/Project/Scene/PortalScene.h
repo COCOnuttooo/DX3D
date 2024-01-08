@@ -19,6 +19,7 @@ private:
 	PortalQuad* portal1;
 	PortalQuad* portal2;
 	TextureCube* cube;
+	TextureCube* mainCameraCube;
 	Quad* testQuad;
 	Terrain* terrain;
 };
