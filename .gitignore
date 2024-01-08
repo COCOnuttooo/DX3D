@@ -117,7 +117,17 @@ ipch/
 *.vsp
 *.vspx
 *.sap
+# Visual Studio folders
+x64/
+[Vv]s/
+[Vv]s[Dd]ebug/
+[Vv]s[Rr]elease/
 
+# Visual Studio files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 # Visual Studio Trace Files
 *.e2e
 
