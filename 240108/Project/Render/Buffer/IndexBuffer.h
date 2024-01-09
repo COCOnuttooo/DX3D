@@ -6,6 +6,7 @@ public:
 	~IndexBuffer();
 
 	void IASetBuffer();
+	void UpdateIndex(void* data, UINT dataCount);
 private:
 	ID3D11Buffer* indexBuffer;
 

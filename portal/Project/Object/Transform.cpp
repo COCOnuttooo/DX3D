@@ -56,6 +56,35 @@ void Transform::SetName(string name)
 	this->name = name;
 }
 
+void Transform::SetRotation(const XMMATRIX& matrix)
+{
+	// 회전 행렬에서 Pitch, Yaw, Roll 값을 계산
+	float pitch, yaw, roll;
+
+	// Pitch (X축 회전)
+	pitch = asinf(matrix._32); // M32는 3행 2열 요소
+
+	// Gimbal lock을 체크
+	if (cosf(pitch) > 0.0001) // Gimbal lock이 아닌 경우
+	{
+		roll = atan2f(-matrix._31, matrix._33); // M31과 M33 사용
+		yaw = atan2f(-matrix._12, matrix._22); // M12과 M22 사용
+	}
+	else // Gimbal lock인 경우
+	{
+		roll = 0.0f;
+		yaw = atan2f(matrix._21, matrix._11); // M21과 M11 사용
+	}
+
+	// 라디안에서 도(degree) 단위로 변환
+	pitch = XMConvertToDegrees(pitch);
+	yaw = XMConvertToDegrees(yaw);
+	roll = XMConvertToDegrees(roll);
+
+	// Vector3 회전에 할당
+	rotation = Vector3(pitch, yaw, roll);
+}
+
 void Transform::Save()
 {
 	BinaryWriter data("_TextData/Transform/" + name + ".transform");

@@ -6,6 +6,9 @@ TerrainEditor::TerrainEditor()
 {
 	CreateMesh();
 
+	material->SetDiffuseMap(L"Landscape/Wall.png");
+	material->SetSpecularMap(L"Landscape/Wall_specular.png");
+	material->SetNormalMap(L"Landscape/Wall_normal.png");
 
 	polygonCount = indices.size() / 3;
 
@@ -130,9 +133,11 @@ void TerrainEditor::Debug()
 
 		ImGui::DragFloat("Adjust Value", &adjustValue, 1.0f, -30.f, 30.0f);
 
-
+		SaveHeightMap();
+		LoadHeightMap();
 		ImGui::TreePop();
 	}
+
 }
 
 void TerrainEditor::Render(D3D11_PRIMITIVE_TOPOLOGY topology)
@@ -146,15 +151,73 @@ void TerrainEditor::Update()
 {
 	GameObject::Update();
 	ComputePicking();
+	
 	if (KEY_PRESS(VK_LBUTTON))
 	{
 		AdjustHeight();
 	}
 }
 
+void TerrainEditor::CalculateTangent()
+{
+	for (UINT i = 0; i < indices.size() / 3; i++)
+	{
+		UINT index0 = indices[i * 3 + 0];
+		UINT index1 = indices[i * 3 + 1];
+		UINT index2 = indices[i * 3 + 2];
+
+		Vector3 p0 = vertices[index0].pos;
+		Vector3 p1 = vertices[index1].pos;
+		Vector3 p2 = vertices[index2].pos;
+
+
+		Vector2 uv0 = vertices[index0].uv;
+		Vector2 uv1 = vertices[index1].uv;
+		Vector2 uv2 = vertices[index2].uv;
+
+		Vector3 e0 = p1 - p0;
+		Vector3 e1 = p2 - p0;
+
+		float u0 = uv1.x - uv0.x;
+		float v0 = uv1.y - uv0.y;
+
+		float u1 = uv2.x - uv0.x;
+		float v1 = uv2.y - uv0.y;
+
+		float D = 1.0f / (u0 * v1 - v0 * u1);
+
+		Vector3 tangent = D * (e0 * v1 - e1 * v0);
+
+		vertices[index0].tangent += tangent;
+		vertices[index1].tangent += tangent;
+		vertices[index2].tangent += tangent;
+	}
+
+	for (VertexType& vertex : vertices)
+	{
+		Vector3 T = vertex.tangent;
+		Vector3 N = vertex.normal;
+
+		vertex.tangent = Vector3(T - N * Vector3::Dot(N, T)).GetNormalized();
+
+	}
+}
+
 void TerrainEditor::CreateMesh()
 {
+	if (mesh != nullptr)
+	{
+		delete mesh;
+	}
+	//if (structuredBuffer!= nullptr)
+	//{
+	//	delete structuredBuffer;
+
+	//}
+
 	vector<Vector4> colors;
+	vertices.clear();
+	indices.clear();
 	if (heightMap)
 	{
 		colors = heightMap->ReadPixels();
@@ -207,7 +270,11 @@ void TerrainEditor::CreateMesh()
 		vertices[index1].normal += normal;
 		vertices[index2].normal += normal;
 	}
+	CalculateTangent();
 	mesh = new Mesh(vertices, indices);
+
+
+
 }
 
 void TerrainEditor::AdjustHeight()
@@ -232,13 +299,89 @@ void TerrainEditor::AdjustHeight()
 			}
 
 			vertex.pos.y = Clamp(vertex.pos.y, 0.0f, MAX_HEIGHT);
-			vertex.normal = Vector3();
+			vertex.normal  = Vector3();
+			vertex.tangent = Vector3();
 		}
 		break;
 	default:
 		break;
 	}
-	
+	UpdateMesh();
+}
+
+void TerrainEditor::SaveHeightMap()
+{
+	if (ImGui::Button("SaveHeightMap"))
+		DIALOG->OpenDialog("SaveHeightMap", "SaveHeightMap", ".png", "_Texture/HeightMap/");
+	if (DIALOG->Display("SaveHeightMap", 32,ImVec2(300,100)))
+	{
+		if (DIALOG->IsOk())
+		{
+			string file = DIALOG->GetFilePathName();
+			file = file.substr(projectDir.size() + 1, file.size());
+
+			UINT size = width * height * 4;
+			uint8_t* pixels = new uint8_t[size];
+
+
+			for (UINT i = 0; i < size/4; i++)
+			{
+				float vHeight = vertices[i].pos.y / MAX_HEIGHT * 255.0f;
+
+				pixels[i * 4 + 0] = vHeight;
+				pixels[i * 4 + 1] = vHeight;
+				pixels[i * 4 + 2] = vHeight;
+				pixels[i * 4 + 3] = 255;
+
+			}
+			Image image;
+			image.width = width;
+			image.height = height;
+			image.pixels = pixels;
+			image.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			image.rowPitch = width * 4;
+			image.slicePitch = size;
+			SaveToWICFile
+			(
+				image, 
+				WIC_FLAGS_FORCE_RGB, 
+				GetWICCodec(WIC_CODEC_PNG), 
+				ToWString(file).c_str()
+			);
+			delete[] pixels;
+		}
+
+		DIALOG->Close();
+	}
+}
+
+void TerrainEditor::LoadHeightMap()
+{
+	if (ImGui::Button("LoadHeightMap"))
+		DIALOG->OpenDialog("LoadHeightMap", "LoadHeightMap", ".png", "_Texture/HeightMap/");
+	if (DIALOG->Display("LoadHeightMap", 32, ImVec2(300, 100)))
+	{
+		if (DIALOG->IsOk())
+		{
+			string file = DIALOG->GetFilePathName();
+			file = file.substr(projectDir.size() + 1, file.size());
+
+
+			heightMap = Texture::Add(ToWString(file));
+			CreateMesh();
+
+			mesh->UpdateVertex(vertices.data(), vertices.size());
+			mesh->UpdateIndex(indices.data(), indices.size());
+
+		}
+
+		DIALOG->Close();
+	}
+}
+
+void TerrainEditor::UpdateMesh()
+{
+
 	for (UINT i = 0; i < indices.size() / 3; i++)
 	{
 		UINT index0 = indices[i * 3 + 0];
@@ -257,9 +400,44 @@ void TerrainEditor::AdjustHeight()
 		input[i].v0 = vertices[index0].pos;
 		input[i].v1 = vertices[index1].pos;
 		input[i].v2 = vertices[index2].pos;
+
+		Vector3 p0 = vertices[index0].pos;
+		Vector3 p1 = vertices[index1].pos;
+		Vector3 p2 = vertices[index2].pos;
+
+
+		Vector2 uv0 = vertices[index0].uv;
+		Vector2 uv1 = vertices[index1].uv;
+		Vector2 uv2 = vertices[index2].uv;
+
+		Vector3 e0 = p1 - p0;
+		Vector3 e1 = p2 - p0;
+
+		float u0 = uv1.x - uv0.x;
+		float v0 = uv1.y - uv0.y;
+
+		float u1 = uv2.x - uv0.x;
+		float v1 = uv2.y - uv0.y;
+
+		float D = 1.0f / (u0 * v1 - v0 * u1);
+
+		Vector3 tangent = D * (e0 * v1 - e1 * v0);
+
+		vertices[index0].tangent += tangent;
+		vertices[index1].tangent += tangent;
+		vertices[index2].tangent += tangent;
 	}
-	
-	
+	for (VertexType& vertex : vertices)
+	{
+		Vector3 T = vertex.tangent;
+		Vector3 N = vertex.normal;
+
+		vertex.tangent = Vector3(T - N * Vector3::Dot(N, T)).GetNormalized();
+
+	}
+	//CalculateTangent();
+
+
 	mesh->UpdateVertex(vertices.data(), vertices.size());
 	structuredBuffer->UpdateInput(input.data());
 }

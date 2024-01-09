@@ -28,3 +28,8 @@ void IndexBuffer::IASetBuffer()
 
 }
 
+void IndexBuffer::UpdateIndex(void* data, UINT dataCount)
+{
+	DC->UpdateSubresource(indexBuffer, 0, nullptr, data, sizeof(UINT), dataCount);
+}
+

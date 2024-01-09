@@ -5,6 +5,7 @@ struct VertexTerrain
 	Vector2 uv     = {};
 	Vector3 normal = {};
 	Vector4 alpha  = {};
+	Vector3 tangent = {};
 
 };
 class TerrainEditor : public GameObject<VertexTerrain>
@@ -17,12 +18,16 @@ public:
 	void Picking();	 // Mouse Picking
 	void ComputePicking();
 	void Debug();
-
 	void Render(D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST) override;
 	void Update();
 private:
+	void CalculateTangent();
 	void CreateMesh() override;
 	void AdjustHeight();
+	void SaveHeightMap();
+	void LoadHeightMap();
+
+	void UpdateMesh();
 private:
 	const float MAX_HEIGHT = 20.0f;
 	const UINT  MAX_SIZE   = 256;

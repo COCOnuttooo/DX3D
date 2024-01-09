@@ -5,6 +5,8 @@ struct VertexTerrain
     float2 uv     : UV;
     float3 normal : NORMAL;
     float4 alpha  : ALPHA;
+    
+    float3 tangent : TANGENT;
 };
 struct VertexOutput
 {
@@ -16,6 +18,9 @@ struct VertexOutput
     float3 viewDir : CAMERADIR;
     
     float3 worldPos : WORLDPOS;
+    
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
 };
 
 
@@ -40,23 +45,78 @@ VertexOutput VS(VertexTerrain input)
     output.pos = mul(output.pos, proj);
     
     output.normal = (mul(normalize(input.normal), (float3x3) world));
+    output.tangent = (mul(normalize(input.tangent), (float3x3) world));
+    output.binormal = cross(output.normal, output.tangent);
     output.alpha = input.alpha;
     output.uv = input.uv;
     return output;
 }
+float4 CalculateBrush(float3 worldPos)
+{
+    float4 brushColor = float4(0, 0, 0, 0);
+    float2 direction = worldPos.xz - pickedPos.xz;
+    switch (type)
+    {
+        case 0:
+            float distance = sqrt(pow(direction.x, 2) + pow(direction.y, 2));
+        
+            if (distance < range)
+            {
+                return brushColor = float4(color, 1.0f);
+            }
+            break;
+        case 1:
+            if (abs(direction.x)< range && abs(direction.y)< range)
+            {
+                return brushColor = float4(color, 1.0f);
+            }
+            break;
+        default:
+            return float4(0, 0, 0, 0);
+            break;
+    }
+    return float4(0, 0, 0, 0);
 
-
+}
+float4 PhongShading(VertexOutput input)
+{
+    float3 light = normalize(lightDirection);
+    float4 normalMapping = normalMap.Sample(samp, input.uv);
+    //normalMap;
+    
+    normalMapping = normalMapping * 2.0f - 1.0f;
+    
+    float3x3 TBN = float3x3(input.tangent, input.binormal, input.normal);
+    float3 normal = normalize(mul(normalMapping.xyz, TBN));
+    
+    
+    //Diffuse Light
+    float diffuseIntensity = saturate(dot(normal, -light));
+    //albedo = Base Color
+    float4 albedo = diffuseMap.Sample(samp, input.uv);
+    /////////////////////////////specular Light
+    
+    float3 reflection = reflect(light, normal);
+    
+    float specularIntensity = saturate(dot(-reflection, input.viewDir));
+    /////////////////////////////
+    
+    float shininess = 16.0f;
+    specularIntensity = pow(specularIntensity, shininess);
+    
+    float4 diffuse = albedo * diffuseIntensity;
+    
+    float4 specular = specularMap.Sample(samp, input.uv) * specularIntensity;
+    /////////////////////Ambient Light
+    float4 ambient = albedo * float4(0.1f, 0.1f, 0.1f, 0.1f);
+    
+    return diffuse + specular + ambient ; // phong shading
+}
 float4 PS(VertexOutput input) : SV_TARGET
 {
     //clamp, sturate
-    float4 baseColor = diffuseMap.Sample(samp, input.uv);
-    float4 brushColor = float4(0, 0, 0, 0);
-    float2 direction = input.worldPos.xz - pickedPos.xz;
-    float distance = sqrt(pow(direction.x, 2) + pow(direction.y, 2));
-    
-    if(distance < range)
-    {
-        brushColor = float4(color,1.0f);
-    }
-    return baseColor + brushColor; // phong shading
+    float4 brushColor = CalculateBrush(input.worldPos);
+    float4 phong = PhongShading(input);
+    return phong + brushColor;
+
 }

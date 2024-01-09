@@ -13,6 +13,7 @@ public:
 	void IASet(D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	void UpdateVertex(void* vertices, UINT count) { vertexBuffer->UpdateVertex(vertices, count); }
+	void UpdateIndex(void* data, UINT count) { indexBuffer->UpdateIndex(data, count); }
 
 private:
 	VertexBuffer* vertexBuffer;

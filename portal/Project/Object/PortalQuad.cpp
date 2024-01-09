@@ -12,6 +12,7 @@ PortalQuad::PortalQuad(Vector2 size)
 	//edge->rotation = Vector3(0, XM_PI, 0);
 	edge->GetMaterial()->SetDiffuseMap(L"Landscape/Dirt.png");
 	edge->translation.z = 0.01;
+
 }
 
 PortalQuad::~PortalQuad()

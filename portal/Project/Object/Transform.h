@@ -22,7 +22,7 @@ public:
 	Matrix GetWorld() { return world; }
 	void Debug();
 	void SetName(string name);
-
+	void SetRotation(const XMMATRIX& matrix);
 	void Save();
 	void Load();
 

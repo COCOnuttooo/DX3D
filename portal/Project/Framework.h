@@ -21,6 +21,7 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
+#include <DirectXMath.h>
 
 #include "DirectXTex.h"
 #include "DirectXTex.inl"

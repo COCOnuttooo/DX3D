@@ -6,14 +6,21 @@ Camera::Camera()
 	viewBuffer = new ViewBuffer();
 
 	translation.z = -5.0f;
+	if (thisCount==0)
+	{
 
-	LoadData();
+		LoadData();
+	}
 	thisCount = cameraCount++;
 }
 
 Camera::~Camera()
 {
-	SaveData();
+	if (thisCount==0)
+	{
+
+		SaveData();
+	}
 	delete viewBuffer;
 }
 
