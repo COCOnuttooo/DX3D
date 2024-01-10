@@ -24,9 +24,11 @@ private:
 	void CalculateTangent();
 	void CreateMesh() override;
 	void AdjustHeight();
+	void AdjustAlpha();
+
 	void SaveHeightMap();
 	void LoadHeightMap();
-
+	void CreateCompute();
 	void UpdateMesh();
 private:
 	const float MAX_HEIGHT = 20.0f;
@@ -59,4 +61,11 @@ private:
 	ComputeShader* computeShader;
 
 	BrushBuffer* brushBuffer;
+
+	//Texture Splatting
+
+	Texture* alphaMap;
+	Texture* secondDiffuseMap;
+
+
 };

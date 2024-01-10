@@ -78,6 +78,9 @@ float4 CalculateBrush(float3 worldPos)
     return float4(0, 0, 0, 0);
 
 }
+
+Texture2D         alphaMap : register(t10);
+Texture2D secondDiffuseMap : register(t11);
 float4 PhongShading(VertexOutput input)
 {
     float3 light = normalize(lightDirection);
@@ -94,6 +97,12 @@ float4 PhongShading(VertexOutput input)
     float diffuseIntensity = saturate(dot(normal, -light));
     //albedo = Base Color
     float4 albedo = diffuseMap.Sample(samp, input.uv);
+    // Texture Splatting
+    float4 alpha = alphaMap.Sample(samp, input.uv);
+    
+    float4 secondAlbedo = secondDiffuseMap.Sample(samp, input.uv);
+    //albedo = lerp(albedo, secondAlbedo, alpha.r);
+    albedo = lerp(albedo, secondAlbedo, input.alpha.r);
     /////////////////////////////specular Light
     
     float3 reflection = reflect(light, normal);

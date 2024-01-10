@@ -10,26 +10,10 @@ TerrainEditor::TerrainEditor()
 	material->SetSpecularMap(L"Landscape/Wall_specular.png");
 	material->SetNormalMap(L"Landscape/Wall_normal.png");
 
-	polygonCount = indices.size() / 3;
-
-	input.resize(polygonCount);
-	output.resize(polygonCount);
-	for (UINT i = 0; i < polygonCount; i++)
-	{
-		UINT index0 = indices[i * 3 + 0];
-		UINT index1 = indices[i * 3 + 1];
-		UINT index2 = indices[i * 3 + 2];
-
-		input[i].v0 = vertices[index0].pos;
-		input[i].v1 = vertices[index1].pos;
-		input[i].v2 = vertices[index2].pos;
-
-	}
 
 	computeShader = Shader::AddCS(L"07_ComputePicking");
 
 	rayBuffer = new RayBuffer();
-	structuredBuffer = new StructuredBuffer(input.data(), sizeof(InputDesc),input.size(),sizeof(OutputDesc), output.size());
 
 	brushBuffer = new BrushBuffer;
 
@@ -135,27 +119,62 @@ void TerrainEditor::Debug()
 
 		SaveHeightMap();
 		LoadHeightMap();
+		material->SelectMap(&alphaMap, "AlphaMap", L"Solid/Red.png");
+		material->SelectMap(&secondDiffuseMap, "SecondDiffuseMap", L"Solid/Red.png");
+
 		ImGui::TreePop();
 	}
+	if (DIALOG->Display("AlphaMap", 32, ImVec2(300, 100)) ||
+		DIALOG->Display("SecondDiffuseMap", 32, ImVec2(300, 100)))
+	{
+		if (DIALOG->IsOk())
+		{
+			string path = DIALOG->GetFilePathName();
 
+			path = path.substr(projectDir.length() + 1, path.length());
+
+
+			if (DIALOG->GetOpenedKey() == "AlphaMap")
+				alphaMap = Texture::Add(ToWString(path));
+			if (DIALOG->GetOpenedKey() == "SecondDiffuseMap")
+				secondDiffuseMap = Texture::Add(ToWString(path));
+
+		}
+		DIALOG->Close();
+	}
 }
 
 void TerrainEditor::Render(D3D11_PRIMITIVE_TOPOLOGY topology)
 {
 	brushBuffer->SetPSBuffer(1);
+	if (alphaMap)
+		alphaMap->PSSetShaderResources(10);
+	if (secondDiffuseMap)
+		secondDiffuseMap->PSSetShaderResources(11);
 
 	GameObject::Render(topology);
 }
 
 void TerrainEditor::Update()
 {
+
 	GameObject::Update();
-	ComputePicking();
-	
-	if (KEY_PRESS(VK_LBUTTON))
+	if (!ImGui::GetIO().WantCaptureMouse)
 	{
-		AdjustHeight();
+		if (ImGui::GetIO().MouseDelta != ImVec2(0,0))
+			ComputePicking();
+
+		//if (KEY_PRESS(VK_LBUTTON))
+		//	AdjustHeight();
+
+		//if (KEY_UP(VK_LBUTTON))
+		//	UpdateMesh();
+		if (KEY_PRESS(VK_LBUTTON))
+		{
+			AdjustAlpha();
+		}
 	}
+
 }
 
 void TerrainEditor::CalculateTangent()
@@ -209,11 +228,7 @@ void TerrainEditor::CreateMesh()
 	{
 		delete mesh;
 	}
-	//if (structuredBuffer!= nullptr)
-	//{
-	//	delete structuredBuffer;
 
-	//}
 
 	vector<Vector4> colors;
 	vertices.clear();
@@ -273,6 +288,7 @@ void TerrainEditor::CreateMesh()
 	CalculateTangent();
 	mesh = new Mesh(vertices, indices);
 
+	CreateCompute();
 
 
 }
@@ -299,15 +315,40 @@ void TerrainEditor::AdjustHeight()
 			}
 
 			vertex.pos.y = Clamp(vertex.pos.y, 0.0f, MAX_HEIGHT);
-			vertex.normal  = Vector3();
-			vertex.tangent = Vector3();
+			vertex.normal  = Vector3(0,1,0);
+			vertex.tangent = Vector3(1,0,0);
 		}
 		break;
 	default:
 		break;
 	}
-	UpdateMesh();
+	mesh->UpdateVertex(vertices.data(), vertices.size());
+
+	//UpdateMesh();
+
 }
+
+void TerrainEditor::AdjustAlpha()
+{
+	for (VertexType& vertex : vertices)
+	{
+		Vector3 p1 = Vector3(vertex.pos.x, 0.0f, vertex.pos.z);
+		Vector3 p2 = Vector3(pickedPos.x, 0.0f, pickedPos.z);
+
+		float distance = Vector3(p1 - p2).Length();
+
+		float value = adjustValue;
+
+		if (distance <= brushBuffer->data.range)
+			vertex.alpha.x += value * Time::Delta();
+
+		vertex.alpha.x = Clamp(vertex.alpha.x, 0.0f, 1);
+
+	}
+	mesh->UpdateVertex(vertices.data(), vertices.size());
+
+}
+
 
 void TerrainEditor::SaveHeightMap()
 {
@@ -370,13 +411,36 @@ void TerrainEditor::LoadHeightMap()
 			heightMap = Texture::Add(ToWString(file));
 			CreateMesh();
 
-			mesh->UpdateVertex(vertices.data(), vertices.size());
-			mesh->UpdateIndex(indices.data(), indices.size());
+			//mesh->UpdateVertex(vertices.data(), vertices.size());
+			//mesh->UpdateIndex(indices.data(), indices.size());
 
 		}
 
 		DIALOG->Close();
 	}
+}
+
+void TerrainEditor::CreateCompute()
+{
+	polygonCount = indices.size() / 3;
+
+	input.resize(polygonCount);
+	output.resize(polygonCount);
+	for (UINT i = 0; i < polygonCount; i++)
+	{
+		UINT index0 = indices[i * 3 + 0];
+		UINT index1 = indices[i * 3 + 1];
+		UINT index2 = indices[i * 3 + 2];
+
+		input[i].v0 = vertices[index0].pos;
+		input[i].v1 = vertices[index1].pos;
+		input[i].v2 = vertices[index2].pos;
+
+	}
+	if (structuredBuffer!=nullptr)
+		delete structuredBuffer;
+	structuredBuffer = new StructuredBuffer(input.data(), sizeof(InputDesc), input.size(), sizeof(OutputDesc), output.size());
+
 }
 
 void TerrainEditor::UpdateMesh()
