@@ -1,0 +1,7 @@
+function aiGuide() {
+    if(LanguagePack.CURRENT_LOCALE === 'ko'){
+        return window.open('https://blog.naver.com/PostList.naver?blogId=polarisoffice_kr&from=postList&categoryNo=52');
+    } else {
+        return window.open('https://polarisofficehelp.zendesk.com/hc/en-us/sections/6735266100623-User-guide');
+    }
+}

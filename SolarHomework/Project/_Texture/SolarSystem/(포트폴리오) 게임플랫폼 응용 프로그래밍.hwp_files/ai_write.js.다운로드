@@ -1,0 +1,290 @@
+$(document).ready(function(){
+    buttonDisable($('#ai_write_area .fix_r .primary'));
+    $('.custom_select a.current').on('click', function(e){
+        commonPreventEvent(e);
+        const terget = $(this).siblings('.list');
+        terget.toggle();
+        return false;
+    });
+
+    $("#write_result_box .form .btn_wrap .white").on("click",function(e){
+        e.preventDefault();
+        copyWrite();
+    })
+    $("#write_result_box .form .btn_wrap .primary").on("click",function(e){
+        e.preventDefault();
+        const {status} = po_editor.getCursoredLocation()
+        const paths = location.pathname.split("/");
+        const type = paths[paths.length - 1];
+        let textData = '';
+        if(type !== 'sheet') {
+            if(status === 'caret_marking'){
+                textData = $("#ai_write_area textarea").val().replaceAll(/(\n|\r\n)/g,"<br />") + "<br />" + $("#write_result").val().replaceAll(/(\n|\r\n)/g,"<br />");
+            } else {
+                textData = $("#write_result").val().replaceAll(/(\n|\r\n)/g,"<br />")
+            }
+        } else {
+            if(status === 'caret_marking'){
+                textData = $("#ai_write_area textarea").val().replaceAll(/(\n|\r\n)/g,"\r\n") + "\r\n" + $("#write_result").val().replaceAll(/(\n|\r\n)/g,"\r\n");
+            } else {
+                textData = $("#write_result").val().replaceAll(/(\n|\r\n)/g,"\r\n");
+            }
+        }
+        
+        const customStyle = "font-family: 'Malgun Gothic', '맑은 고딕', Dotum, sans-serif;color:rgb(49, 49, 49)";
+        let text = "";
+        if(type === 'sheet') {
+            text = textData;
+            po_editor.execute({event:e, alert:LanguagePack.AI_TOOLS_STR49, text},'insertString');
+        } else {
+            text = `<div style="${customStyle}">${textData}</div>`;
+            po_editor.execute({event:e, alert:LanguagePack.AI_TOOLS_STR49, text},'insertText');
+        }
+        
+    })
+    $('.first_menu ul.list a').on('click', function(e){
+        commonPreventEvent(e);
+        const $this = $(this),
+            curText = $this.find('span').text(),
+            curId = $this.attr('class'),
+            $target = $('a.main'),
+            $list = $this.closest('ul.list');
+        
+        $target.attr('data-id', curId).find('span').text(curText);
+        if(curId == 'change' || curId =='translation'){
+            $('.custom_select.non_ic').find('li').hide();
+            $('.custom_select.non_ic').find('li.' + curId).show();
+            $('#main_select').css('display','none');
+            $('#left_select').css('display','flex');
+            if(curId == 'translation'){
+                $('a.second').attr('data-id', 'ENGLISH').find('span').text(LanguagePack.ENGLISH);
+            } else {
+                $('a.second').attr('data-id', 'test').find('span').text('전문적으로');
+            }
+        } else {
+            $('#main_select').css('display','flex');
+            $('#left_select').css('display','none');
+        }
+        $list.hide();
+        setPlaceHolder();
+    });
+
+    $('.second_menu ul.list a').on('click', function(e){
+        commonPreventEvent(e);
+        const $this = $(this),
+            curText = $this.find('span').text(),
+            curId = $this.data('id'),
+            $target = $('.second.current'),
+            $list = $this.closest('ul.list');
+        
+        $target.data('id', curId).find('span').text(curText);
+        $list.hide();
+    });        
+    
+    $('#ai_write_area .fix_r .primary').bind("click",onExcute)
+    $("#ai_write_area textarea").on('input', function() {
+        if ($(this).val() !== '' && $(this).val().trim() !== '') {
+            buttonRemoveDisable($('#ai_write_area .fix_r .primary'));
+        }
+        else {
+            buttonDisable($('#ai_write_area .fix_r .primary'));
+        }
+    });
+})
+
+function aiWrite() {
+    return $(function(){
+        changeTitle('AI Write');
+        $("#ai_write").css("display","block")
+        const writeType = $("#ai_write .custom_select .current span").text();
+        $('#main_select').css('display','flex');
+        $('#left_select').css('display','none');
+        const {status} = po_editor.getCursoredLocation();
+        if(status === 'caret_marking') {
+            buttonRemoveDisable($('#ai_write_area .fix_r .primary'));
+            $("#ai_write_area textarea").val(po_editor.getMarkedText().replaceAll(/(\v)/g, "\r\n"));
+            $("#ai_write .first_menu .current span").text(LanguagePack.AI_TOOLS_STR14);
+            $("#ai_write .first_menu a").attr('data-id', 'overwrites')
+            
+
+        } else {
+            $("#ai_write .first_menu .current span").text(LanguagePack.AI_TOOLS_STR13);
+            $("#ai_write .first_menu a").attr('data-id', 'create_text');
+
+        }
+        setPlaceHolder(writeType);
+        if($("#write_result").val() !== ''){
+            buttonRemoveDisable($('#write_result_box .form .btn_wrap .white'));
+            buttonRemoveDisable($('#write_result_box .form .btn_wrap .primary'));
+        }
+    })
+}
+
+async function getAiWrite(config) {
+    toastMessage(LanguagePack.AI_TOOLS_STR51);
+    successServiceMessage(LanguagePack.AI_TOOLS_STR51);
+    $("#write_result_box .form").append(loading);
+    let isStopped = false
+    buttonDisable($("#write_result_box .form .btn_wrap .white"));
+    buttonDisable($("#write_result_box .form .btn_wrap .primary"));
+    $("#ai_write_stop").css("display","none");
+    $("#ai_write_stop").off();
+    const data = await fetch(AI_WRITE,{
+        method:"POST",
+        body:JSON.stringify(config),
+        responseType: 'stream',
+     })
+    $("#write_result_box .form .ai_loading").remove();
+    const contentType = data.headers.get("content-type");
+        //response 값이 json으로 온다면 에러
+        if(contentType.includes("application/json")) {
+            const errorRes = await data.json();
+            if(errorRes.resultCode === 15002){
+                toastMessage(LanguagePack.AI_TOOLS_STR45);
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR45);
+            } else if(errorRes.resultCode === 100) {
+                po_editor.execute(null,'sessionError');
+            }
+        } else {
+            //text/stream으로 온다면 처리
+            const reader = data.body.getReader();
+            var enc = new TextDecoder('utf-8');
+            let isFull = false;
+            const { deductCredit } = serviceInfo.find(item=> item.serviceType === 'GPT3');
+            sendLogMessage(LogType.tracking.event, 'ai.write.credit', gFileFormat.toUpperCase(), 'ux', 'cl', $("#main_select .first_menu a").attr('data-id'), {cobj : {type : 'ai write', used_credit :  deductCredit}});
+            $("#ai_write_stop").css("display","block");
+            let result = "";
+            let resultLen = 0;
+            let isShifted = false;
+            let stremData = '';
+            while (true) {
+                if (isFull) break;
+                const { value, done } = await reader.read();
+                if (done) {
+                    break;
+                }
+                
+                //console.log(enc.decode(value), done);
+                stremData = enc.decode(value);
+                const stremArr = stremData.split('data:');
+                stremArr.forEach(str => {
+                    if(str.includes('id')){
+                        const id = str.split('"')[1];
+                        $("#ai_write_stop").on('click',function(e){
+                            e.preventDefault();
+                            // console.log("stop button");
+                            // reader.releaseLock();
+                            // data.body.cancel()
+                            writeStop(id)
+                            .then(res => {
+                                if(res.resultCode === 0){
+                                    //console.log('정지 완료');
+                                    buttonRemoveDisable($('#write_result_box .form .btn_wrap .white'));
+                                    buttonRemoveDisable($('#write_result_box .form .btn_wrap .primary'));
+                                    successServiceMessage(LanguagePack.AI_TOOLS_STR52);
+                                    $("#ai_write_stop").css("display","none");
+                                    isStopped = true;
+                                    return;
+                                }
+                            })
+                        });
+                    } else {
+                        const text = str.split('"');
+                        if(text.length > 1){
+                            if(text[1] !== '#\\n'){
+                                result += text[1].replaceAll(/(\\n)/g,"\r\n");
+                                //첫 줄 공백 제거
+                                if(result.substring(0,4) === '\r\n') result = result.replace("\r\n","");
+                                resultLen = lengthCheck(result);
+                                $("#write_result").html(result);
+                                $("#write_result_box .text_size span").text(resultLen);
+                            }
+                        }
+                    }
+                });
+            }
+            //console.log('result',result)
+            buttonRemoveDisable($('#write_result_box .form .btn_wrap .white'));
+            //console.log('result',result)
+            if(result !== ''){
+                if(isStopped) {
+                    successServiceMessage(LanguagePack.AI_TOOLS_STR52);
+                } else {
+                    successServiceMessage(LanguagePack.AI_TOOLS_STR48);
+                }
+                buttonRemoveDisable($('#write_result_box .form .btn_wrap .primary'));
+            } else {
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR43);
+            }
+            $("#ai_write_stop").css("display","none");
+        }
+
+    
+
+    return ;
+}
+
+
+function setPlaceHolder () {
+    const val = $("#main_select a.current span").text();
+    let placeholder = '';
+    if(val === LanguagePack.AI_TOOLS_STR13){
+        placeholder = LanguagePack.AI_TOOLS_STR07 + '\n' + LanguagePack.AI_TOOLS_STR08;
+    } else if(val === LanguagePack.AI_TOOLS_STR14){
+        placeholder = "이어 쓸 내용을 붙여넣거나 입력하세요. \n내용의 추가 정보를 제공해줍니다."
+    } else if(val === LanguagePack.AI_TOOLS_STR15){
+        placeholder = "요약 할 내용을 붙여넣거나 입력하세요. \n입력하신 내용을 좀 더 간결하게 요약합니다."
+    } else if(val === LanguagePack.AI_TOOLS_STR19){
+        placeholder = "번역이 필요한 내용을 붙여넣거나 입력하세요. \n선택 목록 내에 있는 언어에 한해서 번역을 지원합니다."
+    }
+    $("#ai_write_area textarea").attr("placeholder", placeholder)
+}
+
+function onExcute(e) {
+    const mainSelect = $("#main_select a.current span"); //메인 선택창
+    const optionSelect = $(".non_ic a.current span").text()  //option 창
+    const prompt = $("#ai_write_area textarea").val();
+    const option = $(`.non_ic .list span:contains('${optionSelect}')`).parent('a').attr('data-id');
+    e.preventDefault();
+    
+    const types = {
+        [LanguagePack.AI_TOOLS_STR13]: "CREATE_TEXT",
+        [LanguagePack.AI_TOOLS_STR14]: "CONTINUE_WRITING",
+        [LanguagePack.AI_TOOLS_STR15]: "SUMMARY",
+        [LanguagePack.AI_TOOLS_STR19]: "TRANSLATE",
+    }
+    //console.log(mainSelect.text(),types);
+    const config = {
+        prompt,
+        type:types[mainSelect.text()],
+    }
+    if(config.type === "TRANSLATE"){
+        config.option = option;
+    }  
+    getAiWrite(config);
+    
+}
+
+function copyWrite() {
+    const t = document.createElement("textarea");
+    document.body.appendChild(t);
+    t.value = $("#write_result").val();
+    t.select()
+    document.execCommand('copy');
+    document.body.removeChild(t);
+    successServiceMessage(LanguagePack.AI_TOOLS_STR50);
+}
+
+async function writeStop(id) {
+    const data = await fetch(AI_WRITE_STOP,{
+        method:"POST",
+        body:JSON.stringify({
+            eventId:id,
+            
+        })
+    }).then(res => {
+        //console.log(res)
+        return res.json()
+    });
+    return data
+}

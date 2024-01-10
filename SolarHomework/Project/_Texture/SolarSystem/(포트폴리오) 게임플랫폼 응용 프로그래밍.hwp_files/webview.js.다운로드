@@ -1,0 +1,235 @@
+
+$(function(){
+    var paths = location.pathname.split("/");
+    var type = docTitle ? docTitle.substring(docTitle.lastIndexOf(".") + 1).toLowerCase() : paths[paths.length - 1];
+    var agent = navigator.userAgent.toLowerCase();
+    var isNewDocument = (gMode == 'edit' && gVendorType == "po") ? true : false;    
+    var head = document.getElementsByTagName("head")[0];
+    var script = document.createElement("script");
+    script.type = 'text/javascript';
+    var isIE = (navigator.appName == 'Netscape' && agent.indexOf('trident') != -1) || (agent.indexOf("msie") != -1);
+    var supportFormat = [
+        {type : 'sheet', read : ['xlsx', 'xls', 'csv', 'sheet'], edit : ['xlsx']}
+        , {type : 'slide', read : ['pptx', 'ppt', 'slide'], edit : ['pptx']}
+        , {type : 'hwp', read : ['hwp', 'hwpx'], edit : ['hwp', 'hwpx']}
+        , {type : 'word', read : ['docx', 'doc', 'word'], edit : ['docx']}
+    ];
+
+    if(gUA.indexOf('mac') > -1){
+        //supportFormat = supportFormat.filter(function(obj){return obj.type != 'hwp'});
+        supportFormat[2].edit = [];
+        if(gMode === 'edit' && location.pathname.split("/").findIndex(item => item === 'hwp') !== -1){
+            var pathArr = location.pathname.split("/");
+            pathArr[pathArr.findIndex(item => item === 'hwp')] = 'word';
+            return location.href = pathArr.join("/")
+        }
+    }
+
+    var isEditMode = supportFormat.reduce((pre, cur) => {
+        if(cur.edit.includes(type)){
+            return pre = [...pre, {mode : 'edit', type : cur.type}];
+        } else {
+            if(cur.read.includes(type)){
+                return pre = [...pre, {mode : 'read', type : cur.type}];
+            }
+        }
+     return pre;
+    }, []);
+
+
+    var loadWebOffice = function(isEditMode = [{mode : '', type : ''}]){
+        var isMyDoc = (gUserId == _OwnerID) ? true : false;
+        var containerId = 'weboffice_container';
+        var editInfo = isEditMode[0];
+        var viewMode = '';
+        var ribborns = {};
+        var ribbonBarBanner = {};
+        var bannerLocale = LanguagePack.CURRENT_LOCALE;
+
+        if(!isNewDocument && (versionlist === 'true' || !isMyDoc || editInfo.mode == 'read' || gMode == 'view')){
+            viewMode = 'read';
+            $('#pageslide').show();            
+            if ($('#pageslide .comment').length > 0) {
+                var listTop = $('#pageslide .comment').offset().top + 95;
+            } else {
+                var listTop = null;
+            }            
+            $('aside.panel section.msg div.comment div.list.share').show().css('top', listTop);	
+            
+            window.onbeforeunload = null;
+        } else {
+            if(isNewDocument){
+                viewMode = 'edit';
+            } else {
+                viewMode = editInfo.mode;
+            }
+        }
+
+        if(viewMode == 'edit'){
+            ribborns = getFileConfig(editInfo.type, gUserLevel, gVendorType == 'whale' ? true : false);
+            if(gUserId){
+                if(gUserLevel == 'FREE'){
+                    ribbonBarBanner = {
+                        bannerImageUrl: `${CF_PATH}/assets/img/communication/whale/${bannerLocale}/login_basic.svg`,
+                        onClickBanner: function(){
+                            sendLogMessage(LogType.tracking.page, 'weboffice.click', '', null, null, 'banner2');
+                            window.open('/personal/office?upgrade=1', '_blank');
+                        }
+                    }
+                } else {
+                    ribbonBarBanner = {
+                        bannerImageUrl: `${CF_PATH}/assets/img/communication/whale/${bannerLocale}/logout_promotion.svg`,
+                        onClickBanner: function(){
+                            sendLogMessage(LogType.tracking.page, 'weboffice.click', '', null, null, 'banner3');
+                            po_editor.execute(null, 'installPC');
+                        }
+                    }
+                }            
+    
+            } else {
+                ribbonBarBanner = {
+                    bannerImageUrl : `${CF_PATH}/assets/img/communication/whale/${bannerLocale}/join.svg`,
+                    onClickBanner : function(){
+                        sendLogMessage(LogType.tracking.page, 'weboffice.click', '', null, null, 'banner1');
+                        po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN_STR, LanguagePack.KEYWORD_LOGIN);
+                    }
+                }
+    
+            }            
+        }
+
+        if(gMode == 'edit'){
+            $('#weboffice_container').css('width', 'calc( 100% )').show();
+            if(gfileID){
+                $('#editorComment').show();
+            }
+        } else {
+            if(editInfo.type == 'word' && originalFileName && originalFileName.substring(originalFileName.lastIndexOf(".") + 1).toLowerCase() == 'hwp'){
+                editInfo.type = 'hwp';
+            }
+            $('#weboffice_container').on("touchstart mouseover", function (e) {
+                if (!fullscreen) {
+                    if (!_onfoucs) {
+                        $('#webView div.menu ul.depth1').fadeIn('slow');
+                        _onfoucs = true;
+                    }
+                }
+            });
+        
+            $('#weboffice_container').on("touchstart mouseout", function (e) {
+                if (_onfoucs) {
+                    _onfoucs = false;
+                    COMMENT.hidemenufast();
+                }
+            });
+            $('#pageslide').show();
+            var listTop = $('#pageslide .comment').offset().top + 95;
+            $('aside.panel section.msg div.comment div.list.share').show().css('top', listTop);	
+            $('#weboffice_container').css('width', 'calc( 100% - 380px)' ).show();
+    
+        }
+        
+        if(location.href.includes('tesla')) viewMode = 'read'
+        
+        var config = {
+            documentType: editInfo.type,
+            viewMode: viewMode ,
+            hideTitleBar : true,
+            pixabaySearchAPIKey:'34799304-4cda9a7a22848bda0d85ded14',
+            locale : (local === 'ko_KR') ? 'ko' : 'en',
+            callback: {
+                onClickFileMenu: () => {
+                    editFileMenu.openFileMenu();
+                },
+                onChangeReadMode: () => {
+                    $(".ai_panel_frame").hide();
+                }
+            },
+            ...ribborns,
+            ribbonBarBanner
+        };
+
+        po_editor.init(config, containerId, gVendorType);
+
+        //if(!isNewDocument){
+            $(window).bind("resize", function(e, type) {
+                if(typeof type == 'undefined') return;
+                if ($commentData.getPanelWidth()) {
+                    $('#pageslide').show();
+                    if ($('#pageslide .comment').length > 0) {
+                        var listTop = $('#pageslide .comment').offset().top + 95;
+                    } else {
+                        var listTop = null;
+                    }            
+                    $('aside.panel section.msg div.comment div.list.share').show().css('top', listTop);	
+                    // $('#weboffice_container').css('width', 'calc( 100% - 400px)' );
+                } else {
+                    $('#weboffice_container').css('width', 'calc( 100%)');
+                }
+            });
+        //}
+
+        if(versionlist === 'false'){
+            // var urlSearchObj = new URLSearchParams(location.search);
+            // var isLocal = false;
+            // if(urlSearchObj.has('local')) isLocal = true;
+            // sendLogMessage(LogType.tracking.page, 'weboffice.doc.open', editInfo.type.toUpperCase(), null, null, viewMode, {"cobj" : {"newdoc" :  isNewDocument, "local" : isLocal}});
+        } else {
+            $('#weboffice_container').css('width', 'calc( 100% - 380px)' );
+        }
+    
+    };
+    var checkAvailability = function(){
+        if(isNewDocument) return true;
+        if(isMobile) return false;
+        if(type == 'sheet' || type == 'word' || type == 'slide'){
+            if(gUserId || gMode == 'view'){
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+    if(!isPCHOME && !isIE && !_chromeCast && isEditMode.length != 0 && checkAvailability()) {
+        setTitle(-1, false, docTitle);
+        loadWebOffice(isEditMode);
+    } else {
+        var jsSrc = '';
+        $('#contents').show();
+        switch(type){
+            case 'sheet':
+            case 'csv':
+            case 'xlt':
+            case 'xltx':
+            case 'xlsx':
+            case 'xls':
+                jsSrc = '/common/js/excel_v2.js';
+                break;
+            case 'pps':
+            case 'ppsx':
+            case 'pot':
+            case 'potx':
+            case 'slide':
+            case 'ppt':
+            case 'pptx':
+                jsSrc = '/common/js/ppt_v2.js'
+                break;
+            case 'doc':
+            case 'docx':
+            case 'txt':
+            case 'word':
+            case 'pdf':
+            case 'odt':
+            case 'ods':
+            case 'odp':     
+            case 'hwp':
+            case 'hwpx':           
+                jsSrc = '/common/js/word_v2.js'
+                break;                
+        }
+        script.src = CF_PATH + jsSrc;
+        head.appendChild(script);
+    }
+});

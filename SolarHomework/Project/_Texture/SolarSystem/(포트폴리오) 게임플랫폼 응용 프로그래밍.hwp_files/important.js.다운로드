@@ -1,0 +1,51 @@
+const important = (function(){
+    
+    function getStarList() {
+        $(".favorite_list .list").remove();
+
+        popcorn.getFavoriteList(function(res) {
+            if(res.resultCode === 0) {
+                const $target = document.querySelector(".favorite_list");
+                console.log($target);
+                if(res.list.length > 0){
+                    $(".favorite_list .no_doc").hide();
+                    const fileList =res.list.map((item) => {
+                        return {
+                            ...item,
+                            fullName: item.ownerName || gFullName
+                        }
+                    })
+                    new ListItem({$target, initialState : fileList});
+                } else {
+                    $(".favorite_list .no_doc").show()
+                }
+            } else if(res.resultCode === 100) {
+                po_editor.execute(null,'sessionError');
+            }
+    
+        }, function(error){console.log(error)})
+    }
+
+    const eventBinding = () => {
+        $('#openDoc .favorite').on("click", function(e){
+            e.preventDefault();
+            $(".open_type_menu").children("a").removeClass("on");
+            $(this).addClass("on");
+            $(".list_document").children(".file_list").hide();
+            $(".list_document .favorite_list").show();
+            getStarList();
+        });
+    }
+
+    const init = () => {
+        eventBinding()
+    }
+    return {
+        init
+    }
+})()
+
+$(function(){  
+    if(gUserId)  
+        important.init();
+})

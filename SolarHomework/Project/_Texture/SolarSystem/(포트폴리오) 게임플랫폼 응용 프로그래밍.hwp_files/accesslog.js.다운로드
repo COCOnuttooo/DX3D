@@ -1,0 +1,124 @@
+var leveltoNum = {
+	"FREE" : 1,
+	'PAID1' : 2,
+	'PAID2' : 3,
+	'BUSINESS' : 4,
+	'AMAZONVARA' : 5,
+	'ORANGE_FREE' : 6,
+	'ORANGE_PREMIUM' : 7,
+	'SMART' : 8,
+	'PRO' : 9
+};
+
+function getClientType(){
+	var type = {
+		'os' : null,
+		'client' : null
+	};
+	
+	var ua = typeof gUA != 'undefined' ? gUA.toLowerCase() : navigator.userAgent.toLowerCase();
+	
+	if (ua.indexOf("polarisofficelink") >= 0){
+		if(ua.indexOf("mac") >= 0)
+			type.client = "MacS";
+		else
+			type.client = "PCA";
+	} else if (ua.indexOf("polarispcoffice") >= 0  || ua.indexOf('podialog') >= 0){
+		type.client = "PCOffice";
+	} else if(ua.indexOf("macdialog") >= 0){
+		type.client = "MacOffice";
+	} else {
+		type.client = "Web";
+	}	
+	
+	if (ua.indexOf("mac") >= 0){
+		type.os = "macos";
+	} else if (ua.indexOf('ipad') >= 0 || ua.indexOf('iphone') >= 0) {
+		type.os = "ios";
+	} else if (ua.indexOf('android') >= 0){
+		type.os = "android";
+	} else {
+		type.os = "windows";
+	}
+	
+	return type;
+}
+
+function makeAccessLog(logtype){
+	var var1;
+	var type = getClientType();
+	switch(logtype){
+	case "obt_popup_open":
+		var1 = "t:p|dp:PCOfficeIntro|cobj_event:obt|cobj_entry:popup|cobj_osType:" + type.os + "|cobj_clientType:" + type.client; 
+		break;
+	case "obt_popup_download":
+		var1 = 't:p|dp:OBT|cobj_event:obt|cobj_entry:popup|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;  
+		break;
+	case "banner_pricing":
+		var1 = 't:p|dp:Pricing|cobj_event:obt|cobj_entry:banner|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;
+		break;
+	case 'banner_obt':
+		var1 = 't:p|dp:OBT|cobj_event:obt|cobj_entry:banner|cobj_osType:' + type.os + '|cobj_clientType:' + type.client; 
+		break;
+	case 'file_open':
+		var1 = 't:p|dp:OBT|cobj_event:obt|cobj_entry:filelist|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;  
+		break;
+	case 'webview_open':
+		var1 = 't:p|dp:OBT|cobj_event:obt|cobj_entry:webview|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;   
+		break;
+	case 'download_obt':
+		var1 = 't:p|dp:OBT|cobj_event:obt|cobj_entry:download|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;   
+		break;
+	case 'appmenu_obt':
+		var1 = 't:p|dp:OBT|cobj_event:obt|cobj_entry:appmenu|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;   
+		break;
+	case 'tutorial_download':
+		var1 = 't:e|dp:Download|cobj_event:obt|cobj_entry:tutorial|cobj_action:download|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;   
+		break;
+	case 'grand_open_popup':
+		var1 = 't:p|dp:GrandOpen|cobj_event:go|cobj_entry:popup|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;    
+		break;
+	case 'center_banner_download':
+		var1 = 't:p|dp:Download|cobj_event:go|cobj_entry:centerBanner|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;    
+		break;
+	case 'center_banner_Pricing':
+		var1 = 't:p|dp:Pricing|cobj_event:go|cobj_entry:centerBanner|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;    
+		break;
+	case 'side_banner_pricing':
+		var1 = 't:p|dp:Pricing|cobj_event:go|cobj_entry:sideBanner|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;    
+		break;
+	case 'grand_open_download':
+		var1 = 't:p|dp:OBT|cobj_event:go|cobj_entry:popup|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;    
+		break;
+	case 'download_newdoc':
+		var1 = 't:p|dp:FileBrowser|cobj_event:go|cobj_entry:newdoc|cobj_action:download|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;    
+		break;
+	case 'download_fileopen':
+		var1 = 't:p|dp:FileBrowser|cobj_event:go|cobj_entry:fileopen|cobj_action:download|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;    
+		break;
+	case 'download_upload':
+		var1 = 't:p|dp:FileBrowser|cobj_event:go|cobj_entry:upload|cobj_action:download|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;    
+		break;
+	case 'download_go':
+		var1 = 't:e|dp:Download|cobj_event:go|cobj_entry:download|cobj_action:download|cobj_osType:' + type.os + '|cobj_clientType:' + type.client;    
+		break;
+	}
+	
+	if(gUserId){
+		var1 += "|ul=" + leveltoNum[gUserLevel] + "|uid=" + gUserId; 
+	}
+	return var1;
+}
+
+function sendAccessLog(log){
+
+	$.ajax({
+		type: "GET",
+		url: "/api/2/analysis/log/access?var1=" + log,
+		dataType:"json",
+		contentType:"application/json",
+		success: function(res){
+		
+		}
+	});
+}

@@ -1,0 +1,259 @@
+﻿
+$('document').ready(function(){
+	if($("#container aside.account").length) {
+		initializeAccountEvents();
+		initializeAccountTab();
+	}
+});
+
+var pushhome = false;
+function initializeAccountEvents() {
+	$("#container aside .lnb li").bind("click", "a", tabMove2);
+
+	window.onpopstate = function(event) {
+		if (event.state != null) {
+			consoleLogMessage("pop:" + event.state.container);
+			var id = event.state.container;
+
+			if(id == 'info' || id == 'profile') {
+				if(!pushhome) {
+					$('#tab1').trigger('click');
+				}
+			} else if(id == 'modify' || id == 'setting') {
+				if(!pushhome) {
+					$('#tab2').trigger('click');
+				}
+			} else if(id == 'payment' || id == 'purchase') {
+				if(!pushhome) {
+					$('#tab3').trigger('click');
+				}
+			} else if(id == 'binding') {
+				if(!pushhome) {
+					$('#tab4').trigger('click');
+				}
+			} else if(id == 'home') {
+				history.go(-2);
+				pushhome = true;
+			} else if(id == 'coupon') {
+				if(!pushhome) {
+					$('#tab7').trigger('click');
+				}
+			} else if(id == 'credit'){
+				if(!pushhome) {
+					$('#tab9').trigger('click');
+				}
+			} else {
+				if(!pushhome) {
+					$('#tab1').trigger('click');
+				}
+			}
+			if(pushhome) {
+				history.go(-1);
+			}
+		}
+	};
+
+	historyChange2();
+}
+
+function initializeAccountTab() {
+	if(location.hash) {
+		var target = location.hash.split('#')[1];
+
+		if(target == 'info' || target == 'profile') {
+			target = 'profile';
+			$('#tab1').trigger('click');
+		} else if(target == 'modify' || target == 'setting') {
+			target = 'setting';
+			$('#tab2').trigger('click');
+		} else if(target == 'payment' || target == 'purchase') {
+			target = 'purchase';
+			$('#tab3').trigger('click');
+		} else if(target == 'binding') {
+			$('#tab4').trigger('click');
+		} else if(target == 'paygate') {
+			$('#tab6').trigger('click');
+		} else if(target == 'coupon') {
+			$('#tab7').trigger('click');
+		} else if(target == 'credit') {
+			$('#tab9').trigger('click');
+		} else {
+			$('#tab1').trigger('click');
+		}
+		pushState('home');
+		pushState(target);
+	} else {
+		pushState('home');
+		$('#tab1').trigger('click');
+	}
+}
+
+function tabMove2(e) {
+	commonPreventEvent(e);
+	var jCurrent;
+	var id;
+
+	if($(e.target).is("li")) {
+		jCurrent  = $(e.target);
+	} else {
+		jCurrent = $(e.target).parent();
+	}
+	id = jCurrent.attr("id");
+	if(id == 'tab5'){
+		return;
+	}
+
+	jCurrent.parents(".account").find(".on").removeClass("on");
+	$('.contents_wrap div.contents.on').removeClass('on');
+
+	jCurrent.addClass("on");
+
+	setTimeout(function() {
+		setTitle(LanguagePack.KEYWORD_MYINFO, false);
+	}, 500);
+
+	if (id == "tab1") {
+		$('.contents_wrap div.contents.myInfo').addClass('on');
+	} else if (id == "tab2") {
+		$('.contents_wrap div.contents.changeInfo').addClass('on');
+		return;
+	} else if (id == "tab3") {
+		$('.contents_wrap div.contents.primumInfo').addClass('on');
+		return;
+	} else if (id == "tab4") {
+		$('.contents_wrap div.contents.bindingInfo').addClass('on');
+		return;
+	} else if (id == "tab6") {
+		$('.contents_wrap div.contents.reRegist').addClass('on');
+		return;
+	} else if (id == "tab7") {
+		$('.contents_wrap div.contents.coupon').addClass('on');
+		return;
+	} else if (id == "tab9") {
+		$('.contents_wrap div.contents.credit').addClass('on');
+		return;
+	}
+
+}
+
+function displayToobar(e) {
+	if (displaytoolbarheader) {
+		if (e.stopPropagation) e.stopPropagation();
+	}
+}
+
+function displayToobarInfo() {
+	if(!displaytoolbarheader) {
+		$("#toolbarheader_userinfo").show();
+		displaytoolbarheader = true;
+		$("body").one('touchend click',function(e){
+			if(e.type == 'click') {
+				if(displaytoolbarheader) {
+					displaytoolbarheader = false;
+					$("#toolbarheader_userinfo").hide();
+				}
+			} else {
+				setTimeout(function(){
+					if(displaytoolbarheader) {
+						displaytoolbarheader = false;
+						$("#toolbarheader_userinfo").hide();
+					}
+				}, 500);
+			}
+		});
+	} else {
+		$("#toolbarheader_userinfo").hide();
+		displaytoolbarheader = false;
+	}
+}
+
+function showAddreesDiallog(e) {
+	if(newshare == 'true') {
+		onContactShow(null, null, 'address', null);
+	}
+
+}
+
+/******************** goback *****************************************/
+function pushStateId(id) {
+    if (("#" + id) != document.location.hash) {
+        pushState(id);
+    }
+}
+
+function pushState(id) {
+	if (history.pushState) {
+		var containerObject = {
+				container : id
+		};
+		window.history.pushState(containerObject, "title", "#" + id);
+	}
+}
+
+function historyChange() {
+	if (!history.pushState) {
+		$(window).hashchange();
+		var push = false;
+		History.prototype.pushState = function(dataObject, key, value) {
+			var title = document.title;
+			location.hash = value;
+			document.title = title;
+			push = true;
+		};
+		$(window).hashchange(function() {
+			if(push) {
+				push = false;
+				return;
+			}
+			var id = location.hash.split("#")[1];
+			if(id == 'drive?trashCan') {
+				$('#tab5').trigger('click');
+			} else if(id == 'recent') {
+				$('#tab4').trigger('click');
+			} else if(id == 'active') {
+				$('#tab1').trigger('click');
+			} else if(id.lastIndexOf('version?') != -1) {
+					$('#tab6').trigger('click');
+			} else if(id.lastIndexOf('drive?search') != -1) {
+				$('#tab7').trigger('click');
+			} else {
+				$('#tab3').trigger('click');
+			}
+		});
+	}
+}
+
+function historyChange2() {
+	if (!history.pushState) {
+		$(window).hashchange();
+		var push = false;
+		History.prototype.pushState = function(dataObject, key, value) {
+			var title = document.title;
+			location.hash = value;
+			document.title = title;
+			push = true;
+		};
+		$(window).hashchange(function() {
+			if(push) {
+				push = false;
+				return;
+			}
+			var id = location.hash.split("#")[1];
+			if(id == 'info' || id == 'profile') {
+				$('#tab1').trigger('click');
+			} else if(id == 'modify' || id == 'setting') {
+				$('#tab2').trigger('click');
+			} else if(id == 'payment' || id == 'purchase') {
+				$('#tab3').trigger('click');
+			} else if(id == 'binding') {
+				$('#tab4').trigger('click');
+			} else if(id == 'home'){
+				history.go(-2);
+			} else if(id == 'credit'){
+				$('#tab9').trigger('click');
+			} else {
+				$('#tab1').trigger('click');
+			}
+		});
+	}
+}

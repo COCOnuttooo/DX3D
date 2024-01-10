@@ -1,0 +1,1480 @@
+(function ($) {
+	var poTree = {
+		'init': function (options) {
+			var settings;
+			var $this = this;
+			if (!$this.length) {
+				return;
+			}
+			layout.dim.create();
+
+			if ($this.hasClass('init')) {
+				settings = $.extend({
+					'selector': {
+						'treefolder': null,
+						'treefolderSub': null,
+						'selected': null,
+						'close': null
+					},
+					'data': [],
+					'type': ''
+				}, options);
+
+				var handle = {
+					'create': layout.create,
+					'createRoot': layout.treeFolder.createRoot,
+					'createSub': layout.treeFolder.createSub,
+					'sort': layout.sort
+				};
+				settings.handle = $.extend(settings.handle, handle);
+
+				$this.data('settings', settings);
+				$this.removeClass('init');
+				settings.handle.create.apply($this);
+			} else {
+				$this.children('.ConfirmtPopup_external').css('z-index', layout.dim.getZindex() + 1).children().addClass('other');
+				var settings = $this.data('settings');
+				settings.syncCb = null;
+				settings = $.extend(settings, options);
+
+			}
+			if (!options.parentId) {
+				settings.parentId = null;
+			}
+			if (settings.type == 'move') {
+				$this.children().children().children('h1').text(LanguagePack.KEYWORD_MOVE);
+			} else if (settings.type == 'copy') {
+				$this.children().children().children('h1').text(LanguagePack.KEYWORD_COPY);
+			} else if (settings.type == 'save') {
+				$this.children().children().children('h1').text(LanguagePack.KEYWORD_FILESAVED);
+			}
+			$this.show();
+			if (settings.nosync) {
+				if (listData.rootid) {
+					$('#poTree').poTree('initFodlerFile');
+				}
+			} else {
+				if (listData.revision) {
+					listData.jsonSync(http.SyncSuccess, listData.errorSync);
+				} else {
+					listData.jsonGetList(null, http.GetListRootSuccess, null);
+				}
+			}
+
+		},
+		'initFodlerFile': function () {
+			var $this = $(this);
+			var settings = $this.data('settings');
+
+			settings.selector.treefolder.children().remove();
+			settings.handle.createRoot.apply($this, [listData.rootid]);
+
+			var index = listData.getList(listData.rootid);
+			if (index != -1) {
+				var info = {
+					'id': listData.rootid,
+					'selector': settings.selector.treefolderSub
+				};
+				var sort = {
+					'type': 'name',
+					'reverse': 1
+				};
+				sort.current = 'root';
+				var arr = common.sort(sort, listData.getItemData('DIR', index));
+				settings.handle.createSub.apply($this, [info, arr, {
+					'type': 1
+				}]);
+
+				settings.selector.treefolder.children('span').children('a').children('img').attr('src', common.getImg('rclose'));
+			}
+
+			settings.selector.selected = settings.selector.treefolder.children('dt').children('a');
+			settings.selector.selected.trigger('click');
+
+		},
+		'close': function () {
+			var $this = $(this);
+			if (!$this.hasClass('init') && $this.is(':visible')) {
+				var settings = $this.data('settings');
+				settings.selector.close.trigger('click');
+			}
+		},
+		'createList': function (id) {
+			var $this = $(this);
+			if ($this.hasClass('init')) {
+				return;
+			}
+			var index = listData.getList(id);
+			var type = '';
+			var sort = {
+				'type': 'name',
+				'reverse': 1
+			};
+			if (id == listData.rootid) {
+				sort.current = 'root';
+			}
+			if (index != -1) {
+				var settings = $this.data('settings');
+				var $li = settings.selector.treefolderSub.find('li#potree_sub_' + id);
+				if ($li.length) {
+					if ($li.hasClass('t')) {
+						type = 't';
+					} else if ($li.hasClass('i')) {
+						type = 'i';
+					}
+
+					var info = {
+						'id': id,
+						'selector': $li.children('ul')
+					};
+					var arr = common.sort(sort, listData.getItemData('DIR', index));
+
+					settings.handle.createSub.apply($this, [info, arr, {
+						'type': 1
+					}]);
+					if (!$li.hasClass('close')) {
+						if (!arr.length) {
+							type += 'normal';
+						} else {
+							type += 'open';
+						}
+					}
+					$li.children('span').children('a').children('img').attr('src', common.getImg(type));
+				}
+			}
+		},
+		'sync': function () {
+			listData.jsonSync(http.SyncSuccess, listData.errorSync);
+		},
+		'syncEvent': function (data, popupClose) {
+			var $this = $(this);
+			if (popupClose) {
+				$this.poTree('close');
+			}
+
+			var eventinfo = data;
+			if (eventinfo.divide) {
+				var result = function (e) {
+					var eventinfo = e.data.param.userData;
+					eventinfo.cancel = true;
+					defaultAlertCB(e);
+				};
+				popup = syncfn.createProgressPopup({
+					'eventinfo': eventinfo,
+					'cb': result
+				});
+				eventinfo.popup = popup;
+			}
+			listData.jsonSync(function (res) {
+				if (res.resultCode) {
+					if (res.resultCode == Enum.sync.SHAREDFILE_MOVE_FAIL) {
+						var error = [];
+						error.push({
+							'event': 'move',
+							'msg': LanguagePack.MOVEFFAILEDITEM2,
+							'cb': function (e) {
+								defaultAlertCB(e);
+							}
+						});
+						syncfn.erroMsgPopup(error[0]);
+					} else if (res.resultCode == Enum.sync.MAXSTORAGEEXCESS) {
+						var error = {
+							'type': '',
+							'messages': []
+						};
+						error.type = 6;
+						error.messages.push(LanguagePack.POPUP_CLOUDSTORAGESHORTAGE(gUserLevel));
+						var popup = new PopupMessage(PopupType.NOTICE2, null, null, error, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+						popup.create();
+						popup.show();
+					} else if (res.resultCode == Enum.unknown.UNKNOWN2) {
+						var error = [];
+						error.push({
+							'event': 'move',
+							'msg': LanguagePack.UNKNOWNERROR,
+							'cb': function (e) {
+								defaultAlertCB(e);
+							}
+						});
+						syncfn.erroMsgPopup(error[0]);
+					} else {
+						CheckResult(null, res);
+					}
+					return;
+				}
+				var settings = $this.data('settings');
+				if (!popupClose) {
+					var $selected = settings.selector.selected.parent();
+					var $parent;
+					var id;
+					var isRoot = false;
+					if ($selected.is('dt')) {
+						id = $selected.attr('id').split('potree_')[1];
+						settings.selector.treefolderSub.children().remove();
+						$parent = settings.selector.treefolderSub;
+						isRoot = true;
+					} else {
+						id = $selected.attr('id').split('_')[2];
+						$selected.children('ul').children().remove();
+						$parent = $selected.children('ul');
+					}
+
+					var index = listData.getList(id);
+					if (index != -1) {
+						var info = {
+							'id': id,
+							'selector': $parent
+						};
+						var type = '';
+						var sort = {
+							'type': 'name',
+							'reverse': 1
+						};
+						if (isRoot) {
+							sort.current = 'root';
+						}
+						var arr = common.sort(sort, listData.getItemData('DIR', index));
+
+						settings.handle.createSub.apply($this, [info, arr, 1]);
+
+						if ($selected.hasClass('t')) {
+							type = 't';
+						} else if ($selected.hasClass('i')) {
+							type = 'i';
+						}
+
+						if (!arr.length) {
+							type += 'normal';
+						} else {
+							type += 'open';
+						}
+						settings.selector.selected.children('a').children('img').attr('src', common.getImg(type));
+					} else {
+						$this.poTree('initFodlerFile');
+					}
+					if (settings.syncCb) {
+						settings.syncCb.call(this, null, id);
+					}
+				}
+
+				if (eventinfo.popup) {
+					syncfn.setProgress(eventinfo.popup, eventinfo.current / eventinfo.total * 100);
+				}
+				if (!eventinfo.resultTotal) {
+					eventinfo.resultTotal = 0;
+					eventinfo.resultSuccessTotal = 0;
+					eventinfo.errorCode = [];
+				}
+				var number = 0;
+				for (var i = 0; i < res.resultList.length; i++) {
+					if (!res.resultList[i].resultCode) {
+						eventinfo.resultSuccessTotal++;
+						//GMX-7361 restore hloding...
+						/*if(settings.type == 'move' && (res.resultList[i].copiedFileIdByMove || res.resultList[i].referenceId)) {
+							if(!eventinfo.restore) {
+								eventinfo.restore = {
+										'event' : [], 
+										'count' : 0,
+										'callback' : null 
+								};
+							}
+							var newData = res.resultList[i];
+							
+							if(res.resultList[i].copiedFileIdByMove) {
+								eventinfo.restore.event.push({ 
+									'eventId' : number++,
+									'eventType': 'UPDATE',
+									'fileId': newData.fileId,							
+									'fileType' : newData.fileType,
+									'lastModified' : newData.lastModified,
+									'lastRevision' : newData.revision,
+									'name' : (newData.targetName ? newData.targetName : newData.nameOriginal),
+									'parentId' : settings.data[0].parentId,
+									//'path' : deletedPath,
+									'hide' : 'RELEASE',
+									'size' : newData.size	
+								});
+								
+								eventinfo.restore.event.push({ 
+									'eventId' : number++,
+									'eventType': 'UPDATE',
+									'fileId': res.resultList[i].copiedFileIdByMove,							
+									'fileType' : newData.fileType,
+									'lastModified' : newData.lastModified,
+									'lastRevision' : newData.revision,
+									'name' : (newData.targetName ? newData.targetName : newData.nameOriginal),
+									'parentId' : settings.data[0].parentId,
+									//'path' : deletedPath,
+									'hide' : 'SET',
+									'size' : newData.size	
+								});
+								
+								eventinfo.restore.event.push({ 
+									'eventId' : number++,
+									'eventType': 'DELETE',
+									'fileId': res.resultList[i].copiedFileIdByMove,							
+									'fileType' : newData.fileType,
+									'lastModified' : newData.lastModified,
+									'lastRevision' : newData.revision,
+									'name' : (newData.targetName ? newData.targetName : newData.nameOriginal),
+									'parentId' : settings.data[0].parentId,
+									//'path' : deletedPath,
+									'hide' : 'NONE',
+									'size' : newData.size	
+								});
+							} else {
+								eventinfo.restore.event.push({ 
+									'eventId' : number++,
+									'eventType': newData.eventType,
+									'fileId': res.resultList[i].fileId,							
+									'fileType' : newData.fileType,
+									'lastModified' : newData.lastModified,
+									'lastRevision' : newData.revision,
+									'name' : (newData.targetName ? newData.targetName : newData.nameOriginal),
+									'parentId' : settings.data[0].parentId,
+									//'path' : deletedPath,
+									'size' : newData.size	
+								});
+							}
+							eventinfo.restore.count++;
+							
+							if(settings.syncCb) {
+								eventinfo.restore.callback = function(res, eventinfo) {
+									var parentId;
+									if(res.resultList.length) {
+										parentId = res.resultList[0].parentId;
+									}
+									settings.syncCb.call(this, parentId, parentId, {'res' : res, 'eventinfo' : eventinfo});
+								}; 
+							} 
+						}*/
+					} else {
+						eventinfo.errorCode.push({
+							'code': res.resultList[i].resultCode
+						});
+					}
+
+					eventinfo.resultTotal++;
+				}
+				if (eventinfo.current == eventinfo.total) {
+					syncfn.completeMsg(eventinfo);
+				}
+				if (settings.syncCb) {
+					if (popupClose) {
+						if (settings.type == 'move') {
+							settings.syncCb.call(this, eventinfo.parentid, settings.parentId, {
+								'res': res,
+								'eventinfo': eventinfo
+							});
+						} else {
+							settings.syncCb.call(this, eventinfo.parentid, settings.parentId);
+						}
+					}
+				}
+			}, null, data);
+		},
+		'saveEvent': function (data, popupClose) {
+			var $this = $(this);
+			if (popupClose) {
+				$this.poTree('close');
+			}
+			listData.jsonSave(function (res) {
+				syncfn.completeSaveMsg(res, data);
+			}, function () {
+				var popupMessage = new Array();
+				popupMessage[0] = LanguagePack.POPUP_FAILTOSAVEBYUNKNOWNERRORRETRYAGAIN(_folderName);
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+					popupMessage: popupMessage
+				}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.show();
+			}, data);
+		}
+	};
+
+	var layout = {
+		'dim': {
+			'create': function () {
+				var $dim = $('#dim');
+				if (!$dim.length) {
+					$('body').append('<div id="dim" class="dim"></div>');
+					return;
+				} else {
+					$dim.css('z-index', parseInt($dim.css('z-index')) + 1);
+				}
+			},
+			'remove': function () {
+				var $dim = $('#dim');
+				var zindex = $dim.css('z-index');
+				if (zindex == '9') {
+					$dim.remove();
+				} else {
+					$dim.css('z-index', parseInt($dim.css('z-index')) - 1);
+				}
+			},
+			'getZindex': function () {
+				var $dim = $('#dim');
+				return parseInt($dim.css('z-index'));
+			}
+		},
+		'create': function () {
+			var $this = this;
+			var settings = $this.data('settings');
+			var $wrapper = $('<div />', {
+				'class': 'ConfirmtPopup_external',
+				'css': {
+					'width': 'width:100%',
+					'margin-top': -205 + 'px',
+					'z-index': layout.dim.getZindex() + 1
+				}
+			});
+
+			$wrapper.bind('selectstart', function () {
+				if ((event.target || event.srcElement).nodeName !== 'INPUT') return false;
+			});
+
+			var $popup = $('<div />', {
+				'class': 'popup tree other',
+				'css': {
+					'width': 362 + 'px',
+					'margin': 'auto'
+				}
+			});
+			var $h1 = $('<h1 />', {
+				'text': LanguagePack.KEYWORD_TITLE_COPYFILEDEFAULT
+			});
+
+			var treeFolderName = 'tree_folder';
+			if (gUserLevel == 'ORANGEFREE' || gUserLevel == 'ORANGEPREMIUM' || gUserLevel == 'ORANGEPRO' || gUserLevel == 'UCCPREMIUM') {
+				treeFolderName += ' orange';
+			}
+			var $treefolder = $('<dl />', {
+				'class': treeFolderName
+			});
+
+			var $ok = $('<p />', {
+				'class': 'btn'
+			});
+			var $okbtn = $('<a />', {
+				'href': '#',
+				'text': LanguagePack.KEYWORD_CONFIRM,
+				'click': events.ok
+			});
+
+			var $cancelbtn = $('<a />', {
+				'href': '#',
+				'text': LanguagePack.KEYWORD_CANCEL,
+				'click': events.close
+			});
+			$ok.append($okbtn).append(' ').append($cancelbtn);
+
+			var $newfolder = $('<span />', {
+				'class': 'btn_newFolder'
+			});
+			var $newfoldera = $('<a />', {
+				'href': '#',
+				'alt': LanguagePack.KEYWORD_NEWFOLDER,
+				'text': LanguagePack.KEYWORD_NEWFOLDER,
+				'click': events.newfolder.create
+			});
+
+			$newfolder.append($newfoldera);
+
+			var $close = $('<span />', {
+				'class': 'btn_close'
+			});
+			var $closebtn = $('<a />', {
+				'href': '#',
+				'html': '<img src="' + CF_PATH + '/maxage1/common/img/popup_button_close.svg" alt="Close">',
+				'click': events.close
+			});
+			$close.append($closebtn);
+
+			$popup.append($h1).append($treefolder).append($ok).append($newfolder).append($close);
+
+			$this.append($wrapper.append($popup));
+
+			settings.selector.treefolder = $treefolder;
+			settings.selector.close = $closebtn;
+
+		},
+		'treeFolder': {
+			'createRoot': function (id) {
+				var $this = this;
+				var settings = $this.data('settings');
+				var $root = $('<dt />', {
+					'id': 'potree_' + id
+				});
+
+				var $rootbtn = $('<a />', {
+					'href': '#',
+					'text': LanguagePack.KEYWORD_DRIVE(gUserLevel),
+					'click': events.treefolder.show
+				});
+				$root.append($rootbtn);
+
+				var $ul = $('<ul />');
+				var $sub = $('<dd />').append($('<table />').append($('<tbody />').append($('<tr />').append($('<td />').append($ul)))));
+
+				settings.selector.treefolder.append($root).append($sub);
+				settings.selector.treefolderSub = $ul;
+			},
+			'createSub': function (info, list, extra) {
+				var $this = this;
+				var settings = $this.data('settings');
+				var $confirmBtn = settings.selector.treefolder.next('.btn').children().first();
+				var $parent = info.selector;
+				var isRoot = false;
+				var $first;
+
+				if ($confirmBtn.hasClass('newfolder'))
+					$confirmBtn.removeClass('newfolder');
+
+				if (extra.type == 1) {
+					$parent.children().remove();
+				}
+				if (info.id == listData.rootid) {
+					isRoot = true;
+				}
+				for (var i = 0; i < list.length; i++) {
+					var data = list[i];
+					var img;
+
+					var t = '';
+					var str = '';
+					var name = data.fileName;
+					if (data.isTeamFolder) {
+						t = 't';
+					} else {
+						if (isRoot && data.fileName.toLowerCase() == 'inbox') {
+							t = 'i';
+							name = 'Inbox';
+						}
+					}
+					img = common.getImg(t + 'close');
+
+					var $li = $('<li id="potree_sub_' + data.fileId + '" class="close ' + t + '">' +
+						'<span>' +
+						'<a href="#">' +
+						'<img src="' + img + '">' +
+						'</a>' +
+						'<em>' + name + '</em>' +
+						'</span>' +
+						'<ul></ul>' +
+						'</li>');
+
+					$li.data('data', data);
+					var $a = $li.children('span').children('a');
+					$li.bind('click', events.treefolder.show);
+					$a.bind('click', events.treefolder.toogle);
+
+					if ($first) {
+						$first.after($li);
+					} else {
+						$first = $li;
+					}
+
+					if (extra.type == 2) {
+						var $lis = $parent.children('li');
+						if ($lis.length && extra.index <= $lis.length) {
+							if (extra.index == $lis.length) {
+								if ($lis.last().attr('id').split('_')[2] != info.id) {
+									$lis.last().after($li);
+								}
+							} else {
+								if ($lis.eq(extra.index).attr('id').split('_')[2] != info.id) {
+									$lis.eq(extra.index).before($li);
+								}
+							}
+						} else {
+							$parent.append($li);
+							var $pli = $parent.parent('li');
+							var type = '';
+							if (!$pli.hasClass('close')) {
+								if ($pli.hasClass('t')) {
+									type = 't';
+								} else if ($pli.hasClass('i')) {
+									type = 'i';
+								}
+								type += 'open';
+								$pli.children('span').children('a').children('img').attr('src', common.getImg(type));
+							}
+						}
+					}
+					/*$li.show('fast');*/
+				}
+				if (extra.type != 2) {
+					if ($first) {
+						$parent.append($first);
+					}
+				}
+			}
+		}
+	};
+
+	var events = {
+		'newfolder': {
+			'create': function (e) {
+				if (e.preventDefault) e.preventDefault();
+				var $this = $(this);
+				var $root = $(this).parents('#poTree');
+				var settings = $root.data('settings');
+				var $selected = settings.selector.selected.parent();
+				var $parent;
+				var isTeamFolder = false;
+				var $li = settings.selector.treefolderSub.find('li.add');
+				var $confirmBtn = settings.selector.treefolder.next('.btn').children().first();
+				if ($li.length) {
+					$li.remove();
+				}
+
+				if (!$confirmBtn.hasClass('disabled') && !$confirmBtn.hasClass('newfolder'))
+					$confirmBtn.addClass('newfolder');
+
+				if ($selected.is('dt')) {
+					$parent = settings.selector.treefolderSub;
+				} else {
+					$parent = $selected.children('ul');
+					if ($selected.hasClass('close')) {
+						$selected.children('span').children('a').trigger('click');
+					}
+
+					isTeamFolder = $parent.hasClass('t') ? true : false;
+				}
+				var t;
+				if (isTeamFolder) {
+					t = 't';
+					img = common.getImg('tnormal');
+				} else {
+					t = 'd';
+					img = common.getImg('normal');
+				}
+
+				$li = $('<li />', {
+					'class': 'add ' + t,
+					'css': {
+						'display': 'none'
+					},
+				});
+
+				$li.bind('click', function (e) {
+					if (e.preventDefault) e.preventDefault();
+					if (e.stopPropagation) e.stopPropagation();
+				});
+				var $span = $('<span />');
+
+				if ($selected.is('dt')) {
+					id = $selected.attr('id').split('potree_')[1];
+				} else {
+					id = $selected.attr('id').split('_')[2];
+				}
+				var index = listData.getList(id);
+				var path = '';
+
+				if (index != -1) {
+					path = listData.alist[index].myPath + listData.alist[index].fileName + '/';
+				}
+
+				var name = LanguagePack.KEYWORD_NEWFOLDER;
+				/* GMX-3425 */
+				if (syncfn.verifyname({
+						'path': path,
+						'name': '',
+						'fileType': "DIR"
+					})) {
+					name = '';
+				}
+
+				var $input = $('<input />', {
+					'value': name,
+					'keyup': events.newfolder.keyup,
+					'blur': events.newfolder.blur
+				});
+
+				$li.append($span.append('<img src="' + img + '">').append($input));
+
+				var $child = $parent.children();
+				if ($child.length) {
+					$child.first().before($li);
+				} else {
+					$parent.append($li);
+				}
+				$li.show('fast');
+
+				$input.focus();
+				if (isMobile) {
+					$input.setSelectionRange(0, $input.val().length);
+				} else {
+					$input.select();
+				}
+			},
+			'keyup': function (e) {
+				if (e.stopPropagation) e.stopPropagation();
+				var $this = $(this);
+				var text = '';
+				switch (e.keyCode) {
+					case 27: // [esc]
+						$this.val('');
+						$this.blur();
+						break;
+					case 13: // [enter]
+						if (e.preventDefault) e.preventDefault();
+						if (e.stopPropagation) e.stopPropagation();
+						$this.blur();
+						break;
+					default:
+						text = $.trim($this.val());
+				}
+
+				/* GMX-3425 */
+				if (text.length) {
+					var $root = $this.parents('#poTree');
+					if (!$root.length) {
+						return;
+					}
+					var settings = $root.data('settings');
+					var $selected = settings.selector.selected.parent();
+
+					if ($selected.is('dt')) {
+						id = $selected.attr('id').split('potree_')[1];
+					} else {
+						id = $selected.attr('id').split('_')[2];
+					}
+					var index = listData.getList(id);
+					var path = '';
+
+					if (index != -1) {
+						path = listData.alist[index].myPath + listData.alist[index].fileName + '/';
+					}
+
+					syncfn.verifyname({
+						'path': path,
+						'name': text,
+						'fileType': "DIR",
+						'selector': $this
+					});
+				}
+			},
+
+			'blur': function (e) {
+				var $this = $(this);
+				if ($this.hasClass('disable')) {
+					return;
+				}
+				$this.addClass('disable');
+				var text = $.trim($this.val());
+				setTimeout(function () {
+					if (text.length) {
+						var $root = $this.parents('#poTree');
+						if (!$root.length) {
+							return;
+						}
+						var settings = $root.data('settings');
+						var $selected = settings.selector.selected.parent();
+						var id;
+						var isRoot = false;
+
+						if ($selected.is('dt')) {
+							id = $selected.attr('id').split('potree_')[1];
+							isRoot = true;
+						} else {
+							id = $selected.attr('id').split('_')[2];
+						}
+
+						var EventList = [];
+						var error = [];
+						var arr = [];
+
+						var action = 'DIRADD';
+						var index = listData.getList(id);
+						var path = '';
+
+						if (isRoot) {
+							if (text.toLowerCase() == 'inbox') {
+								var popupMessage = new Array();
+								popupMessage[0] = LanguagePack.INBOX_NOT_CREATE;
+								var result2 = function (e) {
+									if (e.preventDefault) e.preventDefault();
+									defaultAlertCB(e);
+									setTimeout(function () {
+										$this.focus();
+									}, 200);
+								};
+								var popup2 = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_NEWFOLDER, {
+									popupMessage: popupMessage
+								}, result2, result2, result2);
+								popup2.create();
+								popup2.show();
+								return;
+							}
+						}
+
+						if (index != -1) {
+							arr = listData.getItemData('DIR', index);
+							path = listData.alist[index].myPath + listData.alist[index].fileName + '/';
+						}
+
+
+						for (var i = 0; i < arr.length; i++) {
+							var data = arr[i];
+							if (('' + data.fileName).toLowerCase() == text.toLowerCase()) {
+								var popupMessage = new Array();
+								popupMessage[0] = LanguagePack.POPUP_ERRORBYSAMEFOLDERNAME;
+								var result = function (ev) {
+									defaultAlertCB(ev);
+									$this.removeClass('disable');
+									setTimeout(function () {
+										$this.focus();
+									}, 200);
+								};
+								var result2 = function (ev) {
+									defaultAlertCB(ev);
+									$this.parents('li.add').remove();
+								};
+								var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_NEWFOLDER, {
+									popupMessage: popupMessage
+								}, result, result2, result2);
+								popup.create();
+								popup.show();
+								return;
+							}
+						}
+						var verifyResult = syncfn.verify({
+							'event': 'add',
+							'name': text,
+							'fileType': 'DIR',
+							'path': path + text
+						});
+						if (verifyResult) {
+							if (!error.length) {
+								error.push(verifyResult);
+							}
+						}
+						var event = {
+							'eventId': 1,
+							'eventType': action,
+							'parentId': '' + id,
+							'name': text,
+							'path': path,
+							'hide': 'NONE',
+							'fileType': 'DIR'
+						};
+						EventList.push(event);
+
+						var popup = null;
+						var eventinfo = syncfn.createEventInfo(EventList);
+						if (error.length) {
+							error[0].cb = function (ev) {
+								defaultAlertCB(ev);
+								setTimeout(function () {
+									$this.focus();
+								}, 200);
+							};
+							syncfn.erroMsgPopup(error[0]);
+						} else {
+							$this.parents('li.add').remove();
+							$root.poTree('syncEvent', eventinfo, false);
+						}
+					} else {
+						$this.parents('li.add').remove();
+					}
+					$this.removeClass('disable');
+				}, 200);
+			}
+		},
+		'ok': function (e) {
+			if (e.preventDefault) e.preventDefault();
+			var $this = $(this);
+			var $root = $(this).parents('#poTree');
+			var settings = $root.data('settings');
+			var arr = [];
+
+			if ($this.hasClass('disabled') || $this.hasClass('newfolder')) {
+				return;
+			}
+
+			var $li = settings.selector.treefolderSub.find('li.add');
+			if ($li.length) {
+				$li.remove();
+			}
+
+			var $selected = settings.selector.selected.parent();
+			var id, path, index, name, path2;
+			var EventList = [];
+			var error = [];
+
+			if ($selected.is('dt')) {
+				id = $selected.attr('id').split('potree_')[1];
+				path = 'PATH://drive/';
+				path2 = 'PATH://drive/';
+				name = LanguagePack.KEYWORD_DRIVE(gUserLevel);
+			} else {
+				id = $selected.attr('id').split('_')[2];
+				index = listData.getList(id);
+				if (index == -1) {
+					return;
+				}
+				path = listData.alist[index].myPath;
+				name = listData.alist[index].fileName;
+			}
+
+			if (!path2) {
+				if (listData.alist[index].referenceId) {
+					path2 = listData.teamDataInfo[listData.alist[index].referenceId].path;
+				} else if (listData.alist[index].path) {
+					path2 = listData.alist[index].path + listData.alist[index].fileName + '/';
+				} else if (listData.alist[index].myPath) {
+					path2 = listData.alist[index].myPath + listData.alist[index].fileName + '/';
+				}
+			}
+
+			if (settings.type == 'save') {
+				var verifyResult = syncfn.verify({
+					'event': settings.type,
+					'path': path2,
+					'name': settings.data.fileName
+				});
+				if (verifyResult) {
+					if (!error.length) {
+						error.push(verifyResult);
+					}
+				}
+				if (error.length) {
+					error[0].cb = function (e) {
+						defaultAlertCB(e);
+					};
+					syncfn.erroMsgPopup(error[0]);
+				} else {
+					var data = {
+						'type': settings.data.type,
+						'fileId': settings.data.fileId,
+						'dstId': id,
+						'fileName': settings.data.fileName,
+						'detFileName': name
+					};
+					if (typeof _viewtype != 'undefined' && ispoformat) {
+						data.poformatId = poformatId;
+						//	data.path = path + data.detFileName+'/';
+					}
+					$root.poTree('saveEvent', data, true);
+				}
+			} else {
+				var isTeamCheck = false;
+				if (settings.type == 'move' && path2.lastIndexOf('PATH://drive/') != -1) {
+					isTeamCheck = true;
+				}
+				var TeamInfo = {
+					'isTeamFile': false,
+					'name': '',
+					'cb': null
+				};
+
+				var warring = [];
+
+				for (var i = 0; i < settings.data.length; i++) {
+					var data = settings.data[i];
+					var action;
+					if (settings.type == 'move') {
+						var action = 'FILEMOVE';
+						if (data.fileType == 'DIR') {
+							action = "DIRMOVE";
+						}
+					} else if (settings.type == 'copy') {
+						action = 'FILECOPY';
+					}
+
+					var verifyResult = syncfn.verify({
+						'event': settings.type,
+						'path': path2,
+						'name': data.fileName,
+						'type': data.fileType,
+						'shared': data.shared
+					});
+					if (verifyResult) {
+						if (verifyResult.type == 'warring') {
+							if (!warring.length) {
+								warring.push(verifyResult);
+							}
+						} else {
+							if (!error.length) {
+								error.push(verifyResult);
+							}
+							continue;
+						}
+					}
+
+					if (isTeamCheck) {
+						if (settings.data[i].isTeamFolder && !settings.data[i].referenceId) {
+							TeamInfo.name = data.fileName;
+							TeamInfo.type = data.fileType;
+							TeamInfo.isTeamFile = true;
+							isTeamCheck = false;
+						}
+					}
+					var event = {
+						'eventId': i,
+						'eventType': action,
+						'fileId': '' + data.fileId,
+						'parentId': '' + id,
+						'name': data.fileName,
+						'lastRevision': data.lastRevision,
+						'path': path2,
+						'hide': 'NONE',
+						'size': data.size,
+						'fileType': data.fileType,
+						'lastModified': data.lastModified
+					};
+					if (data.fileType == 'DIR' && data.referenceId) {
+						event.referenceId = data.referenceId;
+					}
+					EventList.push(event);
+				}
+
+				var popup = null;
+				var eventinfo = syncfn.createEventInfo(EventList);
+				eventinfo.targetname = name;
+				if (error.length) {
+					error[0].isAll = true;
+					error[0].total = settings.data.length;
+					if (EventList.length) {
+						error[0].isAll = false;
+					}
+					if (error[0].isAll) {
+						error[0].cb = function (e) {
+							defaultAlertCB(e);
+						};
+					} else {
+						error[0].cb = function (e) {
+							defaultAlertCB(e);
+							if (TeamInfo.isTeamFile) {
+								TeamInfo.count = EventList.length;
+								TeamInfo.cb = function (e) {
+									defaultAlertCB(e);
+									$root.poTree('syncEvent', eventinfo, true);
+								};
+								syncfn.movetoPopup(TeamInfo);
+							} else {
+								$root.poTree('syncEvent', eventinfo, true);
+							}
+						};
+					}
+					syncfn.erroMsgPopup(error[0]);
+				} else {
+					if (warring.length) {
+						warring[0].total = settings.data.length;
+						warring[0].cb = function (e) {
+							defaultAlertCB(e);
+							if (TeamInfo.isTeamFile) {
+								TeamInfo.count = EventList.length;
+								TeamInfo.cb = function (e) {
+									defaultAlertCB(e);
+									$root.poTree('syncEvent', eventinfo, true);
+								};
+								syncfn.movetoPopup(TeamInfo);
+							} else {
+								$root.poTree('syncEvent', eventinfo, true);
+							}
+						};
+						syncfn.erroMsgPopup(warring[0]);
+					} else {
+						if (TeamInfo.isTeamFile) {
+							TeamInfo.count = EventList.length;
+							TeamInfo.cb = function (e) {
+								defaultAlertCB(e);
+								$root.poTree('syncEvent', eventinfo, true);
+							};
+							syncfn.movetoPopup(TeamInfo);
+						} else {
+							$root.poTree('syncEvent', eventinfo, true);
+						}
+					}
+				}
+			}
+		},
+		'close': function (e) {
+			if (e.preventDefault) e.preventDefault();
+			var $root = $(this).parents('#poTree');
+			var settings = $root.data('settings');
+			settings.selector.treefolderSub.children().remove();
+
+			if (settings.selector.selected) {
+				settings.selector.selected.removeClass('on');
+				settings.selector.selected = null;
+				settings.selector.treefolder.next('.btn').children().first().removeClass('disabled');
+			}
+
+			$root.hide();
+			$root.children().children().removeClass('other');
+
+			layout.dim.remove();
+		},
+		'treefolder': {
+			'show': function (e) {
+				if (e.preventDefault) e.preventDefault();
+				if (e.stopPropagation) e.stopPropagation();
+				var $this = $(this);
+				var $root = $this.parents('#poTree');
+				var settings = $root.data('settings');
+				var $checked;
+				var isRoot = false;
+				var $li = settings.selector.treefolderSub.find('li.add');
+				var $confirmBtn = settings.selector.treefolder.next('.btn').children().first();
+				if ($li.length) {
+					$li.remove();
+				}
+
+				if ($confirmBtn.hasClass('newfolder'))
+					$confirmBtn.removeClass('newfolder');
+
+				if ($this.parent().is('dt')) {
+					isRoot = true;
+					$checked = $this;
+				} else {
+					$checked = $this.children('span');
+				}
+
+				if (!settings.selector.selected) {
+					settings.selector.selected = $checked;
+				} else if (settings.selector.selected != $checked) {
+					settings.selector.selected.removeClass('on');
+					settings.selector.selected = $checked;
+				}
+
+				$checked.addClass('on');
+
+				var id;
+				var isTeamFolder = false;
+				if (isRoot) {
+					id = $this.parent().attr('id').split('potree_')[1];
+				} else {
+					var $li = $this.closest('li');
+					id = $li.attr('id').split('_')[2];
+					if ($li.hasClass('t')) {
+						isTeamFolder = true;
+					}
+				}
+
+				var disabled = false;
+
+				if (settings.type == 'move') {
+					if (settings.parentId == id) {
+						disabled = true;
+					} else {
+						for (var i = 0; i < settings.data.length; i++) {
+							if (settings.data[i].fileId == id) {
+								disabled = true;
+							} else {
+								if (settings.data[i].fileType == 'DIR') {
+									var $ul = settings.selector.treefolderSub.find('li#potree_sub_' + settings.data[i].fileId).children('ul');
+									if ($ul.length) {
+										if ($ul.has('li#potree_sub_' + id).length) {
+											disabled = true;
+										}
+									}
+									if (isTeamFolder && (settings.data[i].isTeamFolder && settings.data[i].referenceId)) {
+										disabled = true;
+									}
+								}
+							}
+							if (disabled) {
+								break;
+							}
+						}
+					}
+					if (disabled) {
+						settings.selector.treefolder.next('.btn').children().first().addClass('disabled');
+					} else {
+						settings.selector.treefolder.next('.btn').children().first().removeClass('disabled');
+					}
+				}
+
+				var index = listData.getList(id);
+				if (index == -1) {
+					if (isTeamFolder) {
+						listData.jsonGetTeamList(id, http.GetTeamListSuccess, null);
+					} else {
+						listData.jsonGetList(id, http.GetListSuccess, null);
+					}
+				}
+			},
+			'toogle': function (e) {
+				if (e.preventDefault) e.preventDefault();
+				var $this = $(this);
+
+				var $this = $(this);
+				var $root = $('#poTree');
+				var settings = $root.data('settings');
+				s_time = new Date().getTime();
+				var t = '';
+				var $li;
+				var id;
+
+				$li = $this.closest('li');
+
+				if ($li.hasClass('root')) {
+					t = 'r';
+					id = $li.attr('id').split('_')[1];
+				} else {
+					if ($li.hasClass('t')) {
+						t = 't';
+					} else if ($li.hasClass('i')) {
+						t = 'i';
+					}
+					id = $li.attr('id').split('_')[2];
+				}
+
+				if ($li.hasClass('close')) {
+					$li.removeClass('close');
+					if ($li.children('ul').children().length) {
+						t += 'open';
+					} else {
+						var index = listData.getList(id, true);
+
+						if (index != -1) {
+							var info = {
+								'id': id,
+								'selector': $li.children('ul')
+							};
+							var sort = {
+								'type': 'name',
+								'reverse': 1
+							};
+							var arr = common.sort(sort, listData.getItemData('DIR', index));
+							settings.handle.createSub.apply($root, [info, arr, {
+								'type': 1
+							}]);
+
+							if (!arr.length) {
+								t += 'normal';
+							} else {
+								t += 'open';
+							}
+						}
+					}
+				} else {
+					$li.addClass('close');
+					if ($li.children('ul').children().length) {
+						t += 'close';
+					} else {
+						t += 'normal';
+					}
+				}
+				if ($li.hasClass('root') && $li.children().children('a').hasClass('on')) {
+					t += '2';
+				}
+				$this.children('img').attr('src', common.getImg(t));
+			}
+		},
+		'prevent': function (e) {
+			if (e.preventDefault) e.preventDefault();
+		}
+	};
+
+	var http = {
+		'GetListSuccess': function (res) {
+			if (res.resultCode == 0) {
+				$('#poTree').poTree('createList', res.directoryInfo.fileId);
+			}
+		},
+		'GetTeamListSuccess': function (res) {
+			if (res.resultCode == 0) {
+				var id, parentid;
+				id = res.list[0].folderInfo.fileId;
+				parentid = res.list[0].folderInfo.parentId;
+				if (res.list[0].folderInfo.referenceId) {
+					parentid = res.list[0].sharedfolderInfo.parentId;
+				} else if (res.list[0].folderInfo.parentId == res.list[0].sharedfolderInfo.referenceId) {
+					parentid = res.list[0].sharedfolderInfo.fileId;
+				}
+				/*else if(res.list[0].folderInfo.fileId == res.list[0].sharedfolderInfo.referenceId) {
+					id = res.list[0].sharedfolderInfo.fileId;
+					parentid = res.list[0].sharedfolderInfo.parentId;
+				} */
+
+				$('#poTree').poTree('createList', id);
+			}
+		},
+		'GetListRootSuccess': function (res) {
+			if (res.resultCode == 0) {
+				for (var i = 0; i < res.list.length; i++) {
+					if (res.list[i].fileName == 'drive') {
+						listData.rootid = res.list[i].fileId;
+						listData.jsonGetList(listData.rootid,
+							function (res) {
+								if (listData.rootid) {
+									$('#poTree').poTree('initFodlerFile');
+								}
+							}, null);
+						break;
+					}
+				}
+			}
+		},
+		'SyncSuccess': function (res) {
+			if (CheckResult(null, res) == null) {
+				return;
+			}
+			var isTeamfolder = false;
+			for (fileId in listData.teamDataInfo) {
+				isTeamfolder = true;
+				break;
+			}
+			if (isTeamfolder) {
+				listData.jsonTeamSync(function () {
+					$('#poTree').poTree('initFodlerFile');
+				}, null);
+			} else {
+				$('#poTree').poTree('initFodlerFile');
+			}
+		}
+	};
+
+	var common = {
+		'getImg': function (type) {
+			var str;
+			if (typeof rtl != 'undefined' && rtl) {
+				if (type == 'open') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_folder_opened_rtl.svg';
+				} else if (type == 'close') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_folder_closed_rtl.svg';
+				} else if (type == 'normal') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_folder_normal_rtl.svg';
+				} else if (type == 'topen') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_team_folder_opened_rtl.svg';
+				} else if (type == 'tclose') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_team_folder_closed_rtl.svg';
+				} else if (type == 'tnormal') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_team_folder_normal_rtl.svg';
+				} else if (type == 'iopen') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_inbox_opened_rtl.svg';
+				} else if (type == 'iclose') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_inbox_closed_rtl.svg';
+				} else if (type == 'inormal') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_inbox_normal_rtl.svg';
+				} else if (type == 'ropen') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_open_rtl.svg';
+				} else if (type == 'rclose') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_close_rtl.svg';
+				} else if (type == 'rnormal') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_rtl.svg';
+				} else if (type == 'ropen2') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_open_on_rtl.svg';
+				} else if (type == 'rclose2') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_close_on_rtl.svg';
+				} else if (type == 'rnormal2') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_on_rtl.svg';
+				}
+			} else {
+				if (type == 'open') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_folder_opened.svg';
+				} else if (type == 'close') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_folder_closed.svg';
+				} else if (type == 'normal') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_folder_normal.svg';
+				} else if (type == 'topen') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_team_folder_opened.svg';
+				} else if (type == 'tclose') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_team_folder_closed.svg';
+				} else if (type == 'tnormal') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_team_folder_normal.svg';
+				} else if (type == 'iopen') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_inbox_opened.svg';
+				} else if (type == 'iclose') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_inbox_closed.svg';
+				} else if (type == 'inormal') {
+					str = CF_PATH + '/maxage1/common/img/cloud/folder_tree_icon_inbox_normal.svg';
+				} else if (type == 'ropen') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_open.png';
+				} else if (type == 'rclose') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_close.svg';
+				} else if (type == 'rnormal') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud.svg';
+				} else if (type == 'ropen2') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_open_on.svg';
+				} else if (type == 'rclose2') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_close_on.svg';
+				} else if (type == 'rnormal2') {
+					str = CF_PATH + '/maxage1/common/img/cloud/cloud_on.svg';
+				}
+			}
+			return str;
+		},
+		'sort': function (order, object) {
+			var newObject = JSON.parse(JSON.stringify(object));
+			return newObject.sort(function (a, b) {
+				if (a.isTeamFolder && b.isTeamFolder) {
+					if (order.reverse == 1) {
+						if (a.fileName > b.fileName) {
+							return 1;
+						} else {
+							return -1;
+						}
+					} else if (order.reverse == 0) {
+						if (a.fileName > b.fileName) {
+							return -1;
+						} else {
+							return 1;
+						}
+					}
+				} else if (a.isTeamFolder) {
+					if (order.current == 'root') {
+						if (b.fileName.toLowerCase() == 'inbox') {
+							return 1;
+						} else {
+							return -1;
+						}
+					} else {
+						return -1;
+					}
+				} else if (b.isTeamFolder) {
+					if (order.current == 'root') {
+						if (a.fileName.toLowerCase() == 'inbox') {
+							return -1;
+						} else {
+							return 1;
+						}
+					} else {
+						return 1;
+					}
+				} else {
+					if (order.current == 'root') {
+						if (a.fileName.toLowerCase() == 'inbox') {
+							return -1;
+						} else if (b.fileName.toLowerCase() == 'inbox') {
+							return 1;
+						}
+					}
+					if (order.reverse == 1) {
+						if (a.fileName > b.fileName) {
+							return 1;
+						} else {
+							return -1;
+						}
+					} else if (order.reverse == 0) {
+						if (a.fileName > b.fileName) {
+							return -1;
+						} else {
+							return 1;
+						}
+					}
+				}
+			});
+		}
+	};
+	$.fn.poTree = function (method) {
+		if (poTree[method]) {
+			return poTree[method].apply(this, Array.prototype.slice.call(arguments, 1));
+		} else if (typeof method === 'object' || !method) {
+			return poTree.init.apply(this, arguments);
+		} else {
+			$.error('The method ' + method + ' does not exist in $.poTree');
+		}
+	};
+
+})($);
+
+$('document').ready(function () {
+	$('body').append('<div id="poTree" class="init"></div>');
+});
+
+var loga = 0;

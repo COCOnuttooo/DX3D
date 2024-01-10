@@ -8,6 +8,8 @@ private:
 public:
 	void Update();
 	void PreRender();
+	void P1ReRender();
+	void P2ReRender();
 	void Render();
 	void PostRender();
 

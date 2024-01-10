@@ -1,0 +1,64 @@
+const share = (function(){
+    
+
+    function getShareList() {
+        $(".share_list .list").remove();
+        const data = {
+            "sort": "TIME",
+            "page": 1,
+            "count": 30,
+            "desc": true
+        }
+
+        popcorn.getSharedFileList(data, function(res) {
+            if(res.resultCode === 0) {
+                const $target = document.querySelector(".share_list");
+                console.log($target);
+                if(res.workList.length > 0){
+                    $(".share_list .no_doc").hide();
+                    const fileList = res.workList.map((item) => {
+                        const {lastModified, name, id, ownerName} = item.fileInfo
+                        return {
+                            lastAccessTime:lastModified,
+                            fileName:name,
+                            file:item.fileInfo,
+                            fullName:ownerName,
+                            fileId:id,
+                            starred: item.hasOwnProperty("favorite"),
+                            shared:true
+                        }
+                    })
+                    new ListItem({$target, initialState : fileList});
+                } else {
+                    $(".share_list .no_doc").show()
+                }
+            } else if(res.resultCode === 100) {
+                po_editor.execute(null,'sessionError');
+            }
+    
+        }, function(error){console.log(error)})
+    }
+
+    const eventBinding = () => {
+        $('#openDoc .shareList').on("click", function(e){
+            e.preventDefault();
+            $(".open_type_menu").children("a").removeClass("on");
+            $(this).addClass("on");
+            $(".list_document").children(".file_list").hide();
+            $(".list_document .share_list").show();
+            getShareList();
+        });
+    }
+
+    const init = () => {
+        eventBinding()
+    }
+    return {
+        init
+    }
+})()
+
+$(function(){  
+    if(gUserId)  
+        share.init();
+})

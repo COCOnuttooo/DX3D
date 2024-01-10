@@ -1,0 +1,1052 @@
+
+const po_editor = (function(){
+    let db_manager = null;
+    let PolarisAPI = null;
+    let vendorType = null;
+    let checkUnload = true;
+    const fileFormat = {
+        'word' : 'docx',
+        'sheet' : 'xlsx',
+        'slide' : 'pptx',
+        'hwp' : 'hwp'
+    };
+    const click_log_dp = (gVendorType == 'whale') ? 'whale.click' : 'weboffice.click';
+    const view_log_dp = (gVendorType == 'whale') ? 'whale.doc.open' : 'weboffice.doc.open';
+    const response = {
+        'uploadFileToDrive': async function(name,blob){
+            if(!gfileID){
+                const formData = new FormData();
+                formData.append("multipartFile",blob,name);
+                formData.append("path",'PATH://drive/');
+                formData.append("name",name);
+                return fetch(ADD_FILE_DRIVE,{
+                    method:"POST",
+                    body:formData
+                })
+                .then(res => res.json())
+                .then(receive.uploadFileToDrive.onSuccessCB).catch(receive.uploadFileToDrive.onFailCB)
+            } else {
+                const {resultCode ,file} = await getFileInfo(gfileID);
+                if(resultCode === 0){
+                    return updateFile(file, blob, name)
+                        .then(receive.uploadFileToDrive.onSuccessCB).catch(receive.uploadFileToDrive.onFailCB)
+                }
+            }
+        },
+        
+    }
+    
+    const receive = {
+        'uploadFileToDrive':{
+            'onSuccessCB' : function(res) {
+                //console.log(res);
+                if(res.resultCode === 0){
+                    gfileID = res.file.fileId;
+                    DOC_ID = res.file.fileId;
+                    originalFileName = docTitle = gdocName = res.file.fileName;
+                    $(".document").text(originalFileName);
+                    setTitle(-1, false, originalFileName);
+                    $(".save a span").html(LanguagePack.WEBVIEW_SAVED);
+                    $(".save a").addClass("on");
+                    const urlSearchObj = new URLSearchParams(location.search);
+                    let isLocal = false;
+                    if(urlSearchObj.has('local')) isLocal = true;
+                    const click_log_dp = (gVendorType == 'whale') ? 'whale.click' : 'weboffice.click';
+                    sendLogMessage(LogType.tracking.event, click_log_dp, '', 'ux', 'cl', 'save.button',{cobj : {local: isLocal}});
+                    toastMessage(LanguagePack.TEAM_MSG_SAVE);
+                    if($('#editorComment').css('display') == 'none'){
+                        $('#editorComment').show();
+                        COMMENT.init();
+                    }
+                    
+                    setTimeout(()=>{
+                        $(".save a").removeClass("on");
+                    },2000)
+    
+                    return res
+                }
+          
+            },
+            'onFailCB' : function(error) {console.log(error)}
+        },
+    }    
+
+    function goToLoginPage(context = LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', btn = LanguagePack.KEYWORD_LOGIN) {
+        setAlert(context, btn, null, poLogin, null);
+    }
+
+    function goToRegistPage(context = LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', btn = LanguagePack.KEYWORD_LOGIN) {
+        setAlert(context, btn, null, poRegist, null);
+    }
+
+    function installPcOfficePopup(e){
+        if(e) commonPreventEvent(e);
+        if (gUserId && !gfileID){
+            setAlert(LanguagePack.WEBVIEW_SAVE_OPEN, LanguagePack.KEYWORD_FILESAVED, null, onSaveDocument, null);
+            return;
+        }
+        checkUnload = false;
+        PCInstallPopup();
+    }
+    
+    function pcOfficePopup(e) {
+        if (gUserId == null) {
+            if(e) commonPreventEvent(e);
+            goToLoginPage(LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+            return;
+        } else if (gUserId && !gfileID){
+            setAlert(LanguagePack.WEBVIEW_SAVE_OPEN, LanguagePack.KEYWORD_FILESAVED, null, onSaveDocument, null);
+            return;
+        }
+        checkUnload = false;
+        if (isAlltimePC || getCookie("REPCPOP")) {
+            openPCOffice(e);
+        } else {
+            OpenPCPopup(e);
+        }
+    }
+    
+    function permisstionCheck(file) {
+        return checkPermission('Share', function () {
+            const idArr = [];
+            idArr.push(file.fileId)
+            //console.log(idArr);
+            const data = {
+                'log': {
+					'state': 'start'
+				},
+                fileinfo: {
+                    id: idArr
+                },
+                agent: false
+            };
+            showCooperation(data);
+        }, function (e, message) {
+            var popupMessage = new Array();
+            popupMessage[0] = message;
+            var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_ALERT, {
+                popupMessage: popupMessage
+            }, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+            popup.create();
+            popup.show();
+            return;
+        });
+    }
+    
+    function openSharePopup(e){
+        if(e) commonPreventEvent(e);
+        if (gUserId == null) {
+            goToLoginPage(LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+            return;
+        }
+        PolarisAPI.saveDocument()
+        .then((doc) => { 
+            if (doc.name && doc.blob) {
+                response.uploadFileToDrive(originalFileName, doc.blob)
+                .then((res) => permisstionCheck(res.file))
+            }
+        })
+        .catch((error) => {
+            console.log(error);
+            toastMessage(error.message);
+        });
+    }
+    
+    
+    function onSaveDocument(e, cb) {
+        if(e) commonPreventEvent(e);
+        if(!gUserId) {
+            setAlert(LanguagePack.WEBVIEW_DOWNLOAD, LanguagePack.KEYWORD_DOWNLOAD, LanguagePack.KEYWORD_CLOSE, function(e) {
+                sendLogMessage(LogType.tracking.event, click_log_dp, '', 'ux', 'cl', 'download.button');
+                downloadFile(e)
+            }, null);
+        } else {
+            PolarisAPI.saveDocument()
+            .then((doc) => { 
+                if (doc.name && doc.blob) {
+                    response.uploadFileToDrive(originalFileName, doc.blob)
+                    .then(()=>{
+                        if(cb) cb();
+                    });
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+                toastMessage(error.message);
+            });
+        }
+    }
+    
+    async function downloadFile(e){
+        if(e) commonPreventEvent(e);
+        if(gVendorType === 'whale') {
+            $("#whale_down_modal").css("display","block");
+            // $("#whale_down_modal .complete").css("display","none");
+            if(gUserId){
+                onDownload()
+            }
+        } else {
+            $("#down_modal").css("display","block");
+            $("#down_modal .complete").css("display","none");
+            onDownload();
+        }
+    }
+
+    async function onDownload() {
+        //console.log('down',PolarisAPI);
+        PolarisAPI.saveDocument()
+            .then((doc) => { 
+                if (doc.name && doc.blob) { 
+                    const downloadUrl = window.URL.createObjectURL(doc.blob); // 해당 file을 가리키는 url 생성
+                    const anchorElement = document.createElement('a');
+                    document.body.appendChild(anchorElement);
+                    anchorElement.download = originalFileName; // a tag에 download 속성을 줘서 클릭할 때 다운로드가 일어날 수 있도록 하기
+                    anchorElement.href = downloadUrl; // href에 url 달아주기
+                    $("#down_modal .ing").css("display","none");
+                    $("#down_modal .complete").css("display","block");
+                    anchorElement.click(); // 코드 상으로 클릭을 해줘서 다운로드를 트리거
+                    document.body.removeChild(anchorElement); // cleanup - 쓰임을 다한 a 태그 삭제
+                } 
+            })
+            .catch((error) => {
+                console.log(error);
+                toastMessage(error.message);
+            });
+    }
+    
+    //PO 드라이브에서 템플릿 파일 다운로드
+    async function downLoadTemplatefromPo(id) {
+        const documentDownloadUrl = '/api/2/document/template/download/' + id;
+        const blob = await fetch(documentDownloadUrl).then(res => res.blob());
+        return blob;
+    }
+
+    //PO 드라이브에서 파일 다운로드
+    async function downLoadFilefromPo() {
+        var type = docTitle.substring(docTitle.lastIndexOf(".") + 1).toLowerCase();
+        var downloadUrl = '';
+        if(type == 'sheet' || type == 'word' || type == 'slide'){
+            downloadUrl =  '/api/2/polarisdocument/download/' + gfileID;
+        } else {
+            downloadUrl = (gIsTeamFile || gUserId == _OwnerID) ? "/api/2/drive/download/" + gfileID + "/" + 0 : '/api/1/weblink/downloadweblink/' + gfileID;
+        }        
+        const blob = await fetch(downloadUrl).then(res => res.blob());
+        return blob;
+    }
+    
+    async function saveToStorage(cb, blob, fileName) {
+        PolarisAPI.saveDocument()
+        .then((doc) => { 
+            if (doc.blob) { 
+                if(db_manager){
+                    db_manager.saveFile(blob || doc.blob, fileName || originalFileName).then(()=>{
+                        if(cb) cb();
+                    }).catch(err => console.log(err));
+                } else {
+                    const reader = new FileReader();
+                    reader.addEventListener('load', ()=> {
+                        localStorage.setItem(`officeObj`,reader.result);
+                        localStorage.setItem(`officeObjName`,originalFileName);
+                        if(cb) cb();
+                    })
+                    reader.readAsDataURL(doc.blob);
+                }
+            } 
+        })
+        .catch((error) => {
+            console.log(error);
+            toastMessage(error.message);
+        });
+    }
+
+    function insertImage(data){
+        //console.log(data);
+        commonPreventEvent(data.event);
+        PolarisAPI.InsertPicture(data.blob)
+        .then(()=>{
+            $(".ai_side_panel .result_text p").removeClass("error");
+            $(".ai_side_panel .result_text p").addClass("complete");
+            $(".ai_side_panel .result_text p").html(data.text)
+            toastMessage(data.text)
+        })
+    }
+
+    function insertPicture(data) {
+        PolarisAPI.InsertPicture(data)
+    }
+
+    function insertText(data){
+        //console.log(data);
+        commonPreventEvent(data.event);
+        PolarisAPI.insertTextData(data.text)
+        .then(()=>{
+            $(".ai_side_panel .result_text p").removeClass("error");
+            $(".ai_side_panel .result_text p").addClass("complete");
+            $(".ai_side_panel .result_text p").html(data.alert)
+            toastMessage(data.alert)
+        })
+    }
+
+    function textInsertFromWebview(text) {
+        PolarisAPI.insertTextData(text)
+    }
+
+    function colseSheetCellEdit() {
+        PolarisAPI.colseSheetCellEdit()
+    }
+
+    function insertStringFromWebview(text) {
+        PolarisAPI.insertString(text)
+    }
+
+    function insertString(data){
+        //console.log(data);
+        commonPreventEvent(data.event);
+        PolarisAPI.insertString(data.text)
+        .then(()=>{
+            $(".ai_side_panel .result_text p").removeClass("error");
+            $(".ai_side_panel .result_text p").addClass("complete");
+            $(".ai_side_panel .result_text p").html(data.alert)
+            toastMessage(data.alert)
+        })
+    }
+
+    function poLogin(e){
+        if(e){
+        commonPreventEvent(e);
+        }
+        function signIn(){
+            window.onbeforeunload = null; 
+            if(gUA.indexOf('whale')> -1){
+                location.href = location.protocol + '//' + location.host + "/"  + LanguagePack.CURRENT_LOCALE + '/sign-in-whale?return=' + location.pathname + '?name=' + encodeURIComponent(originalFileName);
+            } else {
+                location.href = location.protocol + '//' + location.host  + "/"  + LanguagePack.CURRENT_LOCALE + '/sign-in?return=' + location.pathname + '?name=' + encodeURIComponent(originalFileName);
+            }
+        }
+        saveToStorage(signIn);
+    }
+
+    function getMarkedText(){
+        return PolarisAPI.getMarkString()
+    }
+    function movePage(page) {
+        return PolarisAPI.movePage(page)
+    }
+
+    async function exportAsPDF() {
+        return await PolarisAPI.exportAsPDF();
+    }
+
+    function getCursoredLocation(){
+        return PolarisAPI.getCaretInfo()
+    }
+
+    function poRegist(e){
+        if(e) commonPreventEvent(e);
+        function signUp(){
+            window.onbeforeunload = null;
+            location.href = location.protocol + '//' + location.host  + "/"  + LanguagePack.CURRENT_LOCALE + '/sign-up?return=' + location.pathname + '?name=' + encodeURIComponent(originalFileName);
+        }
+        saveToStorage(signUp);
+    }
+    
+    function setAlert(text, confirmBtn, cancelBtn, confirmCb, cancelCb){
+        var alertType = ButtonType.CONFIRM;
+        if(confirmBtn && cancelBtn) alertType = ButtonType.CONFIRM_CANCEL;
+        var popupMessage = new Array();
+        popupMessage[0] = text
+        var popup = new PopupMessage(PopupType.DEFAULT, alertType, null, {
+            popupMessage: popupMessage
+        }, function(e){
+            defaultAlertCB(e);
+            if(confirmCb) confirmCb(e);
+        }, function(e){
+            defaultAlertCB(e);
+            if(cancelCb) cancelCb(e);
+        }, defaultAlertCB);
+        popup.create();
+        popup.changebutton({
+            confirm: confirmBtn,
+            cancel : cancelBtn
+        });
+        popup.show();
+        return false;
+    }
+    
+    function makeNewFileName(){
+        const today = new Date()
+            , year = today.getFullYear()
+            , month = ('0' + (today.getMonth() + 1)).slice(-2)
+            , day = ('0' + today.getDate()).slice(-2)
+            , hours = ('0' + today.getHours()).slice(-2)
+            , minutes = ('0' + today.getMinutes()).slice(-2)
+            , seconds = ('0' + today.getSeconds()).slice(-2); 
+    
+        return 'NewDocument ' + year + '-' + month + '-' + day + ' ' + hours + minutes + seconds;
+    }
+    
+    function openDocumentFile(name, blob) {
+        return PolarisAPI.openDocument({name, blob})
+    }
+
+    function getCellRange() {
+        return PolarisAPI.getCellRange();
+    }
+    
+    function base64ToBlob(fileName,doc) {
+        const byteString =  doc ? decodeURIComponent(doc) : localStorage.getItem("officeObj");
+        let name = fileName || localStorage.getItem("officeObjName");
+        function timerFunc(){
+            $(".doc_loading").show();
+        }
+        let timer = setTimeout(timerFunc,3000);
+        fetch(byteString)
+        .then((response) => {
+            stopLoadingImage();
+            return response.blob();
+        })
+        .then((blob) => PolarisAPI.openDocument({name, blob}).then(()=>{
+            $(".doc_loading").hide();
+            clearTimeout(timer);
+            name = checkDocumentFormat(name);
+            $(".document").text(name);
+            setTitle(-1, false, name);
+            localStorage.removeItem("officeObj");
+            localStorage.removeItem("officeObjName");
+            if(gUserLevel == 'FREE' && gVendorType === 'whale' && whaleUserInfo !== null && !whaleUserInfo.useCouponEvents.includes("WHALE_BROWSER_WEBVIEW") && !getCookie('whale_promotion_popup')){
+                openPromotionPopup();
+            }
+        }).catch(err =>{
+            console.error(err);
+            $(".doc_loading").hide();
+            clearTimeout(timer);
+            if(agent.indexOf('whale')> -1){
+                $(".whale_fail_load").css("display","block");
+            }
+        })
+        ).catch(err => {
+            console.error(err);
+            if(agent.indexOf('whale')> -1){
+                $(".whale_fail_load").css("display","block");
+            }
+        });
+    }
+    
+    async function fileSearch(keyword) {
+        const {resultCode,list} = await fetch(SEARCH_FILE,{
+            method:"POST",
+              body:JSON.stringify({
+                keyword,
+                fileType:'FILE'
+              })
+        }).then(res => res.json())
+        return {resultCode,list}
+    }
+    
+    async function updateFile(file,blob, name) {
+        const formData = new FormData();
+        formData.append("multipartFile",blob,name);
+        formData.append("path",'PATH://drive/');
+        formData.append("name",name);
+        formData.append("lastRevision",file.lastRevision);
+        formData.append("lastModified", parseInt(new Date().getTime().toString().substring(0, 10)));
+        formData.append("fileId",file.fileId);
+        const {resultCode} = await fetch(UPDATE_FILE_DRIVE,{
+                method:"POST",
+                body:formData
+        }).then(res => res.json())
+        //console.log(resultCode)
+        return {resultCode,file}
+    }
+    
+    async function getFileInfo(fileId) {
+        const {resultCode,file} = await fetch(FILE_INFO,{
+            method:"POST",
+              body:JSON.stringify({
+                fileId,
+              })
+        }).then(res => res.json())
+        return {resultCode,file}
+    }
+    
+    function importantMark(e) {
+        if(e) commonPreventEvent(e);
+        if(!gUserId) {
+            goToLoginPage(LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+            return;
+        }
+        if(!gfileID){
+            PolarisAPI.saveDocument()
+            .then((doc) => { 
+                if (doc.name && doc.blob) {
+                    response.uploadFileToDrive(doc.name,doc.blob).then(() => setMarkingStar());
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+                toastMessage(error.message);
+            });
+        } else {
+            setMarkingStar();
+        }
+    }
+    
+    function setMarkingStar () {
+        var data = {
+            'fileId': gfileID,
+            'star': (gFavorite == 'true' ? 'RELEASE' : 'SET'),
+            'isShared': (logisShared == 'true' ? true : false)
+        };
+        if (logisShared == '' && _OwnerID != gUserId) {
+            data.isShared = true;
+        }
+    
+        var webdata = {
+            'updateList': [data]
+        };
+        popcorn.updateFavoriteList(webdata, function (res) {
+            //console.log(res)
+            if (CheckResult(null, res)) {
+                
+                if (typeof (res.resultList[0].resultCode) != 'undefined' && (res.resultList[0].resultCode == 0 || res.resultList[0].resultCode == 201)) {
+                    if (data.star == 'SET') {
+                        $('#webView header dd.favorite a').addClass('on');
+                        $('#webView header dd.favorite li.favorite').text(LanguagePack.STAR_RELEASE);
+                        $('#webView header dd.favorite ul.favorite').addClass('on');
+                        gFavorite = 'true';
+                    } else {
+                        $('#webView header dd.favorite a').removeClass('on');
+                        $('#webView header dd.favorite li.favorite').text(LanguagePack.STAR_MARK);
+                        $('#webView header dd.favorite ul.favorite').removeClass('on');
+                        gFavorite = 'false';
+                    }
+                }
+            }
+        }, function (err) {
+    
+        });
+    }
+
+    function sessionCancelAlert() {
+        window.onbeforeunload = null;
+        var alertType = ButtonType.CONFIRM;
+            if(LanguagePack.KEYWORD_DOWNLOAD && LanguagePack.KEYWORD_CLOSE) alertType = ButtonType.CONFIRM_CANCEL;
+            var popupMessage = new Array();
+            popupMessage[0] = LanguagePack.WEBVIEW_LOGOUT;
+            var popup = new PopupMessage(PopupType.DEFAULT, alertType, null, {
+                popupMessage: popupMessage
+            }, function(e){
+                downloadFile(e);
+                sendLogMessage(LogType.tracking.event, click_log_dp, '', 'ux', 'cl', 'download.button');
+                logout(e);
+            }, function(e){
+                logout(e);
+            }, function(e){
+                logout(e);
+            });
+            popup.create();
+            popup.changebutton({
+                confirm: LanguagePack.KEYWORD_DOWNLOAD,
+                cancel : LanguagePack.KEYWORD_CLOSE
+            });
+            popup.show();
+            return false;
+    }
+
+    function openNewCoverLetter(data){
+        commonPreventEvent(data.event);
+        const params = getUrlParam();
+        const name = decodeURIComponent(params["templateName"]) + '.' + fileFormat[gFileFormat];
+
+        PolarisAPI.openDocument({name, blob:data.blob}).then(()=>{
+            originalFileName = docTitle = gdocName = name;
+            $(".document").text(originalFileName);
+            $("#template_modal").css("display","none");
+        });
+    }
+
+    function getImageInfo(){
+        const {objectType} = getCursoredLocation();
+
+        if(objectType === 5){
+         return PolarisAPI.getFrameToImage()
+        }
+    }
+
+    function startLoadingImage(){
+        $('#wrapper').css('height', '100%').append('<p id="LoadingImage" class="loading"><img src="' + CF_PATH + '/resources/image/Polaris/new/webView/loading.gif" /></p>');
+        $('#LoadingImage').show();
+    }
+    function stopLoadingImage(){
+        $('#LoadingImage').hide();
+    }
+    function writeContextInit(){
+        aiEventEndPoint('ai_write')
+    }
+    function wordCloudContextInit(){
+        aiEventEndPoint('ai_word_cloud')
+    }
+    function textToImageContextInit(){
+        // const {status} = getCursoredLocation();
+        aiEventEndPoint('ai_text_to_image');
+        // if(status === 'caret_marking') {
+        //     $("#text_to_image .type02 textarea").text(getMarkedText());
+        //     buttonRemoveDisable($('#text_to_image .type02 .fix_r a'));
+        // }
+    }
+    function removeBackgroundContextInit(){
+        aiEventEndPoint('ai_remove_background_image');
+    }
+    function resolutionEnhancementContextInit(){
+        aiEventEndPoint('ai_resolution_enhancement');
+    }
+    function styleTrasferContextInit(){
+        aiEventEndPoint('ai_style_change');
+    }
+    function customConfig(config) {
+        const newConfig = {...config};
+        if(gVendorType !== 'whale' && newConfig.viewMode == 'edit') {
+            const writeIdIndex = newConfig.customRibbonTabMenus[0].ribbonGroups[0].ribbonMenus.findIndex(item => item.menuId === 'ai_write');
+            //console.log(newConfig.customRibbonTabMenus[0].ribbonGroups[0].ribbonMenus);
+            newConfig.customRibbonTabMenus[0].ribbonGroups[0].ribbonMenus[writeIdIndex].isDisabled = function(){
+                getCursoredLocation().status === 'caret_off'
+                return false
+            }
+
+            function wizardContext () {
+                const { objectType, objectCount } = getCursoredLocation();
+
+                return gUserId && objectType === 5 && objectCount === 1
+            }
+
+            function basicContext() {
+                const { objectType, status } = getCursoredLocation();
+
+                return gUserId && (objectType === 0 || objectType === 3 || (status === 'caret_normal' && objectType === 6));
+            }
+
+            function aiWriteContext() {
+                const { objectType, status } = getCursoredLocation();
+
+                return gUserId && (objectType !== 2) && !(status === 'caret_anchor' && objectType === 5) && !(status === 'caret_off' && objectType === 6)
+            }
+
+            newConfig.customContextMenus = [
+                {
+                    groupId:'custom_context_group_ai_wizard',
+                    condition: wizardContext,
+                    contextMenuId: 'ai_removeBackground',
+                    contextMenuName: LanguagePack.AI_TOOLS_STR03,
+                    smallIcon: icons.bgDeleteSmall,
+                    callback: removeBackgroundContextInit
+                },
+                {
+                    groupId:'custom_context_group_ai_wizard',
+                    condition: wizardContext,
+                    contextMenuId: 'ai_qui',
+                    contextMenuName: LanguagePack.AI_TOOLS_STR04,
+                    smallIcon: icons.aiQualitySmall,
+                    callback: resolutionEnhancementContextInit
+                },
+                {
+                    groupId:'custom_context_group_ai_wizard',
+                    condition: wizardContext,
+                    contextMenuId: 'ai_style_trans',
+                    contextMenuName: LanguagePack.AI_TOOLS_STR05,
+                    smallIcon: icons.aiStyleSmall,
+                    callback: styleTrasferContextInit
+                },
+                {
+                    groupId:'custom_context_group_ai_basic',
+                    condition: aiWriteContext,
+                    contextMenuId: 'ai_write',
+                    contextMenuName: 'AI Write',
+                    smallIcon: icons.aiWriteSmall,
+                    //isDisabled: () => getCursoredLocation().status === 'caret_off',
+                    callback: writeContextInit
+                },
+                {
+                    groupId:'custom_context_group_ai_basic',
+                    condition: basicContext,
+                    contextMenuId: 'ai_word_cloud',
+                    contextMenuName: LanguagePack.AI_TOOLS_STR02,
+                    smallIcon: icons.aiWordCloudSmall,
+                    callback: wordCloudContextInit
+                },
+                {
+                    groupId:'custom_context_group_ai_basic',
+                    condition: basicContext,
+                    contextMenuId: 'ai_txt_img',
+                    contextMenuName: 'Text to Image',
+                    smallIcon: icons.aiTextToImageSmaill,
+                    callback:textToImageContextInit,
+                },
+            ]
+        }
+        return newConfig
+    }
+    function getFormulaBarFieldText() {
+        return PolarisAPI.getFormulaBarFieldText();
+    }
+    function checkDocumentFormat (name) {
+        const docFormat = name.substring(name.lastIndexOf(".") + 1).toLowerCase();
+        if(docFormat == 'hwpx'){
+            name = name.replace('.hwpx', '.hwp');
+        }
+        originalFileName = docTitle = gdocName = name;
+        return name;
+    }
+    async function init(config, containerId, vendor = '') {
+        startLoadingImage();
+        const customedConfig = customConfig(config);
+        PolarisAPI = new WebOffice(customedConfig, containerId);
+        vendorType = vendor;
+        const urlSearchObj = new URLSearchParams(location.search);
+        let isLocal = false;
+        if(urlSearchObj.has('local')) isLocal = true;
+
+        $(".save").on("click",function(e) {
+            e.preventDefault();
+            onSaveDocument(e)
+        });
+        
+
+        $(".ai_side_panel").css("display","none");
+        //문서열기 팝업 이벤트 바인딩
+        $('.layer_modal .close').on('click',function(){
+            $('.layer_modal').css('display','none');
+            $('.layer_modal').addClass('disable');
+        });
+        $("#open_menu_pop .do_not_show").on("click", function(e){
+            e.preventDefault();
+            setCookies('open_menu_pop', 365);
+            $('#open_menu_pop').hide();
+        });
+        
+        $("#open_menu_pop .detail").on("click", function(e){
+            e.preventDefault();
+            $('.layer_modal').css('display','none');
+            $('.layer_modal').addClass('disable');
+            editFileMenu.openFileMenu();
+            $("#menu_open").click();
+           
+        })
+        //문서열기 팝업 이벤트 바인딩
+        $(".file_share").on("click",openSharePopup);
+        if(gMode == 'edit'){
+            $("#favstatus").on("click",importantMark);
+            $(".pc_open").on("click",function(e){
+                pcOfficePopup(e);
+                sendLogMessage(LogType.tracking.event, click_log_dp, '', 'ux', 'cl', 'pcoffice.button');
+                
+            });            
+        }
+        
+        $('.close').on('click',function(e){
+            commonPreventEvent(e);
+            $('.layer_modal').css('display','none');
+            $('.layer_modal').addClass('disable');
+        });
+        $(".file_down").on("click", function(e){
+            downloadFile(e);
+            sendLogMessage(LogType.tracking.event, click_log_dp, '', 'ux', 'cl', 'download.button');
+        });        
+  
+        $("#cloud_down .primary").on("click", function(e){
+            e.preventDefault();
+        })
+        $(".outcome .btn_wrap .primary").on("click", function(e){
+            e.preventDefault();
+            PolarisAPI.insertTextData(`<p>${$("#exps .form textarea").val()}</p>`).then(()=>{ $("#template_modal").css("display","none")})
+        });
+
+        $(".service_account ul li").each(function (index, item) {
+            const $item = $(item);
+            const url = $item.children("a").attr("href");
+            $item.children("a").on("click",function(e){
+                e.preventDefault();
+                window.open(location.protocol + '//' + location.host + url);
+            });
+            $item.children("a").removeAttr("href");
+            $item.children("a").css("cursor","pointer");
+        });
+        
+        $('#editor_login').on('click', function(e){
+            commonPreventEvent(e);
+            goToLoginPage(LanguagePack.WEBVIEW_LOGIN_STR, LanguagePack.KEYWORD_LOGIN);
+        });
+        $('#editor_regist').on('click', function(e){
+            commonPreventEvent(e);
+            sendLogMessage(LogType.tracking.event, click_log_dp, '', 'ux', 'cl', 'join.button');
+            goToRegistPage(LanguagePack.WEBVIEW_REGIST_STR, LanguagePack.REGIST_TITLE);
+        }); 
+        
+        if(config.viewMode == 'edit'){
+            window.onbeforeunload = function (e) {
+                e.preventDefault();
+                if(checkUnload) {
+                    return (e.returnValue = "");
+                } else {
+                    checkUnload = true;
+                }
+            }
+        }
+        function openFiles(){
+            const params = getUrlParam();
+            if(localStorage.getItem('officeObj')){
+                const localFileName = localStorage.getItem("officeObjName");
+                const localFileformat = localFileName ? localFileName.substring(localFileName.lastIndexOf(".") + 1).toLowerCase() : ''; 
+                if(localFileformat != fileFormat[gFileFormat]){
+                    stopLoadingImage();
+                    PolarisAPI.openNewDocument().then(()=>{
+                        console.error("## po_editor : openNewDocument Success");
+                        originalFileName = docTitle = gdocName = makeNewFileName() + '.' + fileFormat[gFileFormat];
+                        $(".document").text(originalFileName);
+                        setTitle(-1, false, originalFileName);
+                        if(gUserLevel == 'FREE' && gVendorType === 'whale' && whaleUserInfo !== null && !whaleUserInfo.useCouponEvents.includes("WHALE_BROWSER_WEBVIEW") && !getCookie('whale_promotion_popup')){
+                            openPromotionPopup();
+                        }
+                        if(gVendorType === 'whale' && !gUserId && config.viewMode == 'edit') {
+                            $("#whale_modal").show();
+                        }
+                    }).catch(err =>{
+                        console.error(err);
+                        if(vendorType == 'whale'){
+                            $(".whale_fail_load").css("display","block");
+                        }
+                        toastMessage(err.message);
+                    });
+                } else {
+                    base64ToBlob();
+                }
+            } else if(params.hasOwnProperty("templateId")) { 
+                const name = decodeURIComponent(params["templateName"]) + '.' + fileFormat[gFileFormat];
+                downLoadTemplatefromPo(params["templateId"]).then(blob => {
+                    stopLoadingImage();
+                    function timerFunc(){
+                        $(".doc_loading").show();
+                    }
+                    let timer = setTimeout(timerFunc,3000);
+                    PolarisAPI.openDocument({name, blob}).then(()=>{
+                        originalFileName = docTitle = gdocName = name;
+                        $(".doc_loading").hide();
+                        clearTimeout(timer);
+                        $(".document").text(originalFileName);
+                        setTitle(-1, false, originalFileName);
+
+                        const resume1 = {
+                            'verify': 1265,
+                            'prod': 1105
+                        }
+
+                        const resume2 = {
+                            'verify': 1267,
+                            'prod': 1106
+                        }
+                    
+                        if(parseInt(params["templateId"]) == resume1[IsProdouctionDomain()] || parseInt(params["templateId"]) == resume2[IsProdouctionDomain()]) {
+                            aiTemplate();
+                            $("#template_modal").css("display","block");
+                        }
+                    })
+                    
+                    .catch((err)=>{
+                        $(".doc_loading").hide();
+                        clearTimeout(timer);
+                        toastMessage(err.message);
+                    });
+                });
+                sendLogMessage(LogType.tracking.page, view_log_dp, gFileFormat.toUpperCase(), null, null, config.viewMode, {"cobj" : {"newdoc" :  true, "local" : false, whaleopen:false}});
+    
+            } else if (params.hasOwnProperty("doc") && params.hasOwnProperty("name")){
+                sendLogMessage(LogType.tracking.page, view_log_dp, gFileFormat.toUpperCase(), null, null, config.viewMode, {"cobj" : {"newdoc" :  false, "local" : false, whaleopen:true}});
+                base64ToBlob(decodeURIComponent(params["name"]).replace(/\+/g, ' '), params["doc"]);
+            } else if( gfileID ) { //po drive 문서
+                let name = typeof originalFileName != 'undefined' ? originalFileName : docTitle;
+    
+                downLoadFilefromPo().then(blob => {
+                    stopLoadingImage();
+                    function timerFunc(){
+                        $(".doc_loading").show();
+                    }
+                    let timer = setTimeout(timerFunc,3000);
+                    PolarisAPI.openDocument({name, blob}).then(()=>{
+                        name = checkDocumentFormat(name);
+                        $(".doc_loading").hide();
+                        clearTimeout(timer);
+                        
+                        $(".document").text(name);
+                        if(gDocPosition){
+                            setTimeout(function () {
+                                API.setPointDocLink(gDocPosition);
+                            }, 200);
+                        }
+                        if(gUserLevel == 'FREE' && gVendorType === 'whale' && whaleUserInfo !== null && !whaleUserInfo.useCouponEvents.includes("WHALE_BROWSER_WEBVIEW") && !getCookie('whale_promotion_popup')){
+                            openPromotionPopup();
+                        } 
+                        if(gVendorType === 'whale' && !gUserId && config.viewMode == 'edit') {
+                            $("#whale_modal").show();
+                        }
+                        setViewSuccess(null, gfileID);
+                    })
+                    .catch((err)=>{
+                        $(".doc_loading").hide();
+                        clearTimeout(timer);
+                        toastMessage(err.message);
+                    });
+                    window.getPointDocLink = PolarisAPI.getPointDocLink;
+                });
+                sendLogMessage(LogType.tracking.page, view_log_dp, config.documentType.toUpperCase(), null, null, config.viewMode, {"cobj" : {"newdoc" :  false, "local" : false, whaleopen:false}});
+            } else {
+                stopLoadingImage();
+                PolarisAPI.openNewDocument().then(()=>{
+                    originalFileName = docTitle = gdocName = makeNewFileName() + '.' + fileFormat[gFileFormat];
+                    $(".document").text(originalFileName);
+                    setTitle(-1, false, originalFileName);
+                    if(gUserLevel == 'FREE' && gVendorType === 'whale' && whaleUserInfo !== null && !whaleUserInfo.useCouponEvents.includes("WHALE_BROWSER_WEBVIEW") && !getCookie('whale_promotion_popup')){
+                        openPromotionPopup();
+                    }
+                    if(gVendorType === 'whale' && !gUserId && config.viewMode == 'edit') {
+                        $("#whale_modal").show();
+                    }
+                }).catch((err) =>{
+                    console.error(err);
+                    if(vendorType == 'whale'){
+                        $(".whale_fail_load").css("display","block");
+                    }
+                    toastMessage(err.message);
+                });
+                sendLogMessage(LogType.tracking.page, view_log_dp, gFileFormat.toUpperCase(), null, null, config.viewMode, {"cobj" : {"newdoc" :  true, "local" : false, whaleopen:false}});
+          }
+        }
+        async function openIndexDBFile(){
+            const fileName = getUrlParam()['name'] || '';
+            const files = await db_manager.getFile(decodeURIComponent(fileName));
+            if(files){
+                stopLoadingImage();
+                const name = files.name;
+                const blob = files.file;
+                function timerFunc(){
+                    $(".doc_loading").show();
+                }
+                let timer = setTimeout(timerFunc,3000);
+                PolarisAPI.openDocument({name, blob}).then(()=>{
+                    $(".doc_loading").hide();
+                    clearTimeout(timer);
+                    files.name = checkDocumentFormat(files.name);
+                    $(".document").text(files.name);
+                    setTitle(-1, false, files.name);
+                    db_manager.removeFile(decodeURIComponent(fileName));
+                    if(gUserLevel == 'FREE' && gVendorType === 'whale' && whaleUserInfo !== null && !whaleUserInfo.useCouponEvents.includes("WHALE_BROWSER_WEBVIEW") && !getCookie('whale_promotion_popup')){
+                        openPromotionPopup();
+                    }
+                    if(gVendorType === 'whale' && !gUserId && config.viewMode == 'edit') {
+                        $("#whale_modal").show();
+                    }
+                }).catch(err =>{
+                    console.error(err);
+                    $(".doc_loading").hide();
+                    clearTimeout(timer);
+                    if(agent.indexOf('whale')> -1){
+                        $(".whale_fail_load").css("display","block");
+                    }
+                    toastMessage(err.message);
+                });
+                if(isLocal)
+                    sendLogMessage(LogType.tracking.page, view_log_dp, gFileFormat.toUpperCase(), null, null, config.viewMode, {"cobj" : {"newdoc" :  false, "local" : isLocal, whaleopen:false}});
+            } else {
+                openFiles();
+            }
+        }
+        if (window.indexedDB) {
+            db_manager = new IndexedDBManager();
+            await db_manager.open();
+            openIndexDBFile();
+        } else {
+            openFiles();
+        }
+        
+        $('#' + containerId).show();
+
+        function expireSessionEditorPopup(){
+            po_editor.execute(null,'sessionError');
+        }
+
+        if(typeof expireSessionPopup == 'function'){
+            expireSessionPopup = expireSessionEditorPopup;
+        }
+    }
+
+    return {
+        init,
+        getCursoredLocation,
+        getMarkedText,
+        getImageInfo,
+        permisstionCheck,
+        downLoadFilefromPo,
+        saveToStorage,
+        textInsertFromWebview,
+        insertPicture,
+        colseSheetCellEdit,
+        insertStringFromWebview,
+        getCellRange,
+        getFormulaBarFieldText,
+        exportAsPDF,
+        execute : function(e, type, content = '', confirmBtn = '', cancelBtn = '', confirmCB, cancelCB){
+            switch(type){
+                case 'share':
+                    openSharePopup(e);
+                    break;
+                case 'saveToDrive':
+                    onSaveDocument(e, content);
+                    break;
+                case 'poDownload':
+                    onDownload(e);
+                    break;
+                case 'poLogin':
+                    poLogin(e);
+                    break;
+                case 'poRegist':
+                    poRegist(e);
+                    break;
+                case 'insertImage':
+                    insertImage(e);
+                    break;
+                case 'insertText':
+                    insertText(e);
+                    break;
+                case 'insertString':
+                    insertString(e);
+                    break;
+                case 'openNewCoverLetter':
+                    openNewCoverLetter(e);
+                    break;
+                case 'downloadPopup':
+                    downloadFile(e);
+                    break;
+                case 'loginPopup':
+                    goToLoginPage(content, confirmBtn);
+                    break;
+                case 'registPopup':
+                    goToRegistPage(content, confirmBtn);
+                    break;
+                case 'movePage':
+                    movePage(content);
+                    break;                   
+                case 'openPC':
+                    pcOfficePopup(e);
+                    break;
+                case 'installPC':
+                    installPcOfficePopup(e);
+                    break;
+                case 'sessionError':
+                    sessionCancelAlert();
+                    break;
+                case 'showAlert':
+                    setAlert(content, confirmBtn, cancelBtn, confirmCB, cancelCB);
+                    break;
+            }
+        }
+    }
+})();
+

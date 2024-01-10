@@ -1,0 +1,114 @@
+const myLocal = (function(){
+    function supportFormat () {
+        const agent = navigator.userAgent;
+        return '.hwp, .hwpx, .xlsx, .docx, .pptx, .xls, .csv, .sheet, .ppt, .slide, .doc, .word';
+        //if(agent.match(/Mac|PPC/)){
+        //     //mac
+        //     if(gMode === 'edit') {
+        //         if(gUserLevel === "PRO" || gUserLevel === "BUSINESS") return '.hwp, .hwpx, .xlsx, .docx, .pptx'
+        //         return '.xlsx, .docx, .pptx'
+        //     } else {
+        //         if(gUserLevel !== "PRO" && gUserLevel !== "BUSINESS") return '.hwp, .hwpx, .xls, .csv, .sheet, .ppt, .slide, .doc, .word';
+        //         return '.hwpx, .xls, .csv, .sheet, .ppt, .slide, .doc, .word'
+        //     }
+        //} else {
+        //     //window
+        //     if(gMode === 'edit') {
+        //         return '.hwp, .hwpx, .xlsx, .docx, .pptx'
+        //     } else {
+        //         return '.xls, .csv, .sheet, .ppt, .slide, .doc, .word';
+        //     }
+        //}
+    }
+    
+    const myComputerBtn = function () {
+        const input = document.createElement("input");
+        
+        input.setAttribute('type', 'file');
+        input.setAttribute("accept", supportFormat());
+        $(input).on("change", function(e) {
+            const file = $(this).get(0).files[0];
+            const name = file.name.split('.');
+            const format = supportFormat();
+
+            //지원하지 않는 포맷
+            if(!format.includes((name[name.length - 1]).toLowerCase())){
+                commonPreventEvent(e);
+                var popupMessage = new Array();
+                popupMessage[0] = LanguagePack.WEBVIEW_NOT_SUPPORT;
+                var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+                    popupMessage: popupMessage
+                }, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+                popup.create();
+                popup.show();
+                return ;
+            } else {
+    
+                const fileToBlob = async (file) => new Blob([new Uint8Array(await file.arrayBuffer())], {type: file.type });
+                fileToBlob(file).then(res => {
+                    po_editor.saveToStorage(()=>{
+
+                        const fileType = file.name.split(".");
+                        const type = fileType[fileType.length - 1].toLowerCase();
+                        
+                        let supportFormat = [
+                            {type : 'sheet', read : ['xlsx', 'xls', 'csv', 'sheet'], edit : ['xlsx']}
+                            , {type : 'slide', read : ['pptx', 'ppt', 'slide'], edit : ['pptx']}
+                            , {type : 'hwp', read : ['hwp', 'hwpx'], edit : ['hwp', 'hwpx']}
+                            , {type : 'word', read : ['docx', 'doc', 'word'], edit : ['docx']}
+                        ];
+
+                        if(gUA.indexOf('mac') > -1){
+                            supportFormat[2].edit = [];
+                        }
+
+                        const domainType = supportFormat.reduce((pre, cur) => {
+                            if(cur.edit.includes(type)){
+                                return pre = [...pre, {mode : 'edit', type : cur.type}];
+                            } else {
+                                if(cur.read.includes(type)){
+                                    return pre = [...pre, {mode : 'read', type : cur.type}];
+                                }
+                            }
+                         return pre;
+                        }, []);
+                        // const domainType = supportFormat.filter(item => {
+                        //     return item.read.includes(type)
+                        // })
+                        
+                        if(domainType[0].mode == 'edit'){
+                            window.open(location.protocol + '//' + location.host + "/" + 'editor/' + (gVendorType ? gVendorType : 'po') + '/' + domainType[0].type + '?name=' + encodeURIComponent(file.name) + '&local') ;
+                        } else {
+                            window.open(location.protocol + '//' + location.host + "/" + 'viewer/' + (gVendorType ? gVendorType : 'po') + '/' + domainType[0].type + '?name=' + encodeURIComponent(file.name) + '&local') ;
+                        }
+                        
+                        editFileMenu.closeFileMenu();
+                    }, res, file.name); 
+                });
+                // reader.onload = function(e) {
+                //     console.log(reader.result);
+                //     const blob = new Blob([new Uint8Array(e.target.result)], {type: file.type });
+                //     console.log(blob)
+                //     po_editor.openDocumentFile(file.name, blob);  
+                // }
+                // reader.readAsArrayBuffer(file);
+            }
+        })
+        input.click();
+    }
+
+    const eventBinding = () => {
+        $('#openDoc .my_computer').on("click", myComputerBtn);
+    }
+
+    const init = () => {
+        eventBinding()
+    }
+    return {
+        init
+    }
+})()
+
+$(function(){    
+    myLocal.init();
+})

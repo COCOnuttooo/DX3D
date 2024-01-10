@@ -1,0 +1,3024 @@
+﻿//
+var downloading = false;
+var driveId = null;
+var isHandwrite = false;
+var DOC_ID = gfileID;
+var _onfoucs = false;
+var _downladurl, _viewerurl, _getPageImege, _textViewUrl;
+var $appConnector;
+var _viewsuccess = false;
+var isShareDocOpen = false;
+var isTeamFolderDoc = false;
+var is_Mac = (navigator.userAgent.replace(/ /g, '').toLowerCase().indexOf('mac') != -1) ? true : false;
+var fullscreen = false;
+
+var targetCanvas = $('#weboffice_container');
+
+_downladurl = '/api/1/weblink/downloadweblink/';
+if (_viewtype.indexOf('normal') >= 0 || _OwnerID == gUserId) {
+	_downladurl = '/api/2/drive/download/';
+}
+_getPageImege = '/api/1/web/download/image/';
+_viewerurl = '/d/';
+_textViewUrl = '/textview/';
+if (typeof ispoformat != 'undefined' && ispoformat) {
+	_downladurl = '/api/2/polarisdocument/download/';
+	_getPageImege = '/api/1/viewer/polarisdocument/image/';
+}
+navigator.sayswho = (function () {
+	var N = navigator.appName,
+		ua = navigator.userAgent,
+		tem;
+	var M = ua.match(/(opera|chrome|safari|firefox|msie)\/?\s*(\.?\d+(\.\d+)*)/i);
+	if (M && (tem = ua.match(/version\/([\.\d]+)/i)) != null) M[2] = tem[1];
+	M = M ? [M[1], M[2]] : [N, navigator.appVersion, '-?'];
+	return M;
+})();
+var browser_version = navigator.sayswho;
+browser_version = (browser_version + '').toLowerCase();
+if (agent.indexOf('firefox') < 0 && agent.indexOf('rv:') > -1) browser_version = 'msrv';
+
+var isAlltimePC = getPCOfficeUseState() || false;
+
+function CommentData() {
+	this.data = null;
+	this.pannelWidth = 351;
+	this.isComplete = false;
+	this.currentPage = 1;
+	this.fetchSize = 20;
+	this.totalCnt = 0;
+	this.shorUrl = null;
+	this.loadTime = "?" + new Date().getTime();
+	this.liveUpdate = false;
+}
+
+CommentData.prototype = {
+	'setData': function () {
+		this.data = arguments[0];
+	},
+	'isModifyData': function () {
+
+		if (this.data == arguments[0])
+			return false;
+		else
+			return true;
+	},
+	'getPanelWidth': function () {
+		return this.pannelWidth;
+	},
+	'setPanelWidth': function () {
+		this.pannelWidth = arguments[0];
+	},
+	'onComplete': function () {
+		this.isComplete = true;
+	},
+	'isCompeted': function () {
+		return this.isComplete;
+	},
+	'changeLoadingImg': function () {
+		var pos = ($(window).width() - this.pannelWidth) / $(window).width() / 2 * 100;
+		//$('#LoadingImage').css('left',pos + '%');
+
+		if ($('#contents.fullscreen').is(':visible')) {
+			$('#LoadingImage').css('left' + '%');
+		} else {
+			$('#LoadingImage').css('left', pos + '%');
+		}
+	}
+};
+
+$commentData = new CommentData();
+
+if (isMobile || gUserLevel == 'ORANGEPRO') {
+	$commentData.pannelWidth = 0;
+	if (rtl) {
+		$('#webView footer').css("margin-right", "0px");
+	} else {
+		$('#webView footer').css("margin-left", "0px");
+	}
+
+	$('#webView .menu').show();
+}
+
+var COMMENT = {
+	'init': function () {
+		if (isMobile) {
+			$('aside.panel section.msg div.comment div.list.share').css("overflow-y", "auto");
+		}
+		var cmmtMaxLenDom = $('#modal > section > div.comment > p > span > span');
+		var cmmtMaxLen = $(cmmtMaxLenDom).text();
+		var loginConfirm = function(){
+			if(gMode == 'view'){
+				po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+				return;
+			}
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.WEBVIEW_LOGIN.replace('<br/>', '');
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, function(e){
+				defaultAlertCB(e);
+				openloginpopup(e);
+			}, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.changebutton({
+				confirm: LanguagePack.KEYWORD_LOGIN
+			});
+			popup.show();
+		}
+		$(cmmtMaxLenDom).text(poLocal.localizationNumber(cmmtMaxLen, local));
+		$('#txtInput').keyup(function (e) {
+			if (e.keyCode == 13) {
+				commonStopPropagation(e);
+			}
+
+		});
+		$('#comment_input').bind("click", clickPlaceHolderEvent);
+		$('#comment_input').bind("click", function (e) {
+			if (gUserId == null) {
+				loginConfirm();
+				return;
+			}
+
+			if(!gfileID){
+				po_editor.execute(null, 'saveToDrive');
+			}
+		});
+		$('#comment_input').bind("keyup", keyupPlaceHolderEvent);
+		$('#comment_input').bind("keyup", function (e) {
+			if (e.stopPropagation) e.stopPropagation();
+
+			if (gUserId == null) {
+				$(this).val('');
+				loginConfirm();
+				return;
+			}
+			var $this = $(this);
+			function insertComment($this){
+				if ($this.val().length > 1024) {
+					toastMessage(LanguagePack.TOAST_LIMITEDSIZE);
+					$this.blur();
+					var text = $this.val().substring(0, 1024);
+					$this.val(text);
+					$this.focus();
+				}
+				$this.next().text(poLocal.localizationNumber(1024 - $this.val().length, local));
+			}
+			if(!gfileID){
+				po_editor.execute(null, 'saveToDrive');
+			} 
+			insertComment($this);
+		});
+
+		var suspendSendComment = false;
+
+		$('#sendComment').bind("click", function (res) {
+			commonPreventEvent(res);
+			if (suspendSendComment) {
+				return;
+			} else {
+				suspendSendComment = true;
+				setTimeout(function () {
+					suspendSendComment = false;
+				}, 500);
+			}
+			if (gUserId == null) {
+				loginConfirm();
+				return;
+			}
+			function sendComment(){
+				var webapp = {};
+				webapp.idFile = gfileID;
+	
+				if (_OwnerID)
+					webapp.idDocOwnedUser = _OwnerID;
+				else
+					webapp.idDocOwnedUser = gUserId;
+				var str = $('#comment_input').val();
+				var commentstr = str;
+				var emojistr = '';
+				for (var j = 0; j < str.length; j++) {
+					var theUnicode = str.charCodeAt(j).toString(16).toLowerCase();
+					if (theUnicode >= 'd800' && theUnicode <= 'd8ff') {
+						emojistr = str.slice(j, j + 2);
+						commentstr = commentstr.replace(emojistr, '__');
+					}
+				}
+				//$('#comment_input').val(commentstr);
+				webapp.comment = commentstr;
+				popcorn.createComment(webapp, function (res) {
+					if (res.resultCode == 0) {
+						COMMENT.AddComment(res.comment, gUserId, res.timeCreate, res.idComment, userName);
+						$commentData.totalCnt = $commentData.totalCnt + 1;
+						$('#comment_input').val('');
+						$('aside.panel section.msg div.comment p.input span.txt').text(poLocal.localizationNumber(1024, local));
+						$('aside.panel section.msg div.comment p.input .box label').removeClass("off");
+						$("aside.panel section.msg div.comment div.list.share").scrollTop(0);
+						COMMENT.handleCommentCount(false);
+					} else if (res.resultCode == "100") {
+						$commentData.auth.c = {
+							'val': false,
+							'view': false
+						};
+						COMMENT.handleViewItems($commentData.auth);
+						COMMENT.showPopup(LanguagePack.NOTICE_AUTH_LOGIN, LanguagePack.KEYWORD_ALERT, {
+							'type': 'login'
+						});
+					} else if (res.resultCode == "101") {
+						$commentData.auth.c = {
+							'val': false,
+							'view': false
+						};
+						COMMENT.handleViewItems($commentData.auth);
+						COMMENT.showPopup(LanguagePack.NOTICE_AUTH_NOTGRANTED, LanguagePack.KEYWORD_ALERT, {
+							'type': 'reset'
+						});
+					}
+				}, function (res) {
+	
+				});
+			}
+
+			if(!gfileID){
+				po_editor.execute(null, 'saveToDrive', sendComment);
+			} else {
+				sendComment();
+			}
+
+		});
+		$('#fetch').bind("click", function (res) {
+			commonPreventEvent(res);
+			$commentData.currentPage++;
+			COMMENT.getlistComment(true);
+		});
+		if ($.fn.zclip && !isMobile && CheckFlashPlayer()) {
+
+			if (browser_version.indexOf('msie,9.0') > -1) {
+				setTimeout(function () {
+					bindZclip();
+				}, 1000);
+				setTimeout(function () {
+					if (local == 'ar_AE') {
+						if ($('aside.panel section.msg div.link_share p.copy div.zclip').css('left') != '0px') {
+							$('aside.panel section.msg div.link_share p.copy div.zclip').css('left', '0px');
+						}
+					} else {
+						if ($('aside.panel section.msg div.link_share p.copy div.zclip').css('left') == '0px') {
+							$('aside.panel section.msg div.link_share p.copy div.zclip').css('left', '165px');
+						}
+					}
+				}, 2500);
+			} else {
+				bindZclip();
+				setTimeout(function () {
+					if (local == 'ar_AE') {
+						if ($('aside.panel section.msg div.link_share p.copy div.zclip').css('left') != '0px') {
+							$('aside.panel section.msg div.link_share p.copy div.zclip').css('left', '0px');
+						}
+					} else {
+						if ($('aside.panel section.msg div.link_share p.copy div.zclip').css('left') == '0px') {
+							$('aside.panel section.msg div.link_share p.copy div.zclip').css('left', '165px');
+						}
+					}
+				}, 1500);
+			}
+		} else {
+			$('#clipboard').hide();
+			$('aside.panel section.msg div.link_share p.copy input').addClass("no");
+		}
+
+
+		$('.btn_close').bind("click", function (res) {
+			//logTracking
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.event;
+			if (isMobile) {
+				webData['obj'].dp = 'FileView.Tablet';
+			} else {
+				webData['obj'].dp = 'FileView';
+			}
+			webData['obj'].dt = gdocext;
+			webData['obj'].ec = 'ux';
+			webData['obj'].ea = 'cl';
+			webData['obj'].el = 'CloseRightPanel';
+			$.extend(webData, {
+				'cobj': {
+					'myDoc': ((gUserId == _OwnerID) ? true : false),
+					'isShared': (logisShared == 'true' ? true : false)
+				}
+			});
+			$LOGMODEL.sendData(webData);
+
+			commonPreventEvent(res);
+			if ($commentData.getPanelWidth()) {
+				$commentData.setPanelWidth(0);
+				$(window).trigger('resize', ['webview']);
+				$('#pageslide').animate({
+					right: '-380px'
+				}, 500, function () {
+					$('#webView .menu').hide();
+					$commentData.changeLoadingImg();
+				});
+
+				if(gMode != 'edit'){
+					if (rtl) {
+						$('#webView footer').animate({
+							marginRight: '0px'
+						}, 500, function () {
+							$('#webView .menu').fadeIn("slow", function (res) {
+								setTimeout(function () {
+	
+								}, 5000);
+							});
+						});
+					} else {
+						$('#webView footer').animate({
+							marginLeft: '0px'
+						}, 500, function () {
+							$('#webView .menu').fadeIn("slow", function (res) {
+								setTimeout(function () {
+	
+								}, 5000);
+							});
+						});
+					}
+				}
+			} else {
+				$commentData.setPanelWidth(395);
+
+				$('#pageslide').animate({
+					right: '0px'
+				}, 500, function () {
+					$(window).trigger('resize', ['webview']);
+				});
+			}
+
+		});
+		$('#webView div.menu ul.depth1 a.menu_03, .coment').on("click", function (res) {
+			//logTracking
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.event;
+			if (isMobile) {
+				webData['obj'].dp = 'FileView.Tablet';
+			} else {
+				webData['obj'].dp = 'FileView';
+			}
+			webData['obj'].dt = gdocext;
+			webData['obj'].ec = 'ux';
+			webData['obj'].ea = 'cl';
+			webData['obj'].el = 'OpenRightPanel';
+			$.extend(webData, {
+				'cobj': {
+					'myDoc': ((gUserId == _OwnerID) ? true : false),
+					'isShared': (logisShared == 'true' ? true : false)
+				}
+			});
+			$LOGMODEL.sendData(webData);
+
+			commonPreventEvent(res);
+			$commentData.setPanelWidth(351);
+			$('#pageslide').animate({
+				right: '0px'
+			}, 500, function () {
+				$(window).trigger('resize', ['webview']);
+			});
+
+			if (rtl) {
+				$('#webView footer').animate({
+					marginRight: '381px'
+				}, 500, function () {
+					$('#webView .menu').hide();
+				});
+			} else {
+				$('#webView footer').animate({
+					marginLeft: '-381px'
+				}, 500, function () {
+					$('#webView .menu').hide();
+				});
+			}
+			
+			
+			COMMENT.getCoworkInfo();
+			
+		});
+		$('#webView div.menu ul.depth1 li.download, #modal section.msg ul.btn li.download').bind("click", function (res) {
+			commonPreventEvent(res);
+			commonStopPropagation(res);
+			if ($(this).find('ul').is(":visible"))
+				$(this).find('ul').hide();
+			else {
+				$('.depth2').hide();
+				$(this).find('ul').show();
+			}
+
+			var target = $(this);
+			$("body").one('touchend click', function (e) {
+				if (e.type == 'click') {
+					target.find('ul').hide();
+					COMMENT.hidemenu();
+				}
+			});
+
+
+		});
+		$('#webView div.menu ul.depth1 li.edit, #modal section.msg ul.btn li.edit').bind('click', function (res) {
+			if (gUserId == null) {
+				if(gMode == 'view'){
+					po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+					return;
+				} else {
+					PCInstallPopup(res);
+					return;
+				}
+			}
+
+			function openPC(){
+				if (isAlltimePC || getCookie("REPCPOP")) {
+					openPCOffice(res);
+				} else {
+					OpenPCPopup(res);
+				}
+			}
+
+			if(!gfileID){
+				po_editor.execute(null, 'saveToDrive', openPC);
+			} else {
+				openPC();
+			}
+
+		});
+
+		$('#webView header h1 a').bind('click', function (e) {
+			//logTracking
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.event;
+			if (isMobile) {
+				webData['obj'].dp = 'FileView.Tablet';
+			} else {
+				webData['obj'].dp = 'FileView';
+			}
+			webData['obj'].dt = gdocext;
+			webData['obj'].ec = 'ux';
+			webData['obj'].ea = 'cl';
+			webData['obj'].el = 'GoHome';
+			$.extend(webData, {
+				'cobj': {
+					'myDoc': ((gUserId == _OwnerID) ? true : false),
+					'isShared': (logisShared == 'true' ? true : false)
+				}
+			});
+			$LOGMODEL.sendData(webData);
+
+			if(gMode == 'view' && !gUserId){
+				commonPreventEvent(e);
+				commonStopPropagation(e);
+				po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+				return;
+			}
+		});
+
+		if (gUserLevel == 'ORANGEPRO') {
+			$('#webView div.menu ul.depth1 li.favorite, #modal section.msg ul.btn li.favorite, #webView header dd.favorite').remove();
+		} else {
+			$('#webView div.menu ul.depth1 li.favorite, #modal section.msg ul.btn li.favorite, #webView header dd.favorite a').on('click', function (e) {
+				commonPreventEvent(e);
+				//logTracking
+				var webData = $LOGMODEL.getData();
+				webData['ti'].t = LogType.tracking.event;
+				if (isMobile) {
+					webData['obj'].dp = 'FileView.Tablet';
+				} else {
+					webData['obj'].dp = 'FileView';
+				}
+				webData['obj'].dt = gdocext;
+				webData['obj'].ec = 'ux';
+				webData['obj'].ea = 'cl';
+				webData['obj'].el = 'MarkStar';
+				$.extend(webData, {
+					'cobj': {
+						'myDoc': ((gUserId == _OwnerID) ? true : false),
+						'isShared': (logisShared == 'true' ? true : false)
+					}
+				});
+				$LOGMODEL.sendData(webData);
+
+				if (gUserId == null) {
+					if(gMode == 'view'){
+						po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+						return;
+					} else {
+						openloginpopup(e, true);
+						return;
+					}
+				}
+				
+				function updateFavorite(){
+					var data = {
+						'fileId': gfileID,
+						'star': (gFavorite == 'true' ? 'RELEASE' : 'SET'),
+						'isShared': (logisShared == 'true' ? true : false)
+					};
+					if (logisShared == '' && _OwnerID != gUserId) {
+						data.isShared = true;
+					}
+	
+					var webdata = {
+						'updateList': [data]
+					};
+					popcorn.updateFavoriteList(webdata, function (res) {
+						if (CheckResult(null, res)) {
+							if (typeof (res.resultList[0].resultCode) != 'undefined' && (res.resultList[0].resultCode == 0 || res.resultList[0].resultCode == 201)) {
+								if (data.star == 'SET') {
+									$('#webView header dd.favorite a').addClass('on');
+									$('#webView header dd.favorite li.favorite').text(LanguagePack.STAR_RELEASE);
+									$('#webView header dd.favorite ul.favorite').addClass('on');
+									gFavorite = 'true';
+								} else {
+									$('#webView header dd.favorite a').removeClass('on');
+									$('#webView header dd.favorite li.favorite').text(LanguagePack.STAR_MARK);
+									$('#webView header dd.favorite ul.favorite').removeClass('on');
+									gFavorite = 'false';
+								}
+							}
+						}
+					}, function (err) {
+	
+					});
+				}
+				if(!gfileID){
+					po_editor.execute(null, 'saveToDrive', updateFavorite);
+				} else {
+					updateFavorite();
+				}
+
+			});
+		}
+
+
+		$('header div.title .btn_app').bind("click", function (res) {
+			commonPreventEvent(res);
+			commonStopPropagation(res);
+			/*if(ispoformat) { // appconnector is unsupported for poformat
+				$appConnector.handleUnsupported();
+				return;
+			}*/
+			var target = $(this).next();
+			if (getCookie('HIDE_STARTAPP')) {
+				editmode();
+				return;
+
+			}
+
+			target.show();
+			$("body").one('touchend click', function (e) {
+				if (e.type == 'click') {
+					target.hide();
+					COMMENT.hidemenu();
+				}
+			});
+
+		});
+		$('header div.title div.alert dl dd.btn a.yes').bind("click", function (res) {
+			commonPreventEvent(res);
+			commonStopPropagation(res);
+			setCookies('KEEP_STARTAPP', 365);
+			editmode();
+		});
+		$('header div.title div.alert dl dd.btn a.no').bind("click", function (res) {
+			commonPreventEvent(res);
+			commonStopPropagation(res);
+			if ($("header div.title div.alert dl dd label input").is(":checked")) {
+				setCookies('HIDE_STARTAPP', 365);
+			}
+			editmode();
+
+		});
+		$('header div.title div.alert dl dd label input, header div.title div.alert dl dd label').bind("click", function (res) {
+			commonStopPropagation(res);
+
+		});
+
+		COMMENT.SetInfo();
+
+		//GMX-6957
+		$('aside.panel section.msg div.link_no_share').hide().find('p.copy02').html(LanguagePack.SHARE_BY_SNS);
+		if (_viewtype == "shared_view" && _OwnerID != gUserId) {
+			$('aside.panel section.msg div.link_share').hide();
+			$('aside.panel section.msg div.comment div.list.share').addClass("no");
+		} else {
+			COMMENT.getWeblink();
+		}
+
+		COMMENT.getlistComment(false);
+		$('#webView div.menu ul.depth1').bind('mouseover', function (res) {
+			_onfoucs = true;
+			$(this).show();
+			
+		});
+		$('#webView div.menu ul.depth1').bind('mouseout', function (res) {
+			_onfoucs = false;
+			COMMENT.hidemenu();
+			
+		});
+		$('#favstatus.view, #favstatus.whale').bind('mouseover', function (res) {
+			if ($('div.favguide').is(':visible')) {
+				$('#favstatus.view ul:first').hide();
+				$('#favstatus.whale ul:first').hide();
+			} else {
+				$('#favstatus.view ul:first').show();
+				$('#favstatus.whale ul:first').show();
+			}
+		});
+		$('#favstatus.view, #favstatus.whale').bind('mouseout', function (res) {
+			$('#favstatus.view ul:first').hide();
+			$('#favstatus.whale ul:first').hide();
+		});
+
+		handleStarguide();
+	},
+	'SetInfo': function () {
+		var ownerInfo = _OwnerID ? _OwnerID : gUserId;
+		var ownerName = _OwnerName ? _OwnerName : userName;
+		var photoapi = gUserId ? TASK_GET_USERPICTURE : TASK_GET_PUSERPICTURE;
+		if(gMode == 'view' && !ownerInfo){
+			$('#modal .msg dl.info').children().remove();
+		} else {
+			$('#modal .msg dl.info dt span').eq(0).text(ownerName);
+			$('#modal .msg dl.info dd img').attr("src", photoapi + ownerInfo + $commentData.loadTime);
+		}
+
+		var text = shortenString(gdocName, 490);
+		if (!text) {
+			text = gdocName;
+		}
+
+		var isltr = '';
+		if (typeof rtl != 'undefined' && rtl) {
+			if (!isRTL(text)) {
+				isltr = 'ltr';
+				$('header div.title dl dt.document').addClass(isltr);
+			}
+		}
+		$('header div.title dl dt.document').text(text);
+
+		if (versionlist == 'true') {
+			$('#favstatus.view').hide();
+		}
+		if (gUserLevel != 'ORANGEPRO') {
+			COMMENT.getCoworkInfo();
+		}
+		$commentData.changeLoadingImg();
+		$commentData.liveUpdate = false; // change to true for liveupdate
+	},
+	'getCoworkInfo': function () {
+		if(!gfileID) return;
+		var webdata = {
+			'fileId': '' + gfileID,
+			'workId': ''
+		};
+		if (gUserId == null) {
+			webdata = {
+				'fileId': '' + gfileID
+			};
+			popcorn.getPublicFileInfo(webdata, function (_res) {
+				COMMENT.getCoworkInfoSuccessCB(_res, true);
+			}, function (err) {});
+		} else popcorn.getShareFileInfo(webdata, function (_res) {
+			COMMENT.getCoworkInfoSuccessCB(_res, false);
+		}, function (err) {});
+	},
+	'getCoworkInfoSuccessCB': function (_res, _ispublic) {
+		$commentData['auth'] = {
+			'c': {
+				'val': false,
+				'view': true
+			},
+			'e': {
+				'val': false,
+				'view': false
+			},
+			'l': {
+				'val': false,
+				'view': false
+			},
+			's': {
+				'val': false,
+				'view': true
+			},
+			'v': {
+				'val': 0,
+				'view': true
+			}
+		};
+		// comment, edit, link, share, viewcount
+		// val은 권한, view는 노출여부
+		if (_OwnerID == gUserId) {
+			for (var authfield in $commentData.auth) {
+				$commentData.auth[authfield].val = true;
+			}
+		}
+		if (_res && CheckResult(null, _res)) {
+			var work = {};
+			var attendanceList = _res.attendanceList;
+			work.own = {
+				'userId': null,
+				'email': null,
+				'username': null,
+				'member': false,
+				'authority': 1
+			};
+			work.etc = {
+				'userId': null,
+				'email': null,
+				'username': null,
+				'member': false,
+				'authority': 1
+			};
+			if (_ispublic) {
+				work.fileInfo = (_res.countWebview != null) ? {
+					'countWebview': _res.countWebview
+				} : {};
+				work.publicAuthority = (_res.publicAuthority) ? _res.publicAuthority : 0;
+				work.shareDeniedReason = (_res.publicAuthority) ? 0 : null;
+				work.customMode = 0;
+				if (work.publicAuthority == 0) {
+					// TODO: redirect to /view/home if publicAuthority == 0
+				}
+			} else {
+				work.fileInfo = (_res.work.fileInfo) ? _res.work.fileInfo : {};
+				work.publicAuthority = (_res.work.publicAuthority) ? _res.work.publicAuthority : 0;
+				work.shareDeniedReason = (_res.work.shareDeniedReason) ? _res.work.shareDeniedReason : 0;
+				work.customMode = (_res.work.customMode) ? _res.work.customMode : 0;
+				$commentData['workId'] = _res.work.id;
+			}
+			$commentData.shareDeniedReason = work.shareDeniedReason;
+			$commentData.publicAuthority = work.publicAuthority;
+			$commentData.customMode = work.customMode;
+			if (!_ispublic && attendanceList.length > 0) {
+				for (var idx in attendanceList) {
+					if (attendanceList[idx].userId == gUserId) {
+						work.own = attendanceList[idx];
+					}
+					if (attendanceList[idx].userId == null || attendanceList[idx].userId == '') {
+						work.etc = attendanceList[idx];
+					}
+				}
+			}
+			if (_OwnerID == gUserId) work.own = {
+				'authority': 0
+			};
+
+			if (gUserId) {
+				$commentData.auth['c'].val = ((work.own.authority >= 0 || work.publicAuthority > 0) ? true : false);
+				// $commentData.auth['e'].val = (( work.own.authority>=0 || work.publicAuthority>1 ) ? true : false);
+				$commentData.auth['e'].val = ((work.own.authority >= 0 || _viewtype == 'normal_view') ? true : false);
+
+				if ($USERINFO.getData('UNVERIFIED')) {
+					$commentData.auth['l'].val = ((work.publicAuthority > 0 && gUserId != _res.work.owner.id) ? true : false); //(work.publicAuthority>0 ? true : work.shareDeniedReason==0 ? true : false);
+				} else {
+					$commentData.auth['l'].val = ((work.publicAuthority > 0 || (_res.work.id != undefined && gUserId == _res.work.owner.id)) ? true : false); //(work.publicAuthority>0 ? true : work.shareDeniedReason==0 ? true : false);
+				}
+				$commentData.auth['s'].val = true;
+				$commentData.auth['v'].val = (work.fileInfo.countWebview) ? work.fileInfo.countWebview : 0;
+			} else {
+				$commentData.auth['c'].val = false;
+				$commentData.auth['e'].val = (work.publicAuthority > 0 ? true : false);
+				$commentData.auth['l'].val = (work.publicAuthority > 0 ? true : false);
+				$commentData.auth['s'].val = (work.publicAuthority > 0 ? true : false); // false;
+				$commentData.auth['v'].val = (work.fileInfo.countWebview) ? work.fileInfo.countWebview : 0;
+			}
+			for (var authfield in $commentData.auth) {
+				// if(authfield=='e' || authfield=='l' || authfield=='c') $commentData.auth[authfield].view = $commentData.auth[authfield].val;
+				if (authfield == 'e' || authfield == 'l') $commentData.auth[authfield].view = $commentData.auth[authfield].val;
+				else $commentData.auth[authfield].view = true;
+			}
+			if (work.fileInfo.sharedFolderId != undefined && work.fileInfo.sharedFolderId != '') {
+				isTeamFolderDoc = true;
+			}
+		}
+		if (gUserLevel == 'ORANGEPRO') {
+			$commentData['auth']['s'].view = false;
+		}
+		COMMENT.handleViewItems($commentData.auth);
+	},
+	'handleViewItems': function (authObj) {
+		var viewItemMap = {
+			'c': ['div.comment p.input'],
+			'e': ['section.msg ul.btn li.edit', 'div.menu ul.depth1 li.edit'],
+			'l': ['section.msg div.link_share'],
+			's': ['section.msg ul.btn li.share', 'div.menu ul.depth1 li.share'],
+			'v': ['section.msg dl.info span.viewcount']
+		};
+		for (var authfield in $commentData.auth) {
+			for (var idx = 0; idx < viewItemMap[authfield].length; idx++) {
+				if ($commentData.auth[authfield].view) {
+					$(viewItemMap[authfield][idx]).show();
+				} else {
+					$(viewItemMap[authfield][idx]).hide();
+				}
+			}
+		}
+
+		
+		
+
+		if ($('aside.panel section.msg div.link_share').css('display') != 'none') {
+			//GMX-6957
+			COMMENT.getWeblink();
+			if ($.fn.zclip && !isMobile && CheckFlashPlayer()) {
+				if (browser_version.indexOf('msie,9.0') > -1) {
+					setTimeout(function () {
+						bindZclip();
+					}, 1000);
+				} else {
+					bindZclip();
+				}
+			}
+		} else {
+			COMMENT.setWeblink();
+		}
+
+		// GMX-7871
+		// if ($('aside.panel section.msg div.link_share').css('display') == 'none' && $('aside.panel section.msg div.link_no_share').css('display') == 'none') {
+		// 	// listTop = 296; 
+		// }
+
+		// if ($('#webView').hasClass('hwp')) {
+		// 	// listTop = 404;
+		// }
+
+		$(viewItemMap['v'][0]).text(LanguagePack.VIEW_COUNT_INFO(poLocal.localizationNumber(authObj['v'].val, local)));
+		var styleMap = {
+			1: 'large',
+			2: 'small',
+			3: 'small'
+		};
+		var styleName = (styleMap[$('section.msg ul.btn li:visible').length] == null ? '' : styleMap[$('section.msg ul.btn li:visible').length]);
+		var tabStyleItems = ['section.msg ul.btn li.edit a.edit', 'section.msg ul.btn li.share a.share', 'section.msg ul.btn li.download a.download', 'section.msg ul.btn li.download ul.download'];
+		for (var i = 0; i < tabStyleItems.length; i++) {
+			$(tabStyleItems[i]).removeClass('large').removeClass('small').addClass(styleName);
+		}
+		/* comment list position absolute top */
+		// if (!authObj['l'].val && !authObj['c'].val) {
+		// 	$('aside.panel section.msg div.comment div.list.share').css('top', listTop + 'px');
+		// } else if (!authObj['l'].val) {
+		// 	$('aside.panel section.msg div.comment div.list.share').css('top', listTop + 'px');
+		// } else if (!authObj['c'].val) {
+		// 	$('aside.panel section.msg div.comment div.list.share').css('top', listTop + 'px');
+		// }
+		
+		
+		
+		
+	},
+	'handleCommentCount': function (morecheck) {
+		var localizationCnt = poLocal.localizationNumber($commentData.totalCnt, local);
+		$('#totalCnt').text(LanguagePack.COMMENT_COUNT_INFO(localizationCnt));
+		if(localizationCnt == 0){
+			$('#commentCnt').hide();
+		} else {
+			$('#commentCnt').show();
+			$('#commentCnt').text('(' + localizationCnt + ')');
+		}
+		$('div.menu ul.depth1 li:last a.menu_03 span').text(localizationCnt);
+		if ($commentData.totalCnt > 0) {
+			// $('div.menu ul.depth1 li:last a.menu_03 span').show(); // for later
+			$('div.menu ul.depth1 li:last a.menu_03 span').hide();
+			$('#label_nocomment').hide();
+		} else {
+			$('div.menu ul.depth1 li:last a.menu_03 span').hide();
+			$('#label_nocomment').show();
+		}
+		if (morecheck) {
+			if ($commentData.totalCnt > $commentData.fetchSize * $commentData.currentPage)
+				$('aside.panel section.msg div.comment p.btn_more').show();
+			else
+				$('aside.panel section.msg div.comment p.btn_more').hide();
+		}
+	},
+	'getWeblink': function () {
+		if(!gfileID){
+			$('aside.panel section.msg div.link_no_share').show();
+			$('aside.panel section.msg div.link_share').hide();
+			return;
+		}
+
+		if (!isTeamFolderDoc) {
+			$('aside.panel section.msg div.link_no_share').hide();
+			$('aside.panel section.msg div.link_share').show();
+
+			var url = location.protocol + '//' + location.host + '/d/' + $.encodeBase62(gfileID);
+			if(gDocPosition){
+				url += '/l/' + gDocPosition;
+			}
+			$('#copy').val(url);
+			$('#copy').bind('click', COMMENT.selectinput);
+			$('#modal .msg .link_share .btn_share .mail').unbind('click').bind("click", COMMENT.sendEmail);
+			$('#modal .msg .link_share .btn_share .qzone').unbind('click').bind("click", COMMENT.sendqq);
+			$('#modal .msg .link_share .btn_share .facebook').unbind('click').bind("click", COMMENT.sendfacebook);
+			$('#modal .msg .link_share .btn_share .twitter').unbind('click').bind("click", COMMENT.sendtwitter);
+			$('#copy').trigger('click');
+		} else {
+			$('aside.panel section.msg div.link_share').hide();
+			$('aside.panel section.msg div.link_no_share').hide();
+		}
+	},
+	'setWeblink': function () { //GMX-6957
+		if (!isTeamFolderDoc) {
+			$('aside.panel section.msg div.link_share').hide();
+			$('aside.panel section.msg div.link_no_share').show();
+
+			var url = location.protocol + '//' + location.host + '/d/' + $.encodeBase62(gfileID);
+			if(gDocPosition){
+				url += '/l/' + gDocPosition;
+			}
+			$('#copy').val(url);
+
+			if (_OwnerID != gUserId) {
+				$('#modal .msg .link_no_share .btn_share .mail').unbind('click').bind("click", COMMENT.sendEmail);
+				$('#modal .msg .link_no_share .btn_share .qzone').unbind('click').bind("click", COMMENT.sendqq);
+				$('#modal .msg .link_no_share .btn_share .facebook').unbind('click').bind("click", COMMENT.sendfacebook);
+				$('#modal .msg .link_no_share .btn_share .twitter').unbind('click').bind("click", COMMENT.sendtwitter);
+			} else {
+				$('#modal .msg .link_no_share .btn_share .mail').unbind('click').bind("click", COMMENT.sendDirect);
+				$('#modal .msg .link_no_share .btn_share .qzone').unbind('click').bind("click", COMMENT.sendDirect);
+				$('#modal .msg .link_no_share .btn_share .facebook').unbind('click').bind("click", COMMENT.sendDirect);
+				$('#modal .msg .link_no_share .btn_share .twitter').unbind('click').bind("click", COMMENT.sendDirect);
+			}
+		} else {
+			$('aside.panel section.msg div.link_share').hide();
+			$('aside.panel section.msg div.link_no_share').hide();
+		}
+	},
+	'sendDirect': function (e) { //GMX-6957
+
+		if ($USERINFO.getData('UNVERIFIED')) {
+			unverifyShareMsg();
+			return;
+		} else {
+
+			var t = $(this).attr('class');
+
+			if (gUserId) {
+				function sendDirect(){
+					var shareChannel = 'WebViewShare';
+					var that = this;
+	
+					checkPermission('Share', function () {
+	
+						switch (t) {
+							case 'mail':
+								shareChannel = 'WebViewEmail';
+								COMMENT.sendEmail.call(that, e);
+								break;
+							case 'qq':
+								shareChannel = 'WebViewQq';
+								COMMENT.sendqq.call(that, e);
+								break;
+							case 'facebook':
+								shareChannel = 'WebViewFacebook';
+								COMMENT.sendfacebook.call(that, e);
+								break;
+							case 'twitter':
+								shareChannel = 'WebViewTwT';
+								COMMENT.sendtwitter.call(that, e);
+								break;
+						}
+	
+						var webdata = {
+							'fileId': gfileID,
+							'publicAuthority': 1,
+							'isCustomMode': false,
+							'channel': shareChannel
+						};
+	
+						popcorn.modifyAuthorityWeblink(webdata, function (result) {
+							COMMENT.getCoworkInfo();
+						});
+					}, function (e, message) {
+						var popupMessage = new Array();
+						popupMessage[0] = message;
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+							popupMessage: popupMessage
+						}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+						popup.create();
+						popup.show();
+						return;
+					});
+				}
+
+				if(!gfileID){
+					po_editor.execute(null, 'saveToDrive', sendDirect);
+				} else {
+					sendDirect();
+				}
+
+			} else {
+				if(gMode == 'view'){
+					po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+					return;
+				} else {
+					openloginpopup(e);
+					return;
+				}
+			}
+
+		};
+
+	},
+	'sendEmail': function (e) {
+		if (e.preventDefault) e.preventDefault();
+
+		//logTracking
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.event;
+		if (isMobile) {
+			webData['obj'].dp = 'FileView.Tablet';
+		} else {
+			webData['obj'].dp = 'FileView';
+		}
+		webData['obj'].dt = gdocext;
+		webData['obj'].ec = 'ux';
+		webData['obj'].ea = 'cl';
+		webData['obj'].el = 'LinkMail';
+		$.extend(webData, {
+			'cobj': {
+				'myDoc': ((gUserId == _OwnerID) ? true : false),
+				'isShared': (logisShared == 'true' ? true : false)
+			}
+		});
+		$LOGMODEL.sendData(webData);
+
+		if (typeof gUserId != 'undefined' && !gUserId) {
+			if(gMode == 'view'){
+				po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+				return;
+			} else {
+				openloginpopup(e);
+				return;
+			}
+			
+		} else { 	
+			function sendEmail(){
+				var settings2 = {
+					'fileId': gfileID,
+					'type': 'weblink',
+					'locale': local,
+					'fileType': gdocext,
+					'fileName': gdocName,
+					'usercnt': 0,
+					'location' : gDocPosition
+				};
+				if ($commentData.shareDeniedReason != null) settings2.externalAuthority = $commentData.shareDeniedReason;
+	
+				checkPermission('Share', function () {
+					$("#address").sendEmail(settings2);
+					gtag('event', '메일', {
+						'event_category': '문서 내 기능',
+						'event_label': gdocext
+					});
+				}, function (e, message) {
+					var popupMessage = new Array();
+					popupMessage[0] = message;
+					var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+						popupMessage: popupMessage
+					}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+					popup.create();
+					popup.show();
+					return;
+				});
+			}
+			if(!gfileID){
+				po_editor.execute(null, 'saveToDrive', sendEmail);
+			} else {
+				sendEmail();
+			}
+		}
+	},
+	'sendfacebook': function (e) {
+		if (e.preventDefault) e.preventDefault();
+
+		//logTracking
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.event;
+		if (isMobile) {
+			webData['obj'].dp = 'FileView.Tablet';
+		} else {
+			webData['obj'].dp = 'FileView';
+		}
+		webData['obj'].dt = gdocext;
+		webData['obj'].ec = 'ux';
+		webData['obj'].ea = 'cl';
+		webData['obj'].el = 'LinkFacebook';
+		$.extend(webData, {
+			'cobj': {
+				'myDoc': ((gUserId == _OwnerID) ? true : false),
+				'isShared': (logisShared == 'true' ? true : false)
+			}
+		});
+		$LOGMODEL.sendData(webData);
+
+		if(!gUserId && gMode == 'view'){
+			po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+			return;
+		}
+
+		function sendFacebook(){
+			var name = "\'" + gdocName + "\':   " + $('#copy').val();
+			var img = location.protocol + '//' + location.host + GET_WEBLINK_THUMBNAIL + gfileID + '?' + $commentData.loadTime;
+	
+			checkPermission('Share', function () {
+				fbookDialogOpen($('#copy').val(), name, img, LanguagePack.POLink_DOC_SHARE);
+				gtag('event', '페이스북', {
+					'event_category': '문서 내 기능',
+					'event_label': gdocext
+				});
+			}, function (e, message) {
+				var popupMessage = new Array();
+				popupMessage[0] = message;
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+					popupMessage: popupMessage
+				}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.show();
+				return;
+			});
+		}
+		if(!gfileID){
+			po_editor.execute(null, 'saveToDrive', sendFacebook);
+		} else {
+			sendFacebook();
+		}
+
+
+	},
+	'sendtwitter': function (e) {
+		if (e.preventDefault) e.preventDefault();
+
+		//logTracking
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.event;
+		if (isMobile) {
+			webData['obj'].dp = 'FileView.Tablet';
+		} else {
+			webData['obj'].dp = 'FileView';
+		}
+		webData['obj'].dt = gdocext;
+		webData['obj'].ec = 'ux';
+		webData['obj'].ea = 'cl';
+		webData['obj'].el = 'LinkTweeter';
+		$.extend(webData, {
+			'cobj': {
+				'myDoc': ((gUserId == _OwnerID) ? true : false),
+				'isShared': (logisShared == 'true' ? true : false)
+			}
+		});
+		$LOGMODEL.sendData(webData);
+
+		if(!gUserId && gMode == 'view'){
+			po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+			return;
+		}
+
+		function sendTwitter(){
+			if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
+				var ver = new Number(RegExp.$1);
+				if (ver <= 8) {
+					name = LanguagePack.POLink_DOC_SHARE + '\r\n' + gdocName + '\r\n';
+				} else
+					name = LanguagePack.POLink_DOC_SHARE + '\r' + gdocName + '\r';
+			} else {
+				name = LanguagePack.POLink_DOC_SHARE + '\r' + gdocName + '\r';
+			}
+	
+			checkPermission('Share', function () {
+				twitterWinOpen("twitter_sp", $('#copy').val(), name, true);
+				gtag('event', '트위터', {
+					'event_category': '문서 내 기능',
+					'event_label': gdocext
+				});
+				
+			}, function (e, message) {
+				var popupMessage = new Array();
+				popupMessage[0] = message;
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+					popupMessage: popupMessage
+				}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.show();
+				return;
+			});
+		}
+		if(!gfileID){
+			po_editor.execute(null, 'saveToDrive', sendTwitter);
+		} else {
+			sendTwitter();
+		}
+
+	},
+	'selectinput': function (e) {
+		var $this = $(this);
+		if (isMobile) {
+			this.setSelectionRange(0, $this.val().length);
+		} else {
+			$this.select();
+		}
+	},
+	'AddComment': function (_data, _ownerId, _time, _commentId, _writer, _updatetime, _notice, _fetch) {
+		var datetime = new Date().getTime().toString().substring(0, 10);
+		if (_time)
+			datetime = _time;
+		if (_updatetime)
+			datetime = _updatetime;
+		var cmtId = _time + '_' + _commentId;
+		if ($('#' + cmtId).length < 1) {
+			var container = $('<dl>', {
+				'id': cmtId
+			});
+			var user = $('<dt>', {
+
+			});
+			var photoapi = gUserId ? TASK_GET_USERPICTURE : TASK_GET_PUSERPICTURE;
+			var userImgtag = $('<img>', {
+				'src': photoapi + _ownerId + $commentData.loadTime,
+				'class': 'mCS_img_loaded',
+				'width': '36px',
+				'height': '36px'
+			});
+			var userSpan = null;
+			if (gUserId == _ownerId)
+				userSpan = $('<span>', {
+					'class': "me"
+				});
+
+
+			var userWrapper = container.append(user.append(userImgtag).append(userSpan));
+
+			var cmtWrapper = $('<dd>', {
+
+			});
+
+
+			var cmtOwner = $('<strong>', {
+				'text': _writer
+			});
+
+			var cmtdate = $('<span>', {
+				'class': 'date',
+				'text': ((_updatetime) ? covertunixTime7(datetime, 1) + LanguagePack.COMMENT_CONTENT_EDITED : covertunixTime7(datetime, 1))
+			});
+
+			var cmtText = $('<span>', {
+				'class': 'txt',
+				'text': _data
+			});
+			var textareatag = $('<textarea>', {
+				'cols': 30,
+				'rows': 3,
+				'class': 'enter',
+				'id': 'tx_' + _commentId
+			});
+
+			var cmtModify = null;
+
+			if (gUserId) {
+				cmtModify = $('<a>', {
+					'href': '#',
+					'class': 'write',
+					'id': _commentId,
+					'click': COMMENT.modifyComment,
+				});
+			}
+
+			var cmtDelete = null;
+			if (gUserId) {
+				cmtDelete = $('<a>', {
+					'href': '#',
+					'class': 'close',
+					'click': COMMENT.deleteComment,
+				});
+			}
+
+			var cmtUpdate = null;
+			if (gUserId) {
+				cmtUpdate = $('<a>', {
+					'href': '#',
+					'class': 'bottom_btn update',
+					'click': COMMENT.saveEdit,
+					'text': LanguagePack.KEYWORD_UPDATE_MODIFY
+				});
+			}
+
+			var cmtCancel = null;
+			if (gUserId) {
+				cmtCancel = $('<a>', {
+					'href': '#',
+					'class': 'bottom_btn cancel',
+					'click': COMMENT.cancelEdit,
+					'text': LanguagePack.KEYWORD_CANCEL
+				});
+			}
+
+			var userinfo = cmtWrapper.append(cmtOwner).append(cmtdate).append(cmtText).append(textareatag).append(cmtCancel).append(cmtUpdate).fadeIn('slow');
+
+			if (gUserId == _ownerId && _commentId != 'tmp') {
+				userinfo = cmtWrapper.append(cmtModify).append(cmtDelete);
+			} else if (gUserId == _OwnerID && _commentId != 'tmp') {
+				userinfo = cmtWrapper.append(cmtDelete.attr('id', _commentId));
+			}
+			userWrapper.append(userinfo);
+			if (_fetch) {
+				$('#mCSB_2_container').append(userWrapper);
+			} else {
+				$('#mCSB_2_container').prepend(userWrapper);
+			}
+			userinfo.children('textarea').bind('keyup', function (e) {
+				e.stopPropagation();
+			});
+		}
+	},
+	'modifyComment': function (e) {
+		commonPreventEvent(e);
+		var target = getSeletor(e);
+
+		var contents = target.parent().children('.txt');
+		contents.hide();
+		target.parent().children("textarea").val(contents.text());
+		target.parent().children("textarea").show();
+		moveCursorToEnd(target.parent().children("textarea")[0]);
+		target.parent().children('.update').show();
+		target.parent().children('.cancel').show();
+		$commentData.setData(contents.text());
+
+	},
+	'saveEdit': function (e) {
+		commonPreventEvent(e);
+		var target = getSeletor(e);
+		var newContents = target.parents('dd').find('textarea');
+		if ($commentData.isModifyData(newContents.val())) {
+			var webapp = {};
+			webapp.idComment = target.next().attr("id");
+			var commentstr = newContents.val();
+			var str = newContents.val();
+			var emojistr = '';
+			for (var j = 0; j < str.length; j++) {
+				var theUnicode = str.charCodeAt(j).toString(16).toLowerCase();
+				if (theUnicode >= 'd800' && theUnicode <= 'd8ff') {
+					emojistr = str.slice(j, j + 2);
+					commentstr = commentstr.replace(emojistr, '__');
+
+				}
+
+			}
+			//$('#comment_input').val(commentstr);
+			webapp.comment = commentstr;
+			popcorn.updateComment(webapp, function (res) {
+				if (CheckResult(null, res) != null) {
+					newContents.parent().children(".date").text(covertunixTime7(new Date().getTime().toString().substring(0, 10)) + LanguagePack.COMMENT_CONTENT_EDITED);
+					newContents.parent().children(".txt").text(res.comment);
+				} else if (res.resultCode == "101") {
+					COMMENT.showPopup(LanguagePack.NOTICE_AUTH_NOEDIT, LanguagePack.KEYWORD_ALERT);
+				} else if (res.resultCode == "209") {
+					COMMENT.showPopup(LanguagePack.NOTICE_ALREADY_DELCOMMENT, LanguagePack.KEYWORD_ALERT, {
+						'type': 'stay'
+					});
+					newContents.parent().parent().fadeOut('slow', function () {
+						$commentData.totalCnt = $commentData.totalCnt - 1;
+						$(this).remove();
+						COMMENT.handleCommentCount(true);
+					});
+				}
+			}, function (res) {
+
+			});
+
+		}
+		newContents.hide();
+		target.hide();
+		target.prev().hide();
+		newContents.prev().show();
+	},
+	'cancelEdit': function (e) {
+		commonPreventEvent(e);
+		var target = getSeletor(e);
+		var contents = $commentData.data;
+		target.parent().find('span.txt').text(contents);
+		target.parent().find('span.txt').show();
+		target.parent().find('textarea').hide();
+		target.hide();
+		target.next().hide();
+	},
+	'deleteComment': function (e) {
+		var target = getSeletor(e);
+		var webapp = {};
+		var $dl = target.closest('dl');
+		var id = $dl.attr('id').split('_')[1];
+		webapp.idComment = id;
+		popcorn.deleteComment(webapp, function (res) {
+			if (CheckResult(null, res) != null) {
+				target.parent().parent().fadeOut('slow', function () {
+					$commentData.totalCnt = $commentData.totalCnt - 1;
+					$(this).remove();
+					COMMENT.handleCommentCount(true);
+				});
+			} else if (res.resultCode == "101") {
+				target.parent().removeClass('comment_delete_ani');
+				COMMENT.showPopup(LanguagePack.NOTICE_AUTH_NODELETE, LanguagePack.KEYWORD_ALERT, {
+					'type': 'reset'
+				});
+			} else if (res.resultCode == "209") {
+				// target.parent().parent().fadeOut('slow', function () {
+				// 	$commentData.totalCnt = $commentData.totalCnt - 1;
+				// 	$(this).remove();
+				// 	COMMENT.handleCommentCount(true);
+				// });
+			}
+		}, function (res) {
+
+		});
+
+	},
+	'setData': function () {
+
+	},
+	'getlistComment': function () {
+		if(!gfileID) return;
+		var webapp = {};
+		var arg = arguments[0];
+		webapp.idFile = gfileID;
+		webapp.idUser = "";
+		webapp.fetchSize = $commentData.fetchSize;
+		webapp.page = $commentData.currentPage;
+		popcorn.getlistComment(webapp, function (res) {
+			if (CheckResult(null, res) != null) {
+				if (arg) {
+					if (res.commentList.length == 0) {
+						if ($commentData.currentPage > 1) $commentData.currentPage--;
+						COMMENT.showPopup(LanguagePack.NOTICE_NOMORE_COMMENT, LanguagePack.KEYWORD_ALERT, {
+							'type': 'nocomment'
+						});
+					}
+					res.commentList.sort(COMMENT.sortListRev);
+				} else {
+					res.commentList.sort(COMMENT.sortList);
+				}
+				if (res.count && (res.count > webapp.fetchSize * webapp.page)) {
+					$('aside.panel section.msg div.comment p.btn_more').show();
+				} else $('aside.panel section.msg div.comment p.btn_more').hide();
+				$commentData.totalCnt = res.count;
+				COMMENT.handleCommentCount(false);
+				for (var i = 0; i < res.commentList.length; i++) {
+					COMMENT.AddComment(res.commentList[i].comment, res.commentList[i].idUser, res.commentList[i].timeCreate, res.commentList[i].id, res.commentList[i].userName, res.commentList[i].timeUpdate, false, arg);
+				}
+			}
+		}, function (res) {
+			if ($commentData.currentPage > 1) $commentData.currentPage--;
+		});
+	},
+	'hidemenu': function () {
+		if (_onfoucs)
+			return;
+		setTimeout(function () {
+			if (!$('#webView div.menu ul.depth2').is(':visible') && !_onfoucs)
+				$('#webView div.menu ul.depth1').fadeOut('slow');
+
+		}, 5000);
+
+
+	},
+	'hidemenufast': function () {
+		if (_onfoucs)
+			return;
+		setTimeout(function () {
+			if (!$('#webView div.menu ul.depth2').is(':visible') && !_onfoucs)
+				$('#webView div.menu ul.depth1').fadeOut('slow');
+
+		}, 1000);
+
+
+	},
+	'sortList': function (a, b) {
+		if (a.timeCreate > b.timeCreate)
+			return 1;
+		if (a.timeCreate < b.timeCreate)
+			return -1;
+		return 0;
+	},
+	'sortListRev': function (a, b) {
+		if (a.timeCreate < b.timeCreate)
+			return 1;
+		if (a.timeCreate > b.timeCreate)
+			return -1;
+		return 0;
+	},
+	'showPopup': function (content, title, simple, whichType) {
+		var popupMessage = new Array();
+		popupMessage[0] = content;
+		var pType = PopupType.DEFAULT;
+		var bType = ButtonType.CONFIRM;
+		var confirmCB = function (e) {
+			COMMENT.popupHandler(e, simple);
+		}
+		var cancelCB = null
+		var closeCB = function (e) {
+			COMMENT.popupHandler(e, simple);
+		};
+		if (whichType) {
+			pType = whichType.type;
+			bType = whichType.button;
+			confirmCB = whichType.confirm;
+			cancelCB = whichType.cancel;
+		}
+
+		var popup = new PopupMessage(pType, bType, null, {
+			popupMessage: popupMessage
+		}, confirmCB, cancelCB, closeCB);
+		popup.create();
+		if (title != undefined || title != null)
+			popup.setTitle(title);
+		popup.show();
+	},
+	'popupHandler': function (e, simple) {
+		if (e.preventDefault) e.preventDefault();
+		var popup = e.data.param[PopupDataKey.POPUP];
+		popup.destroy();
+		if (simple && simple.type) {
+			if (simple.type == 'reset') {
+				window.location.reload(true);
+			} else if (simple.type == 'home') {
+				window.location.href = '/view/home';
+			} else if (simple.type == 'login') {
+				if (gUserId == null) {
+					openloginpopup(e);
+					return;
+				}
+				window.location.reload(true);
+			} else {
+				// TODO: 
+			}
+		} else window.location.reload(true);
+	},
+	'liveUpdate': {
+		'DELETE': function () {
+			var arg = arguments;
+			if (arg[0].fileInfo.id == gfileID) {
+				COMMENT.showPopup(LanguagePack.COOPERATION_AUTHENTICATEDFAIL_MSG3, LanguagePack.KEYWORD_ALERT, {
+					'type': 'home'
+				}, null);
+				return;
+			}
+		},
+		'DELETEATTENDEE': function () {
+			var arg = arguments; // TODO
+		},
+		'DELETEFILE': function () {
+			var arg = arguments;
+			if (arg[0].fileInfo.id == gfileID) {
+				COMMENT.showPopup(LanguagePack.TOAST_VERSION_RESULT_227, LanguagePack.KEYWORD_ALERT, {
+					'type': 'home'
+				}, null);
+				return;
+			}
+		},
+		'ADDCOMMENT': function () {
+			var arg = arguments;
+			var _data, _ownerId, _time, _commentId, _writer;
+			_data = arg[0].comment;
+			_ownerId = arg[0].user.id;
+			_time = arg[0].time * 1000;
+			_commentId = 'tmp'; // arg[0].commentId;
+			_writer = arg[0].user.name;
+			if (_time > $commentData.loadTime) {
+				COMMENT.AddComment(_data, _ownerId, _time, _commentId, _writer);
+			}
+		}
+	},
+	'getTSM': function () {
+		if (!$commentData.customMode) {
+			return ($commentData.publicAuthority + 1);
+		} else {
+			return ($commentData.publicAuthority + 41);
+		}
+	}
+}
+
+var timeoutErrorStr = LanguagePack.TIMEOUT_OPEN_DOCUMENT_FAIL;
+
+if (!is_Mac) {
+	timeoutErrorStr += '<br><br>' + LanguagePack.TIMEOUT_OPEN_DOCUMENT_PC;
+}
+
+var commonViewMsgs = {
+	'230': '',
+	'231': LanguagePack.POPUP_VIEWERERROR_UNSUPPORTEDFILE,
+	'232': LanguagePack.POPUP_VIEWERERROR_FAILTOCONVERTDOCUMENTBYUNKNOWNERROR_RETRY,
+	'236': LanguagePack.NOTSUPPORTLOCKEDDOC,
+	'237': LanguagePack.POPUP_VIEWERERROR_UNSUPPORTEDFILE,
+	'238': LanguagePack.POPUP_VIEWERERROR_UNSUPPORTEDFILE,
+	'504': LanguagePack.POPUP_VIEWERERROR_FAILTOFINISHDOCCAST,
+	'506': LanguagePack.POPUP_VIEWERERROR_CHANGEDOCCAST,
+	'500': LanguagePack.SCREEN_NODOCEXIST,
+	'501': LanguagePack.SCREEN_NODOCEXIST,
+	'1300': LanguagePack.POPUP_VIEWERERROR_NOPODOCWITHGIVENID,
+	'1301': LanguagePack.POPUP_VIEWERERROR_BEFOREPODOCRECOVERY,
+	'1302': LanguagePack.POPUP_VIEWERERROR_DOINGPODOCRECOVERY,
+	'1303': LanguagePack.POPUP_VIEWERERROR_AFTERPODOCRECOVERY,
+	'252': LanguagePack.POPUP_VIEWERERROR_BEFOREPODOCRECOVERY,
+	'1000': timeoutErrorStr,
+	'1001': LanguagePack.TIMEOUT_OPEN_DOCUMENT_ERROR + '<br><br>' + LanguagePack.TIMEOUT_OPEN_DOCUMENT_PC,
+	'ETC': LanguagePack.POPUP_TEMPORARYERROR
+};
+
+var rtl = false;
+var aiUserInfo = null;
+$(document).ready(function () {
+	//credit
+	if(gUserId && gVendorType != 'whale'){
+		getAIUserInfo(function(res){
+			if(res.resultCode === 0) {
+				aiUserInfo = res;
+			}
+			var totalCredit = res.userinfo.remainCredit == -1 ? LanguagePack.KEYWORD_PRICE_INFINITE : res.userinfo.remainCredit;
+			$('.userCredit').text(totalCredit).closest('dl').on('click', function(e){
+				commonPreventEvent(e);
+				window.open('/account#credit', '_blank');
+			});
+		});	
+	}
+
+	var classname = '';
+	if (local == 'en_US') {
+		classname = 'en';
+	} else if (local == 'ja_JP') {
+		classname = 'ja';
+	} else if (local == 'ko_KR') {
+		classname = 'ko';
+	} else if (local == 'zh_CN') {
+		classname = 'cn';
+	} else if (local == 'zh') {
+		classname = 'cn zh';
+	} else if (local == 'ru_RU') {
+		classname = 'ru';
+	} else if (local == 'ar_AE') {
+		classname = 'rtl';
+		rtl = true;
+	} else if (local == 'fr_FR') {
+		classname = 'fr';
+	} else if (local == 'es_ES') {
+		classname = 'fr es';
+	} else if (local == 'pl_PL') {
+		classname = 'fr pl';
+	} else if (local == 'in_ID') {
+		classname = 'id';
+	} else if (local == 'it_IT') {
+		classname = 'it';
+	} else if (local == 'ru_RU') {
+		classname = 'ru';
+	} else if (local == 'de_DE') {
+		classname = 'de';
+	} else if (local == 'zh_TW') {
+		classname = 'zhTW';
+	} else if (local == 'pt_BR') {
+		classname = 'ptBR';
+	} else if (local == 'pt_PT') {
+		classname = 'ptPT';
+	} else if (local == 'tr_TR') {
+		classname = 'tr';
+	}
+	if (classname && !rtl) {
+		$('body').addClass(classname);
+	}
+
+	if (typeof weblinkerror != "undefined" && weblinkerror) {
+		$('#pageslide').remove();
+		$('div.title').remove();
+		return;
+	}
+
+	$appConnector = new AppConnector();
+	$appConnector.setOS();
+	$appConnector.setUrl();
+
+	if ($('.btn_app').length && getCookie('KEEP_STARTAPP')) {
+		if (location.href.indexOf('cmt=on') < 0) editmode();
+	}
+	if (_viewtype == 'normal_view' || gUserId == _OwnerID) {
+		$('li.download ul.download').each(function (idx) {
+			if ($(this).find('li').length == 2 && !isTeamFolderDoc) {
+				$(this).find('li:last').remove();
+			}
+		});
+	}
+
+	var _chromeCast = checkChromeCast($(this).parent());
+
+	if (_chromeCast) {
+		$('#pageslide').hide();
+		$('#webView div.menu').hide();
+		$commentData.getPanelWidth = function () {
+			return 0;
+		}
+	} else {
+		if(gMode == 'view' || (typeof gVendorType != 'undefined' && gVendorType != 'whale' && gVendorType != 'po' && versionlist == 'false'))
+			COMMENT.init();
+	}
+
+	if (location.href.indexOf('cmt=on') > -1) {
+		$('#webView div.menu ul.depth1 a.menu_03').click();
+	}
+	if (!isMobile && !noticeid && location.href.indexOf('FileBrowser') == -1 && !_chromeCast && location.href.indexOf('/d/') > -1) {
+		isShareDoc = true;
+		$('#allways_pcopen').bind('click', function () {
+			if (document.getElementById('allways_pcopen').checked) {
+				setCookies('OPENPCOFFICE', 365);
+
+				//logTracking
+				var webData = $LOGMODEL.getData();
+				webData['ti'].t = LogType.tracking.event;
+				webData['obj'].dp = 'FileView';
+				webData['obj'].dt = gdocext;
+				webData['obj'].ec = 'ux';
+				webData['obj'].ea = 'cl';
+				webData['obj'].el = 'OnAlwaysOpenPCOffice';
+				$LOGMODEL.sendData(webData);
+
+				if (!getCookie('WEBVIEWOPENPC')) {
+					setCookies('WEBVIEWOPENPC', 365);
+					$('#open_pc_popup').show();
+					$('#viewcontents, #msg_area, .doc_open').click(function () {
+						if ($('#open_pc_popup').css('display') != 'none') {
+							$('#open_pc_popup').remove();
+						}
+					});
+
+					$('#open_pc_install').click(function (e) {
+						commonPreventEvent(e);
+						if (!isMobile) {
+							if (checkAgent() == "macos")
+								window.open(LanguagePack.MACOFFICE_PROD_URL);
+							else
+								downloadTest(LanguagePack.PCOFFICE_PROD_URL);
+							$('#open_pc_popup').remove();
+
+							//logTracking
+							var webData = $LOGMODEL.getData();
+							webData['ti'].t = LogType.tracking.event;
+							webData['obj'].dp = 'FileView';
+							webData['obj'].dt = 'OpenPCOffice1ToolTip';
+							webData['obj'].ec = 'ux';
+							webData['obj'].ea = 'cl';
+							webData['obj'].el = 'Install';
+							$LOGMODEL.sendData(webData);
+						}
+					});
+				}
+
+				if (gUserId) {
+					isAlltimePC = true;
+					setPCOfficeUseOnly();
+				}
+
+			} else {
+				deleteCookie('OPENPCOFFICE');
+
+				//logTracking
+				var webData = $LOGMODEL.getData();
+				webData['ti'].t = LogType.tracking.event;
+				webData['obj'].dp = 'FileView';
+				webData['obj'].dt = gdocext;
+				webData['obj'].ec = 'ux';
+				webData['obj'].ea = 'cl';
+				webData['obj'].el = 'OffAlwaysOpenPCOffice';
+				$LOGMODEL.sendData(webData);
+
+				if (gUserId) {
+					isAlltimePC = false;
+					setPCOfficeUseOnly();
+				}
+				if ($('#open_pc_popup').css('display') != 'none') {
+					$('#open_pc_popup').hide();
+				}
+			}
+
+		});
+		$('#opendoc_installPC').bind('click', function () {
+			if (!isMobile) {
+				//logTracking
+				var webData = $LOGMODEL.getData();
+				webData['ti'].t = LogType.tracking.event;
+				webData['obj'].dp = 'FileView';
+				webData['obj'].dt = gdocext;
+				webData['obj'].ec = 'ux';
+				webData['obj'].ea = 'cl';
+				webData['obj'].el = 'InstallPCOffice';
+				$LOGMODEL.sendData(webData);
+
+				if (checkAgent() == "macos")
+					window.open(LanguagePack.MACOFFICE_PROD_URL);
+				else
+					downloadTest(LanguagePack.PCOFFICE_PROD_URL);
+			}
+		});
+
+		setAllwaysPCOpen();
+	} else {
+		$('#titlebarheader').append(getLoadingimg);
+	}
+
+	if (gUserId) {
+	 	AccountUserInfo(null, null);
+	}
+
+	$('a.edit_web').on('click', function(e){
+		commonPreventEvent(e);
+		var docType = $('#webView').data('type');
+		var vendor = gVendorType != '' ? gVendorType : 'po';
+		if(gdocext == 'hwp' || gdocext == 'hwpx'){
+			docType = 'hwp';
+		}
+		
+		sendLogMessage(LogType.tracking.event, 'weboffice.viewer.click', docType.toUpperCase(), 'ux', 'cl', 'create.newdoc.button');
+		if(is_Mac && docType == 'hwp'){
+			docType = 'word';
+		}
+
+		window.open('/editor/' + vendor + '/' + docType, '_blank');
+	});
+
+	$('#logout').on('click', function(e){
+		var webviewLogout = function(e){
+			window.onbeforeunload = null;
+			logout(e);
+		}
+		if(gMode == 'edit'){
+			var saveLogout = function(){
+				window.onbeforeunload = null;
+				po_editor.execute(null, 'saveToDrive', logout);
+			}
+			po_editor.execute(e, 'showAlert', LanguagePack.WEBVIEW_LOGOUT_STR, LanguagePack.WEBVIEW_SAVE_LOGOUT, LanguagePack.KEYWORD_LOGOUT, saveLogout, webviewLogout);
+		} else {
+			webviewLogout(e);
+		}
+	});
+	
+	$('a.share, #webView div.menu ul.depth1 li.share').on("click", function (e) {
+		checkPermission('Share', function () {
+			//logTracking
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.event;
+			webData['obj'].ec = 'ux';
+			webData['obj'].ea = 'cl';
+			if (isMobile) {
+				webData['obj'].dp = 'FileView.Tablet';
+			} else {
+				webData['obj'].dp = 'FileView';
+			}
+			webData['obj'].dt = gdocext;
+			webData['obj'].di = gfileID;
+			webData['obj'].el = "Share";
+			$.extend(webData, {
+				'cobj': {
+					'myDoc': ((gUserId == _OwnerID) ? true : false),
+					'isShared': (logisShared == 'true' ? true : false)
+				}
+			});
+			$LOGMODEL.sendData(webData);
+
+			gtag('event', '공유', {
+				'event_category': '문서 내 기능',
+				'event_label': gdocext
+			});
+
+			if (gUserId == null) {
+				if(gMode == 'view'){
+					po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+					return;
+				} else {
+					openloginpopup(e, true);
+					return;
+				}
+			}
+
+			if(!gfileID) {
+				po_editor.execute(e, 'share');
+				return;
+			}
+			if (e.preventDefault) e.preventDefault();
+
+			var result = function () {
+				if (typeof $USERINFO.getData('UNVERIFIED') == 'undefined') {
+					setTimeout(result, 200);
+					return;
+				}
+				if (gUserId) {
+					var data2 = {
+						'log': {
+							'state': 'start',
+							'origin': 'Document',
+							'target': 'Web'
+						},
+						'fileinfo': {
+							'id': gfileID,
+						},
+						'synccb': function () {
+							// pageSyncMyFolder('file_share');
+							COMMENT.getCoworkInfo();
+						},
+						'channel': 'WebViewShare',
+						'viewerDocPos' : gDocPosition
+
+					};
+					showCooperation(data2);
+				}
+			};
+			if (typeof $USERINFO.getData('UNVERIFIED') == 'undefined') {
+				setTimeout(result, 200);
+			} else {
+				result();
+			}
+		}, function (e, message) {
+			var popupMessage = new Array();
+			popupMessage[0] = message;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+			return;
+		});
+	});
+
+	$('a.btn_download').on('click', function (event) {
+		commonPreventEvent(event);
+		checkPermission('Download', function () {
+			if(gMode == 'view'){
+				po_editor.execute(null, 'downloadPopup');
+				return;
+			}
+
+			if (!gUserEmail) {
+				$(this).invokeDownload(true, false);
+				openloginpopup(event);
+				return;
+			} else {
+				if (!downloading)
+					download();
+			}
+			gtag('event', '컴퓨터에 다운로드', {
+				'event_category': '문서 내 기능',
+				'event_label': gdocext
+			});
+		}, function () {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.BUSINESS_FILEDOWNLOAD_ERROR;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+			return;
+		});
+	});
+
+	$('#weblinkcopy').bind("click", requestURLcopy);
+
+	$('#drivedownload, #modal .msg .btn .download ul.download li.po a, #mydriveDownload').on("click", function (e) {
+		checkPermission('Download', function () {
+			//logTracking
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.event;
+			if (isMobile) {
+				webData['obj'].dp = 'FileView.Tablet';
+			} else {
+				webData['obj'].dp = 'FileView';
+			}
+			webData['obj'].dt = gdocext;
+			webData['obj'].ec = 'ux';
+			webData['obj'].ea = 'cl';
+			webData['obj'].el = 'SaveMyPolarisDrive';
+			$.extend(webData, {
+				'cobj': {
+					'myDoc': ((gUserId == _OwnerID) ? true : false),
+					'isShared': (logisShared == 'true' ? true : false)
+				}
+			});
+			$LOGMODEL.sendData(webData);
+			if (!gUserEmail) {
+				if(gMode == 'view'){
+					po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+					return;
+				} else {
+					openloginpopup(e);
+					return;
+				}
+			} else {
+				if (!checkExceeded())
+					return;
+
+				if(!gfileID){
+					po_editor.execute(e, 'saveToDrive');
+					return;
+				}
+
+				var settings = {
+					'type': 'save',
+					'data': {
+						'type': _viewtype,
+						'fileId': DOC_ID,
+						'fileName': docTitle
+					}
+				};
+				$('#poTree').poTree(settings);
+			}
+
+			if (publicViewer || _viewtype == "doccast_view") {
+				if (typeof _viewtype != 'undefined' && _viewtype == 'weblink_view') {
+					$('header.view h1 a').bind('click', function (e) {
+
+					});
+				}
+			}
+			if (noticeid && gUserEmail) {
+				var result = function (res) {
+					if (CheckResult(null, res)) {
+						if (res.notice.type == 'REQUESTRESHARE') {
+							var data2 = {
+								'fileinfo': {
+									'id': res.notice.fileInfo.id,
+									'reqUser': res.notice.attendance
+								},
+								'type': 'reqAuth'
+							};
+							showCooperation(data2);
+						} else {
+							console.log(JSON.stringify(res.notice));
+						}
+
+					}
+				};
+				var webdata = {
+					'noticeId': '' + noticeid
+				};
+				popcorn.getNoticeOne(webdata, result, null);
+			}
+
+			//logTracking
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.page;
+			if (isMobile) {
+				webData['obj'].dp = 'FileView.Tablet';
+			} else {
+				webData['obj'].dp = 'FileView';
+			}
+			webData['obj'].dt = gdocext;
+			webData['obj'].di = gfileID;
+			$.extend(webData, {
+				'cobj': {
+					'myDoc': ((gUserId == _OwnerID) ? true : false),
+					'isShared': (logisShared == 'true' ? true : false)
+				}
+			});
+			$LOGMODEL.sendData(webData);
+		}, function () {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.BUSINESS_FILEDOWNLOAD_ERROR;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+			return;
+		}, null, isTeamFolderDoc);
+	});
+
+	if(!gUserId){
+		$('.no_member .login').on('click', function(e){
+			if(gfileID){
+				openloginpopup(e);
+			} else {
+				po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN_STR, LanguagePack.KEYWORD_LOGIN);
+			}
+		});
+
+		$('.no_member .regist').on('click', function(e){
+			if(gfileID){
+				openregistpopup(e);
+			} else {
+				po_editor.execute(null, 'registPopup', LanguagePack.WEBVIEW_REGIST_STR, LanguagePack.REGIST_TITLE);
+			}
+		});
+	}
+
+	if(gMode == 'view'){
+		$('#modal .msg .link_no_share .btn_share .mail').unbind('click').bind("click", COMMENT.sendDirect);
+		$('#modal .msg .link_no_share .btn_share .facebook').unbind('click').bind("click", COMMENT.sendDirect);
+		$('#modal .msg .link_no_share .btn_share .twitter').unbind('click').bind("click", COMMENT.sendDirect);
+	}
+
+	if (versionlist == 'false' && gMode != 'edit') {
+		//logTracking
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.page;
+		if (isMobile) {
+			webData['obj'].dp = 'DocViewer.Tablet';
+		} else {
+			webData['obj'].dp = 'DocViewer.PC';
+		}
+		webData['obj'].dt = gdocext;
+		$.extend(webData, {
+			'cobj': {
+				'ul': gUserLevel,
+				'myDoc': ((gUserId == _OwnerID) ? true : false),
+				'isShared': (logisShared == 'true' ? true : false)
+			}
+		});
+		$LOGMODEL.sendData(webData);
+
+		var category = logisShared == 'true' ? '공유뷰' : '문서뷰';
+		gtag('event', category + '어', {
+			'event_category': category,
+			'event_label': gdocext
+		});
+	}
+
+	if(!is_Mac && ispoformat && !getCookie('WVRENO')){
+		$('.editBtmPop').show();
+	}
+
+	if(logisShared == 'true' && (!gUserLevel || gUserLevel == 'FREE')) {
+		setAdManagerAndCoupangScript(61)
+	}
+});
+
+function download() {
+	downloading = true;
+	var _srcUrl = '';
+	_srcUrl = _downladurl + DOC_ID;
+	if ((location.href.indexOf('?old=1') && _viewtype.indexOf('normal') >= 0) || _OwnerID == gUserId) {
+		_srcUrl += (ispoformat ? '' : '/' + grevision);
+	}
+
+	saveToLocal(_srcUrl);
+	setTimeout(function () {
+		downloading = false;
+	}, 2000);
+}
+
+function saveToLocal(_srcUrl) {
+	if (isMobile) {
+		if (agent.match(/iphone|ipad|ipod/)) {
+			window.open(_srcUrl, 'DOCSAVEWIN');
+		} else {
+			$('#download-iframe').attr('src', _srcUrl);
+		}
+	} else {
+		$('#download-iframe').attr('src', _srcUrl);
+	}
+	//logTracking
+	var webData = $LOGMODEL.getData();
+	webData['ti'].t = LogType.tracking.event;
+	if (isMobile) {
+		webData['obj'].dp = 'FileView.Tablet';
+	} else {
+		webData['obj'].dp = 'FileView';
+	}
+	webData['obj'].dt = gdocext;
+	webData['obj'].ec = 'ux';
+	webData['obj'].ea = 'cl';
+	webData['obj'].el = 'Download';
+	$.extend(webData, {
+		'cobj': {
+			'myDoc': ((gUserId == _OwnerID) ? true : false),
+			'isShared': (logisShared == 'true' ? true : false)
+		}
+	});
+	$LOGMODEL.sendData(webData);
+}
+
+function Imediatelydownload() {
+	var durl = _downladurl + DOC_ID;
+	/*if(ispoformat) {
+		// _downladurl = '/api/2/polarisdocument/get/';
+		durl = _downladurl+poformatId+'/'+poformatSd;
+	}*/
+	if ((location.href.indexOf('?old=1') && _viewtype.indexOf('normal') >= 0) || _OwnerID == gUserId) {
+		durl += (ispoformat ? '' : '/' + grevision);
+	}
+	window.open(durl, "_self");
+	setTimeout(function () {
+		location.reload(true);
+	}, 2000);
+}
+
+function requestURLcopy(event) {
+	commonPreventEvent(event);
+	if ($USERINFO.getData('UNVERIFIED')) {
+		unverifyShareMsg();
+		return;
+	}
+	var docIdInfo = DOC_ID.split('/');
+	var fileid = docIdInfo[0];
+
+	if (publicViewer) {
+		var settings = {
+			'id': fileid,
+			'name': docTitle,
+			'type': gdocext,
+			'ischina': ischina,
+			'url': '/a/' + DOC_ID
+		};
+		settings.log = {
+			'origin': 'Document',
+			'sharetype': 'WebLinkEmail',
+			'id': fileid,
+			'name': docTitle,
+			'size': logsize,
+			'isshare': logisShared
+		};
+		$('#weblink').weblink(settings);
+	} else {
+		if (_viewtype == "shared_view") {
+			fileid = DOC_ID;
+		}
+		var settings = {
+			'id': fileid,
+			'name': docTitle,
+			'type': gdocext,
+			'ischina': ischina
+		}
+		settings.log = {
+			'origin': 'Document',
+			'sharetype': 'WebLinkEmail',
+			'id': fileid,
+			'name': docTitle,
+			'size': logsize,
+			'isshare': logisShared
+		};
+		$('#weblink').weblink(settings);
+	}
+}
+
+function setViewSuccess(_taskID, _fileId) {
+	if (_viewsuccess) return;
+	_viewsuccess = true;
+	var webdata = {
+		maxRecentItemCount: -1,
+		recentItemList: [{
+			fileId: _fileId,
+			accessTime: 0,
+			eliminatedFromRecentList: false,
+			taskId: _taskID
+		}]
+	};
+	if (gUserEmail) {
+		popcorn.setlastaccess(webdata,
+			function (res) {
+
+				if (res.resultCode == 0) {
+					if (gUserId == null || gUserId != _OwnerID) {
+						if ($commentData.auth && $commentData.auth.v)
+							$('section.msg .viewcount').text(LanguagePack.VIEW_COUNT_INFO($commentData.auth.v.val + 1));
+					}
+				} else {
+
+				}
+			},
+			function (res) {
+				showErrorMsg(res.resultCode);
+			});
+	} else {
+		popcorn.increaseviewcount({
+				'fileId': _fileId
+			},
+			function (res) {
+
+				if (res.resultCode == 0) {
+					if (gUserId == null || gUserId != _OwnerID) {
+						if ($commentData.auth && $commentData.auth.v)
+							$('section.msg .viewcount').text(LanguagePack.VIEW_COUNT_INFO($commentData.auth.v.val + 1));
+					}
+				} else {
+
+				}
+			},
+			function (res) {
+				showErrorMsg(res.resultCode);
+			});
+	}
+}
+
+function AppConnector() {
+	this.appSchemeUri = (ischina == 'true') ? "porlarisofficechina://" : "PorlarisOffice://";
+	this.androidCNSuffix = "#Intent;scheme=porlarisofficechina;package=com.infraware.office.link.china;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end";
+	this.androidSuffix = "#Intent;scheme=porlarisoffice;package=com.infraware.office.link;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end";
+	this.oldversion = (location.href.indexOf('?v=old') >= 0 ? true : ((location.pathname.indexOf('/fileview/') < 0 || location.pathname.indexOf('/d/') < 0) && _viewtype == "") ? true : false);
+	this.url = '';
+	this.linksrc = '';
+	this.os = '';
+	this.domain = location.href.indexOf('polarisoffice.kr') >= 0 ? 'kt' : 'global';
+}
+AppConnector.prototype = {
+	'openApp': function () {
+		if (this.os == 'ios') { // ios
+			location.href = this.url;
+			installApp("IOS");
+		} else if (this.os == 'android') { // chrome browser
+			if (checkedLgPlan == -1) {
+				var myUrl = this.url;
+				popcorn.checkLgPlan(function (res) {
+					if (res.resultCode == 0) {
+						if (res.model) {
+							checkedLgPlan = true;
+						} else {
+							checkedLgPlan = false;
+						}
+						if (checkedLgPlan && ischina != 'true') {
+							myUrl = myUrl.split('com.infraware.office.link').join('com.infraware.office.link.lg');
+						}
+						location.href = myUrl;
+						installApp("ANDROID");
+					}
+				}, null);
+			} else {
+				if (checkedLgPlan && ischina != 'true') {
+					this.url = this.url.split('com.infraware.office.link').join('com.infraware.office.link.lg');
+				}
+				location.href = this.url;
+				installApp("ANDROID");
+			}
+		} else { // native android browser
+			if (agent.match(/xiaomi/)) {
+				// alert('XiaoMi NativeBrowser');
+				window.open(this.url);
+				// location.href = this.url;
+			} else {
+				$('body').append('<iframe id="applinkDiv" src="' + this.linksrc + '" width="0" height="0" frameborder="0"></iframe>');
+				setTimeout(function () {
+					$('#applinkDiv').remove();
+				}, 3000);
+			}
+			installApp("ANDROID");
+		}
+	},
+	'setOS': function () {
+		if (agent.match(/iphone|ipad|ipod/)) {
+			this.os = 'ios';
+		} else if (agent.indexOf('android') > -1 && agent.indexOf('chrome') > -1) {
+			this.os = 'android';
+		} else {
+			this.os = 'other';
+		}
+	},
+	'getAppScheme': function (_infoStr) {
+		if (this.os == 'android') {
+			if (_infoStr.indexOf('?') == 0) {
+				return 'intent://' + _infoStr.substring(1);
+			}
+			return 'intent://' + _infoStr;
+		} else {
+			return this.appSchemeUri + _infoStr;
+		}
+	},
+	'setUrl': function () { // TODO: check glastrevision or grevision
+		var infoStr = '';
+		var encodedFileName = encodeURIComponent(docTitle);
+		if (_viewtype.indexOf('normal') > -1) { // oldversion = newversion
+			var accToken = getAccessToken();
+			if (browser_version.indexOf('msie,8.0') < 0) {
+				accToken = $.trim(accToken);
+			}
+			infoStr = '?fileID=' + gfileID + '&revision=' + grevision + '&fileName=' + encodedFileName + '&' + accToken + '&domain=' + this.domain;
+		} else {
+			if (this.oldversion) { // oldversion
+				if (_viewtype == "") { // weblink_view
+					var curUrl = location.href;
+					var weblink_ID = curUrl.substr(curUrl.search('/a/') + '/a/'.length);
+					var re = /[#?]/;
+					var pos = weblink_ID.search(re);
+					if (pos >= 0) weblink_ID = weblink_ID.substring(0, pos);
+					infoStr = '?weblinkID=' + weblink_ID.split('/')[0] + '&revision=' + grevision + '&fileName=' + encodedFileName;
+				} else { // shared_view
+					infoStr = 'share?fileId=' + gfileID + '&ownerId=' + _OwnerID;
+				}
+			} else { // newversion
+				infoStr = 'share?fileId=' + gfileID + '&domain=' + this.domain;
+			}
+		}
+		this.linksrc = this.appSchemeUri + infoStr;
+		infoStr = this.getAppScheme(infoStr);
+		if (this.os == 'android' || this.os == 'other') {
+			infoStr += (ischina == 'true' ? this.androidCNSuffix : this.androidSuffix);
+		}
+		this.url = infoStr;
+	},
+	'handleUnsupported': function (msg) {
+		var text = LanguagePack.POPUP_READYFORSERVICE + '<br>' + LanguagePack.POPUP_NOTSUPPORTEDFILEFORMAT + ': ' + gdocext + '<br>' + LanguagePack.POPUP_APOLOGY;
+		if (msg != null) text = msg;
+		var popupMessage = new Array();
+		popupMessage[0] = text;
+		var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+			popupMessage: popupMessage
+		}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+		popup.create();
+		popup.show();
+	}
+}
+
+function editmode() {
+	$appConnector.openApp();
+}
+
+function openPCOffice(e) {
+	if (typeof e != 'undefined') {
+		commonPreventEvent(e);
+		commonStopPropagation(e);
+	}
+	$('#webView div.menu ul.depth1 li.edit ul').hide();
+
+	var docIdInfo = DOC_ID.split('/');
+	var fileName = encodeURIComponent(docTitle ? docTitle : originalFileName);
+	var owernid = null;
+	if (_OwnerID)
+		owernid = _OwnerID;
+	else
+		owernid = gUserId;
+	var poscheme;
+	if (_viewtype == "shared_view") {
+		poscheme = (ischina == 'true' ? "pocn-coedit" : "po-coedit") + "://?fi=" + DOC_ID + "&dt=" + fileName + "&co=1" + "&st=" + (isKT ? 2 : 1);
+	} else {
+		poscheme = (ischina == 'true' ? "pocn-coedit" : "po-coedit") + "://?fi=" + docIdInfo[0] + "&dt=" + fileName + "&co=1" + "&st=" + (isKT ? 2 : 1);
+	}
+
+	if(gDocPosition){
+		poscheme += '&pl=' + gDocPosition
+	}
+
+	var iscreatepopup = false;
+	if (getBrowserName() == 'safari' || getBrowserName() == 'firefox') {
+		iscreatepopup = true;
+	}
+
+	if (iscreatepopup) {
+		$('.openOffice').attr('src', poscheme);
+	} else {
+		setTimeout(function () {
+			location.href = poscheme;
+		}, 500);
+	}
+	if(typeof checkUnload != 'undefined') checkUnload = true;
+	
+	gtag('event', 'PC Office로 열기', {
+		'event_category': '문서 내 기능',
+		'event_label': gdocext
+	});
+	
+	if (typeof e == 'undefined' || e.target.id == 'open_office') {
+		setInterval(function () {
+			$('.doc_open .loading').hide();
+			$('.inner02 .t03 img').hide();
+			$('.inner02 .t02').remove();
+			$('.inner02 .d_open').css('display', 'inline-block');
+		}, 3000);
+
+	}
+
+	if (typeof e != 'undefined') {
+		if (e.target.id != 'open_office') {
+			defaultAlertCB(e);
+		}
+		var popupMessage = new Array();
+		popupMessage[0] = "<div class='txt_title' style='font-weight:bold;'>" + LanguagePack.NOTICE_PCOFFICE_RUN2 + "</div>" +
+			"<div style='word-break: break-word; '> " + LanguagePack.NOTICE_PCOFFICE_DOWNSTR2 +
+			"<a onclick='checkCBTDown(1)' style='color:#3c7df0;cursor:pointer;'>" + LanguagePack.INSTALL_BTN + " </a> </div> " +
+			"<div style='text-align: center; margin-top: 31px;'><img src=" + CF_PATH + "/resources/image/Polaris/new/webView/loading.gif> </div>";
+		// + "  <a href='#' onclick='InstallPCApp(event);' style='color:#3c7df0'> "+LanguagePack.INSTALL_BTN+" </a> </div> " ;
+		function defaultAlertCBWrapper(e) {
+			popup.isDestroyed = true;
+			defaultAlertCB(e);
+		}
+		var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+			popupMessage: popupMessage
+		}, defaultAlertCBWrapper, defaultAlertCBWrapper, defaultAlertCBWrapper);
+		popup.create();
+		popup.removeBtns();
+		popup.show();
+		setTimeout(function (e) {
+			if (popup != null && !popup.isDestroyed) {
+				popup.destroy();
+			}
+			if (isScrollHold) isScrollHold = false;
+		}, 7000);
+	}
+
+	//logTracking
+	var webData = $LOGMODEL.getData();
+	webData['ti'].t = LogType.tracking.event;
+	webData['obj'].ec = 'ux';
+	webData['obj'].ea = 'cl';
+	webData['obj'].dp = "FileView";
+	webData['obj'].dt = gdocext;
+	webData['obj'].di = gfileID;
+	webData['obj'].el = "Edit";
+	$LOGMODEL.sendData(webData);
+}
+
+function OpenPCPopup(res) {
+	var pop_html = '<div class="popup derivation"  style="display:block"><h1>' + LanguagePack.OPEN + '</h1><div class="popup_content">' +
+		'<p class="txt">' + LanguagePack.POPUP_WEBVIEW_EDIT_OPEN_PC + '</p><p class="txt account">* ' + LanguagePack.POPUP_WEBVIEW_EDIT_OPEN_MSG2 + '</p>' +
+		'<label for="" class=""><input type="checkbox" id="no_again">' + LanguagePack.POPUP_OPEN_DOC_NOTSHOW + '</label></div>' +
+		'<div class="bx_btn"><a href="#" class="install_check btn" data-check="ok">' + LanguagePack.KEYWORD_YES + '</a><a href="#" class="install_check btn" data-check="installed">' + LanguagePack.KEYWORD_NO + '</a></div><span class="btn_close">' +
+		'<a id="popup_close_btn btn_close" class="btn_close" href="#" alt=""><img src="' + CF_PATH + '/resources/image/Polaris/popup_button_close.png" /></a></span></div>';
+	$('body').append(pop_html);
+
+	var nextPopup = false;
+
+	closeNewPopup('REPCPOP');
+	$('.install_check').click(function () {
+		var check_val = $(this).attr('data-check');
+		var re = document.getElementById('no_again').checked;
+
+		$('.popup.derivation').remove();
+
+		if (re) {
+			var todayDate = new Date();
+			todayDate.setDate(todayDate.getDate() + 365);
+			document.cookie = "REPCPOP" + "=" + "true" + ";expires=" + todayDate.toGMTString() + ";path=/";
+		}
+
+		if (check_val == 'ok') {
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.event;
+			webData['obj'].dp = "FileViewOpenPCOffice";
+			webData['obj'].ec = "ux";
+			webData['obj'].ea = "cl";
+			webData['obj'].el = "Yes";
+			$LOGMODEL.sendData(webData);
+
+			isAlltimePC = true;
+			setPCOfficeUseOnly(true);
+			PCInstallPopup(res);
+		} else {
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.event;
+			webData['obj'].dp = "FileViewOpenPCOffice";
+			webData['obj'].ec = "ux";
+			webData['obj'].ea = "cl";
+			webData['obj'].el = "No";
+			$LOGMODEL.sendData(webData);
+
+			setPCOfficeUseOnly(false);
+			openPCOffice(res);
+		}
+	});
+}
+
+function PCInstallPopup(res) {
+	//console.log(res)
+	var installMsg = LanguagePack.POPUP_PCOFFICE_INSTALL_MSG;
+	if (checkAgent() == "macos")
+		installMsg += '<br>(' + LanguagePack.POPUP_OPEN_DOC_MAC_COMMNET1 + ')';
+
+	var pop_html = '<div class="new_popup derivation"><div class="newBox edit"><div class="box ">' +
+		'<a href="#" class="btn_close">닫기</a><dl><dt>' + LanguagePack.POPUP_PCOFFICE_INSTALL_TITLE + '</dt>' +
+		'<dd>' + installMsg + '</dd></dl>' +
+		'<p class="btn"><a href="#" class="install_check blue" data-check="ok">' + LanguagePack.POPUP_PCOFFICE_INSTALL_OK + '</a><a href="#" class="install_check" data-check="installed">' + LanguagePack.POPUP_PCOFFICE_INSTALL_INSTALLED + '</a></p></div></div></div>';
+
+	$('body').append(pop_html);
+
+	var nextPopup = false;
+
+	closeNewPopup();
+	$('.install_check').click(function () {
+		var check_val = $(this).attr('data-check');
+		$('.new_popup').remove();
+
+		if (check_val == 'ok') {
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.event;
+			webData['obj'].dp = "FileViewInstallPCOffice";
+			webData['obj'].ec = "ux";
+			webData['obj'].ea = "cl";
+			webData['obj'].el = "Install";
+			$LOGMODEL.sendData(webData);
+
+			var agnt = navigator.userAgent;
+			var mobile = /(ipad|iphone|ipod|android)/gi.test(agnt);
+			if (!mobile) {
+				if (checkAgent() == "macos")
+					window.open(LanguagePack.MACOFFICE_PROD_URL);
+				else
+					downloadTest(LanguagePack.PCOFFICE_PROD_URL);
+			}
+
+			showGuidePopup(res);
+		} else {
+			var webData = $LOGMODEL.getData();
+			webData['ti'].t = LogType.tracking.event;
+			webData['obj'].dp = "FileViewInstallPCOffice";
+			webData['obj'].ec = "ux";
+			webData['obj'].ea = "cl";
+			webData['obj'].el = "No";
+			$LOGMODEL.sendData(webData);
+
+
+			openPCOffice(res);
+		}
+	});
+}
+
+function showGuidePopup(res) {
+	var pop_html = '';
+	var pop_result = false;
+	pop_html =
+		'<div class="new_popup derivation"><div class="newBox"><div class="box open"><a href="#" class="btn_close">' + LanguagePack.KEYWORD_CLOSE + '</a>' +
+		'<dl><dt>' + LanguagePack.POPUP_PCOFFICE_INSTALLED_TITLE + '</dt>' +
+		'<dd>' + LanguagePack.POPUP_PCOFFICE_INSTALLED_MSG + '</dd>' +
+		'</dl><p class="btn"><a href="#" class="openDoc blue">' + LanguagePack.POPUP_PCOFFICE_INSTALLED_OPENDOC + '</a></p></div></div></div>';
+
+	$('body').append(pop_html);
+	closeNewPopup();
+	$('.openDoc').click(function () {
+		$('.new_popup').remove();
+		openPCOffice(res);
+	});
+
+}
+
+function closeNewPopup(CK_TYPE) {
+	$('a.btn_close').click(function () {
+		if (CK_TYPE) {
+			var re = document.getElementById('no_again').checked;
+
+			if (re) {
+				var todayDate = new Date();
+				todayDate.setDate(todayDate.getDate() + 365);
+				document.cookie = CK_TYPE + "=" + "true" +
+					";expires=" + todayDate.toGMTString() +
+					";path=/";
+			}
+		}
+		$('.new_popup, .derivation').remove();
+	});
+}
+
+function setPCOfficeUseOnly(pcOfficeUse) {
+	var webdata = {
+		type: "PCOFFICEUSE",
+		pcOfficeUse: pcOfficeUse
+	};
+	popcorn.Modifyuserinfo(webdata, function (res) {}, function (err) {});
+
+}
+
+
+function InstallPCApp(e) {
+	commonPreventEvent(e);
+	commonStopPropagation(e);
+	$('#webView div.menu ul.depth1 li.edit ul').hide();
+	pcOfficeBeta.download();
+}
+
+function getLoadingimg() {
+	return $('<img>', {
+		src: CF_PATH + '/resources/image/Polaris/loading_progress_circle.gif',
+		id: 'LoadingImage'
+	});
+}
+
+function getWebviewLoadingimg() {
+	return $('<p>', {
+		'id': 'LoadingImage',
+		'class': 'loading',
+		'html': '<img src="' + CF_PATH + '/resources/image/Polaris/new/webView/loading.gif">'
+
+	});
+}
+
+function moveCursorToEnd(el) {
+	if (browser_version.indexOf('chrome') > -1) {
+		el.focus();
+	} else if (browser_version.indexOf('firefox') > -1) {
+		el.focus();
+		el.setSelectionRange(el.value.length, el.value.length);
+	} else {
+		if (typeof el.selectionStart == "number") {
+			el.selectionStart = el.selectionEnd = el.value.length;
+		} else if (typeof el.createTextRange != "undefined") {
+			el.focus();
+			var range = el.createTextRange();
+			range.collapse(false);
+			range.select();
+		}
+	}
+}
+
+function shortenString(text, width) {
+	$("#dotTest").remove();
+	var limit = 13;
+	if (width > 200) {
+		limit = 16;
+	} else if (width > 450) {
+		limit = 40;
+	}
+	if (text.length > limit) {
+		var dotTestString;
+		dotTestString = '<div id="dotTest" style="position: absolute; top: -999px; font-family:dotum; font-size: 13px; line-height:42px; height: 42px; width: ' + width + 'px; white-space:pre;"> </div>';
+		$("body").append(dotTestString);
+		$("#dotTest").html('<span class="subname">' + text + '</span>');
+		$("#dotTest").dotdotdot({
+			wrap: 'letter'
+		});
+		var dotText = $("#dotTest").text();
+		var index1 = dotText.lastIndexOf('...');
+		var index2 = parseInt(dotText.substr(0, index1 - 1).length / 2);
+		if (index1 > 0 && index1 == dotText.length - 4) {
+			return text.substr(0, index2) + '...' + text.substr(index2 * -1)
+		}
+		return $("#dotTest").text();
+	}
+	return text;
+}
+
+function handleStarguide(_ppsx) {
+	if (checkChromeCast()) {
+		return;
+	}
+	if (typeof ppsType != 'undefined' && ppsType) {
+		if (_ppsx == null)
+			return;
+	}
+	var starguideon = true;
+
+	function hideStarguide(_milsec) {
+		var timing = 7000;
+		if (_milsec) {
+			timing = _milsec;
+		}
+		setTimeout(function () {
+			setCookies('HIDE_STARGUIDE', 365);
+			$starguide.hide();
+			// $(document).unbind('keyup');
+		}, timing);
+	}
+	var osType = checkAgent();
+	if ((typeof gFavorite != 'undefined' && gFavorite == 'true') || getCookie('HIDE_STARGUIDE') || (osType == "macos" && !getCookie('WVRENO'))) {
+		starguideon = false;
+	}
+	if (starguideon) {
+		var $starguide = $('div.favguide');
+		$starguide.show();
+		$(document).bind('keyup', function (e) {
+			var keyCode;
+			if (window.event)
+				keyCode = window.event.keyCode;
+			else if (e)
+				keyCode = e.which;
+			if (keyCode == 13) {
+				if ($starguide.is(':visible')) {
+					// console.log('called hideStarguide by enter');
+					hideStarguide(100);
+				}
+			}
+		});
+		$(document).bind('click', function (e) {
+			if ($starguide.is(':visible')) {
+				// console.log('called hideStarguide by click');
+				hideStarguide(100);
+			}
+		});
+		if ($starguide.is(':visible')) {
+			// hideStarguide();
+		}
+	}
+}
+
+function setAllwaysPCOpen() {
+	$('.pc_open').show();
+	var webData = $LOGMODEL.getData();
+	webData['ti'].t = LogType.tracking.page;
+	webData['obj'].dp = 'FileView';
+	webData['obj'].dt = 'OpenPCOffice2';
+	$LOGMODEL.sendData(webData);
+	var DOCUMENT_KEYWORD = shortenString(gdocName, 490);
+	var doc_img = '';
+	var doc_img_name = '';
+	var doc_img_alt = '';
+	switch (gdocext) {
+		case 'docx':
+		case 'doc':
+			doc_img_name = 'doc';
+			doc_img_alt = 'docx/doc';
+			break;
+		case 'dot':
+			doc_img_name = 'dot';
+			doc_img_alt = 'docx/dot';
+			break;
+		case 'word':
+			doc_img_name = 'pword';
+			doc_img_alt = 'word';
+			break;
+		case 'pptx':
+		case 'ppt':
+			doc_img_name = 'ppt';
+			doc_img_alt = 'pptx/ppt';
+			break;
+		case 'pot':
+			doc_img_name = 'pot';
+			doc_img_alt = 'pptx/pot';
+			break;
+		case 'pps':
+		case 'ppsx':
+			doc_img_name = 'pps';
+			doc_img_alt = 'pptx/pps';
+			break;
+		case 'slide':
+			doc_img_name = 'pslide';
+			doc_img_alt = 'slide';
+			break;
+		case 'xlsx':
+		case 'xls':
+			doc_img_name = 'xls';
+			doc_img_alt = 'xlsx/xls';
+			break;
+		case 'xlt':
+			doc_img_name = 'xlt';
+			doc_img_alt = 'xlsx/xlt';
+			break;
+		case 'sheet':
+			doc_img_name = 'psheet';
+			doc_img_alt = 'sheet';
+			break;
+		case 'pdf':
+			doc_img_name = 'pdf';
+			doc_img_alt = 'pdf';
+			break;
+		case 'hwp':
+			doc_img_name = 'hwp';
+			doc_img_alt = 'hwp';
+			break;
+		case 'odt':
+			doc_img_name = 'odt';
+			doc_img_alt = 'odt';
+			break;
+		case 'ods':
+			doc_img_name = 'ods';
+			doc_img_alt = 'ods';
+			break;
+		case 'odp':
+			doc_img_name = 'odp';
+			doc_img_alt = 'odp';
+			break;
+		case 'txt':
+			doc_img_name = 'txt';
+			doc_img_alt = 'txt';
+			break;
+		case 'rtf':
+			doc_img_name = 'rtf';
+			doc_img_alt = 'rtf';
+			break;
+		case 'csv':
+			doc_img_name = 'csv';
+			doc_img_alt = 'csv';
+			break;
+		default:
+			doc_img_name = 'unknown';
+			doc_img_alt = 'unknown';
+			break;
+	}
+
+	doc_img = '<img src="' + CF_PATH + '/resources/image/Polaris/new/webView/app_' + doc_img_name + '.png" alt="' + doc_img_alt + '"/>';
+
+	if (gUserId) {
+		if (isAlltimePC) {
+			isShareDocOpen = true;
+			$('#allways_pcopen').prop('checked', true).show();
+			$('#document_title span').text(DOCUMENT_KEYWORD);
+			$('#doc_icon').html(doc_img);
+			$('.doc_open').show();
+			addAdsScript(adsType.share);
+			$('.d_open').click(function () {
+				openPCOffice();
+			});
+			openPCOffice();
+		}
+	} else {
+		if (getCookie('OPENPCOFFICE')) {
+			isShareDocOpen = true;
+			$('.doc_open').show();
+			$('#allways_pcopen').prop('checked', true);
+			$('#document_title span').text(DOCUMENT_KEYWORD);
+			$('#doc_icon').html(doc_img);
+			$('.doc_open').show();
+			addAdsScript(adsType.share);
+			//$('ul.btn li.edit').click();
+			$('.d_open').click(function () {
+				openPCOffice();
+			});
+			openPCOffice();
+		}
+	}
+}
+
+function setPCOfficeUseOnly() {
+	var webdata = {
+		type: "PCOFFICEUSE",
+		pcOfficeUse: isAlltimePC
+	};
+	popcorn.Modifyuserinfo(webdata, function (res) {}, function (err) {});
+
+}
+
+function bindZclip() {
+	if (!$('#clipboard').is(':visible')) {
+		setTimeout(function () {
+			bindZclip();
+		}, 1500);
+		return;
+	}
+
+	checkPermission('Share', function () {
+		$('#clipboard').zclip({
+			path: '/common/lib/swfupload/ZeroClipboard.swf',
+			copy: function () {
+				var that = $(this);
+				//logTracking
+				var webData = $LOGMODEL.getData();
+				webData['ti'].t = LogType.tracking.event;
+				webData['obj'].dp = 'FileView';
+				webData['obj'].dt = gdocext;
+				webData['obj'].ec = 'ux';
+				webData['obj'].ea = 'cl';
+				webData['obj'].el = 'LinkCopy';
+				$.extend(webData, {
+					'cobj': {
+						'myDoc': ((gUserId == _OwnerID) ? true : false),
+						'isShared': (logisShared == 'true' ? true : false)
+					}
+				});
+				$LOGMODEL.sendData(webData);
+
+				return that.prev().children().val();
+			},
+			afterCopy: function () {
+				toastMessage(LanguagePack.COOPERATION_COPYED_CLIPBOARD);
+			}
+
+		});
+	}, function (e, message) {
+		$('#clipboard').zclip({
+			path: '/common/lib/swfupload/ZeroClipboard.swf',
+			copy: function () {
+				var popupMessage = new Array();
+				popupMessage[0] = message;
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+					popupMessage: popupMessage
+				}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.show();
+				return;
+			}
+		});
+	});
+}
+
+//view revision change
+function changeVersion(poformat, iscommand, revision) {
+	var prevrevision;
+	var change = false;
+
+	prevrevision = grevision;
+
+	if (ispoformat != poformat) {
+		change = true;
+	}
+
+	if (change || prevrevision != revision) {
+		if (iscommand) {
+			haveNewCommand = true;
+		} else {
+			haveNewCommand = false;
+		}
+		grevision = revision;
+		$('#changeView').trigger('click');
+	}
+}
+
+function sendLogMessage(type, dp, dt, ec, ea, el, obj){
+	//logTracking
+	var webData = $LOGMODEL.getData();
+	webData['ti'].t = type;
+	if(dp) webData['obj'].dp = dp;
+	if(dt) webData['obj'].dt = dt;
+	if(ec) webData['obj'].ec = ec;
+	if(ea) webData['obj'].ea = ea;
+	webData['obj'].el = el;
+	if(typeof obj != 'undefined' && obj){
+		$.extend(webData, obj);
+	}
+	$LOGMODEL.sendData(webData);    
+	//console.log(JSON.stringify(webData));
+}
+
+
+
+

@@ -1,0 +1,141 @@
+$(document).ready(function(){
+    const file = $("#backgroundFile");
+    file.css("cursor","pointer");
+    file.on("change", function(){
+        onRemoveBackground(file.get(0).files[0])
+    });
+
+    $("#remove_background_image .upload_image_large").on("dragover", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }).on("drop", function(e){
+        e.preventDefault();
+        const file = e.originalEvent.dataTransfer.files[0];
+        var reader = new FileReader(); 
+		reader.onload = function(e) {
+			$('.upload_image_large.background .upload_file').hide();
+			$('#previewBackground .thums').attr('style', 'background-image:url('+ e.target.result +')');
+			$('#previewBackground').css('display', 'flex');
+            onRemoveBackground(file)
+		}
+		reader.readAsDataURL(file);
+    });
+})
+
+function aiRemove() {
+    return $(function(){
+        changeTitle(LanguagePack.AI_TOOLS_STR03);
+        $("#previewBackground .close").off();
+        $("#previewBackground .close").bind("click",function(e){
+            e.preventDefault();
+            $("#backgroundFile").val("");
+            $('#remove_background_image .upload_image_large .upload_file').show();
+            $("#previewBackground").removeAttr('style', 'background-image');
+            $("#previewBackground").hide()
+        });
+        $("#remove_background_image").css("display","block");
+
+        const {objectType, objectCount} = po_editor.getCursoredLocation();
+
+        if(objectType === 5 && objectCount === 1){
+            const imageData = po_editor.getImageInfo();
+            const reader = new FileReader();
+            const myFile = new File([imageData], 'image.png',{
+                type:imageData.type
+            })
+            reader.readAsDataURL(imageData); 
+            reader.onloadend = () => {
+            	const base64data = reader.result;
+                $('.upload_image_large.background .upload_file').hide();
+            	$('#previewBackground .thums').attr('style', 'background-image:url('+ base64data +')');
+                $('#previewBackground').css('display', 'flex');
+            }
+            onRemoveBackground(myFile)
+        }
+    })
+}
+
+async function removeBackground(file) {
+    const formData = new FormData();
+    formData.append("multipartFile",file)
+    const data = await fetch(AI_REMOVE_BACKGROUND,{
+        method:"POST",
+        body: formData
+    
+    }).then(res => {
+        const contentType = res.headers.get("content-type");
+        if(contentType.includes("application/json")) {
+            return res.json()
+        } else {
+            getAIUserInfo(function(res){
+                if(res.resultCode === 0) {
+                    aiUserInfo = res;
+                }
+            });	
+            return res.blob()
+        }
+    })
+
+    return data
+}
+
+function fileDownload(blob) {
+    const downloadUrl = window.URL.createObjectURL(blob); // 해당 file을 가리키는 url 생성
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.download = 'image.png'; // a tag에 download 속성을 줘서 클릭할 때 다운로드가 일어날 수 있도록 하기
+    anchorElement.href = downloadUrl; // href에 url 달아주기
+    anchorElement.click(); // 코드 상으로 클릭을 해줘서 다운로드를 트리거
+    document.body.removeChild(anchorElement); // cleanup - 쓰임을 다한 a 태그 삭제
+}
+
+function onRemoveBackground(file) {
+    //크레딧이 부족하다면 API 안태우고 리턴
+    const deductCredit = checkDeductCredit('removeBackground');
+    const isPay = isPaymentCredit(deductCredit);
+    if(isPay !== 1) {
+        isCheckCreditPaymentAvailability(isPay);
+        return;
+    }
+    $("#remove_background_image .applied_image").append(loading);
+    successServiceMessage(`${LanguagePack.AI_TOOLS_STR191}<br/> ${LanguagePack.AI_TOOLS_STR120(deductCredit, aiUserInfo.userinfo.remainCredit === -1 ? LanguagePack.KEYWORD_PRICE_INFINITE : aiUserInfo.userinfo.remainCredit - deductCredit)}`);
+    $("#previewBackground .close").hide();
+
+    removeBackground(file).then(res => {
+        //console.log(res);
+        const keysLength = Object.keys(res).length;
+        $("#remove_background_image .applied_image .ai_loading").remove();
+        $("#previewBackground .close").show();
+        if(keysLength === 0) {
+
+            sendLogMessage(LogType.tracking.event, 'ai.tools.credit', null, 'ux', 'cl', null, {cobj : {type : 'remove_background', used_credit :  deductCredit}});
+            sendLogMessage(LogType.tracking.event, 'ai.remove_background', null, 'ux', 'cl', null, null);
+            successServiceMessage(LanguagePack.AI_TOOLS_STR193);
+            toastMessage(LanguagePack.AI_TOOLS_STR193);
+            //console.log(res);
+            let img = URL.createObjectURL(res);
+            $("#remove_background_image .applied_image .thum").css("background-image", `url(${img})`);
+            buttonRemoveDisable($("#remove_background_image .white"));
+            buttonRemoveDisable($("#remove_background_image .primary"));
+            $("#remove_background_image .white").off();
+            $("#remove_background_image .white").on("click", function(e){
+                fileDownload(res);
+            });
+            
+            $("#remove_background_image .primary").off();
+            $("#remove_background_image .primary").on("click", function(e){
+                insertImageToDocument(e, res, LanguagePack.AI_TOOLS_STR183);
+            });
+        } else {
+            if(res.resultCode === 15002){
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR45);
+            } else if (res.resultCode === 15108 || res.resultCode === 15107 || res.resultCode === 15109 || res.resultCode === 15100) {
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR190);
+            } else if(res.resultCode === 100) {
+                po_editor.execute(null,'sessionError');
+            } else {
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR74 + ' ' + LanguagePack.AI_TOOLS_STR75);
+            }
+        }
+    })
+}

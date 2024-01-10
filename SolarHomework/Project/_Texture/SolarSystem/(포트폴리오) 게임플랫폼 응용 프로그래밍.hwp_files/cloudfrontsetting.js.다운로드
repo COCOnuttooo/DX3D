@@ -1,0 +1,28 @@
+var CF_PATH = '';
+(function (window, document, $) {
+    var hostName = window.location.hostname;
+    var cfPath = '';
+    if (hostName == 'polarisoffice.com' || hostName == 'www.polarisoffice.com' ||
+        hostName == 'pcofficewebview.polarisoffice.com' || hostName == 'www.pcofficewebview.polarisoffice.com') {
+        cfPath = 'https://polink-static-contents.polarisoffice.com/web';
+    } else if (hostName == 'localhost') {
+        cfPath = 'http://localhost';
+    } else if (hostName == 'preproduction.polarisoffice.com' ){
+        cfPath = 'https://preproduction-static-contents.polarisoffice.com/web';
+    } else {
+        cfPath = 'https://vf-postatic.polarisoffice.com/web';
+    }
+    window.CF_PATH = cfPath;
+})(window, document, jQuery);
+
+function checkSpell(target) {    
+    target = target
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"','&quot;')
+    .replaceAll("'", "&#x27;")
+    .replaceAll("/", "&#x2F;");
+    return target;
+ }
+ 

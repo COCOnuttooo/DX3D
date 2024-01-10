@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40px" height="40px" viewBox="0 0 40 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>mask_heart</title>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="ai/mask/heart" fill="#000000" fill-rule="nonzero">
+            <path d="M20.5,9.68421192 C17.765125,2.32197438 4,3.41560552 4,14.5496432 C4,20.0968894 8.2075,27.4782178 20.5,35 C32.7925,27.4782178 37,20.0968894 37,14.5496432 C37,3.47969612 23.25,2.27833823 20.5,9.68421192 Z" id="Path"></path>
+        </g>
+    </g>
+</svg>

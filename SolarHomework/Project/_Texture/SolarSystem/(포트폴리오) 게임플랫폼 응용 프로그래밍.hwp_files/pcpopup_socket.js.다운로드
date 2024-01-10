@@ -1,0 +1,1435 @@
+﻿var sock = null;
+var recInterval = null;
+var hbTimer = null;
+var sock_stop = false;
+var isCowork = false;
+
+(function($) {
+	var noRealTimePush = false;
+	var noticePop = {
+			'init' : function(options) {
+				var settings;
+				var $this = this;
+				if(noRealTimePush) {
+					return;
+				}
+				if(!$this.length) {
+					return;
+				}
+				if($this.hasClass('init')) {
+					settings = $.extend({
+						'selector' : {
+							'noticeCount' : $('#noticePo span.count')
+						},
+						'maxt' : 0,
+						'mint' : 0,
+						'ispolling' : true,
+						'timeout' : null,
+						'isReload' : false,
+						'count' : 50,
+						'hm' : false,
+						'stop' : false,
+						'id'  : null,
+						'isagent' : false,
+						'unreadCount' : 0,
+						'time' : new Date().getTime().toString().substring(0, 10),
+					 	'click' : "ontouchend" in document ? true : false,
+						'type' : []
+					}, options);
+
+					var handle = {
+							'create' : layout.notice.create,
+							'set' : layout.notice.set
+					};
+					settings.handle = $.extend(settings.handle, handle);
+
+					$this.data('settings', settings);
+					$this.removeClass('init');
+
+					settings.handle.create.apply($this);
+
+					//if(!$USERINFO.getData('UNVERIFIED')) {
+					settings.init = true;
+
+					jsonResponse.getUnreadNoticeCount($this);
+					//}
+
+					$this.click(function(e) {
+						if(e.stopPropagation) e.stopPropagation();
+					});
+					if(isMobile) {
+						$this.css('position', 'absolute');
+					}
+				} else {
+					settings = $this.data('settings');
+
+					if(settings.isReload) {
+						settings.mint = 0;
+						settings.isReload = false;
+						settings.maxt = 0;
+						if(settings.selector.mc_box) {
+							settings.selector.mc_box.children('dl').remove();
+							if(!settings.selector.mc_box.children('p.no_data').length) {
+								var $p = $('<p class="no_data">'+ LanguagePack.NOTICE_NODATA + '</p>');
+								settings.selector.mc_box.append($p);
+							}
+						}
+						if(settings.ispolling) {
+							if(settings.timeout) {
+								clearTimeout(settings.timeout);
+								settings.timeout = 0;
+							}
+						}
+						jsonResponse.getNoticeListAll($this, 1, settings.count, 0,2000000000, false);
+						jsonResponse.getUnreadNoticeCount($this);
+					} else {
+						//if(!$USERINFO.getData('UNVERIFIED')) {
+						if(settings.ispolling) {
+							if(settings.timeout) {
+								clearTimeout(settings.timeout);
+								settings.timeout = 0;
+							}
+							var checkstate = false;
+							if(options && options.nocheck) {
+								checkstate = false;
+							}
+							if(checkstate && $this.is(':visible')) {
+								checkstate = false;
+							}
+							jsonResponse.getNoticeListAll($this, 1, settings.count, settings.maxt + 1, 2000000000, true, checkstate);
+						}
+						//}
+					}
+				}
+			},
+			'set' : function(json, isLast, page) {
+				var $this = this;
+				if($this.hasClass('init')) {
+					return;
+				}
+				var settings = $this.data('settings');
+				if(!settings.selector.mc_box) {
+					settings.selector.mc_box = settings.selector.bx.find('.mCSB_container');
+					//settings.selector.mc_box.children('p.no_data').remove();
+				}
+
+
+				if(settings.handle.set.apply(settings.selector.mc_box, [json, isLast, page]) && isLast) {
+					if(settings.unreadCount) {
+						settings.selector.noticeCount.children('em').text(settings.unreadCount);
+						settings.selector.noticeCount.show();
+					}
+				}
+				if(json.length && settings.selector.mc_box.children('dl').length && settings.selector.mc_box.children('p.no_data').length) {
+					settings.selector.mc_box.children('p.no_data').remove();
+				}
+			},
+			'startpolling' : function() {
+				var $this = this;
+				if($this.hasClass('init')) {
+					return;
+				}
+				if($this.length) {
+					var settings = $this.data('settings');
+					settings.ispolling = true;
+					if(sock_stop) {
+						return;
+					}
+					if(!settings.timeout) {
+						settings.timeout = setTimeout(function() {
+							$this.noticePop();
+						}, 10000);
+					}
+				}
+			},
+			'closepolling' : function() {
+				var $this = this;
+				if($this.hasClass('init')) {
+					return;
+				}
+				if($this.length) {
+					var settings = $this.data('settings');
+					settings.ispolling = false;
+
+					if(settings.timeout) {
+						clearTimeout(settings.timeout);
+						settings.timeout = 0;
+					}
+				}
+			},
+			'getUnreadNoticeCount' : function() {
+				var $this = this;
+				if($this.hasClass('init')) {
+					return;
+				}
+				jsonResponse.getUnreadNoticeCount($this);
+			},
+			'setReadNoticeList' : function(list, read) {
+				var $this = this;
+				if($this.hasClass('init')) {
+					return;
+				}
+				var isReadAll = false;
+				var idList = [];
+				if(list) {
+					for(var i = 0; i < list.length; i++) {
+						var data = list[i];
+						idList.push('' + data.idNotice);
+					}
+				} else {
+					isReadAll = true;
+				}
+				if(read) {
+					var settings = $this.data('settings');
+					if(settings.selector.mc_box) {
+						settings.selector.mc_box.children('dl').addClass('read');
+					}
+				}
+				jsonResponse.setReadNoticeList($this, idList, isReadAll);
+			}
+	};
+
+	var layout = {
+			'dim' : {
+				'create' : function() {
+					var $dim = $('#dim');
+					if(!$dim.length) {
+						$('body').append('<div id="dim" class="dim"></div>');
+						return;
+					} else {
+						$dim.css('z-index', parseInt($dim.css('z-index')) + 1);
+					}
+				},
+				'remove' : function() {
+					var $dim = $('#dim');
+					var zindex = $dim.css('z-index');
+					if(zindex == '9') {
+						$dim.remove();
+					} else {
+						$dim.css('z-index', parseInt($dim.css('z-index')) - 1);
+					}
+				},
+				'getZindex' : function() {
+					var $dim = $('#dim');
+					return parseInt($dim.css('z-index'));
+				}
+			},
+			'notice' : {
+				'create' : function() {
+					var $this = this;
+					var settings = $this.data('settings');
+					var	$wrapper;
+					
+					var $h3 = $('<h3 />', {
+						'text' : LanguagePack.KEYWORD_NOTICES
+					});
+
+					var $noticebox = $('<div />', {
+						'id' : 'noticeBox',
+						'class' : 'box'
+					});
+
+					var $p = $('<p class="no_data">'+ LanguagePack.NOTICE_NODATA + '</p>');
+
+					$this.append($h3).append($noticebox.append($p));
+
+					settings.selector.bx = $noticebox;
+
+					settings.selector.bx.mCustomScrollbar({
+						autoHideScrollbar:true,
+						theme:"minimal-dark",
+						mouseWheel: {
+							scrollAmount : 150
+						},
+						callbacks: {
+						      onTotalScroll : function(){
+						    	  if(settings.hm) {
+						    		  jsonResponse.getNoticeListAll($this, 1, settings.count, 0, settings.mint, false);
+						    	  }
+						      }
+						}
+					});
+
+				},
+				'set' : function() {
+					var $this = this;
+					var $root = $('#notice_pop');
+					var settings = $root.data('settings');
+
+					var arg = arguments;
+					var visible = $root.is(':visible');
+					var isCouponNoti = false;
+					var $first;
+
+					for(var i=0; i < arg[0].length; i++) {
+						var data = arg[0][i];
+						if ($this.children('dl').hasClass('notice_' + (data.workId? data.workId : '0') + '_' + data.idNotice) == true) {
+							continue;
+						}
+
+						var name = '';
+						var $dl = $('<dl />', {
+							'class' : 'notice_' + (data.workId? data.workId : '0') + '_' + data.idNotice + ' ' + (data.readNotice? 'read' : ''),
+							'click' : events.checkNotice
+						});
+						var $dt = $('<dt />');
+
+						var $img = $('<img />',{
+							'src' : '/api/1/account/download/portrait/' + data.user.id + '?' + settings.time,
+							'width' : '36px',
+							'height' : '36px',
+							'alt' : 'img'
+						});
+
+						var $dd = $('<dd />');
+
+						var str = '';
+						if(data.fileInfo && data.fileInfo.name) {
+							name = data.fileInfo.name;
+							var index = name.lastIndexOf(".");
+							var type = name.substring(index + 1).toLowerCase();
+							if(type == 'slide' || type == 'sheet' || type == 'word') {
+								name = name.substr(0, index);
+							}
+						}
+
+						if(data.type == 'CREATE') {
+							str = LanguagePack.NOTICE_SHARED_FILE((data.user.name ? data.user.name : data.user.email), name);
+						} else if(data.type == 'ADDCOMMENT') {
+							str = LanguagePack.NOTICE_ADDCOMMEND_OWNER((data.user.name ? data.user.name : data.user.email), name, data.comment);
+							if(typeof $commentData != 'undefined' && $commentData.liveUpdate) COMMENT.liveUpdate[data.type](data);
+						} else if(data.type == 'ADDATTENDEE') {
+							if(settings.id == data.fileInfo.ownerId) {
+								if(typeof data.attendance == 'undefined' || data.attendance.length == 0) {
+									console.log('ADDATTENDEE Error');
+									continue;
+								}
+								if(data.attendance.length == 1) {
+									str = LanguagePack.NOTICE_SHARED_FILE_OWNER(name, (data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email));
+								} else {
+									str = LanguagePack.NOTICE_SHARED_FILE_OWNER2(name, (data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email), data.attendance.length-1);
+								}
+							} else {
+								str = LanguagePack.NOTICE_SHARED_FILE((data.user.name ? data.user.name : data.user.email), name);
+							}
+						} else if(data.type == 'ACHIEVEVIEWCOUNT') {
+							str = LanguagePack.NOTICE_ACHIEVEVIEWCOUNT(name, data.fileInfo.countWebview);
+						} else if(data.type == 'DELETEATTENDEE') {
+							if(settings.id == data.fileInfo.ownerId) {
+								if(typeof data.attendance == 'undefined' || data.attendance.length == 0) {
+									console.log('DELETEATTENDEE Error');
+									continue;
+								}
+								if(data.attendance.length == 1) {
+									str = LanguagePack.NOTICE_DELETED_FILE_OWNER(name, (data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email));
+								} else {
+									str = LanguagePack.NOTICE_DELETED_FILE_OWNER2(name, (data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email), data.attendance.length-1);
+								}
+							}
+						} else if(data.type == 'MODIFYAUTHORITY') {
+							if(typeof data.attendance == 'undefined' || data.attendance.length == 0) {
+								console.log('MODIFYAUTHORITY Error');
+								continue;
+							}
+							if(settings.id == data.fileInfo.ownerId) {
+								if(data.attendance.length == 0) {
+									console.log('MODIFYAUTHORITY Error');
+									continue;
+								}
+								if(data.attendance.length == 1) {
+									var auth = LanguagePack.KEYWORD_ENABLEVIEW;
+									if(!data.attendance[0].authority) {
+										console.log('MODIFYAUTHORITY Error');
+										continue;
+									}
+									if(data.attendance[0].authority == 2) {
+										auth = LanguagePack.KEYWORD_ENABLEEDIT;
+									}
+									str = LanguagePack.NOTICE_MODIFYATTENDEE_OWNER((data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email), name, auth);
+								} else {
+									var writecount = 0;
+									var readcount = 0;
+									var writename = null;
+									var readname = null;
+									for(var j=0; j < data.attendance.length; j++) {
+										if(!data.attendance[j].authority) {
+											console.log('MODIFYAUTHORITY Error');
+											continue;
+										}
+										if(data.attendance[j].authority == 1) {
+											readcount++;
+											if(!readname) {
+												readname = data.attendance[j].name ? data.attendance[j].name : data.attendance[j].email;
+											}
+										} else if(data.attendance[j].authority == 2) {
+											writecount++;
+											if(!writename) {
+												writename = data.attendance[j].name ? data.attendance[j].name : data.attendance[j].email;
+											}
+										}
+									}
+									if(readcount && writecount)  {
+										str = LanguagePack.NOTICE_MODIFYATTENDEE_OWNER3((data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email),  data.attendance.length-1, name);
+									} else {
+										if(readcount) {
+											if(readcount == 1) {
+												str = LanguagePack.NOTICE_MODIFYATTENDEE_OWNER(readname,  name, LanguagePack.KEYWORD_ENABLEVIEW);
+											} else {
+												str = LanguagePack.NOTICE_MODIFYATTENDEE_OWNER2(readname, readcount-1,  name, LanguagePack.KEYWORD_ENABLEVIEW);
+											}
+										}
+										if(writecount) {
+											if(writecount == 1) {
+												str += LanguagePack.NOTICE_MODIFYATTENDEE_OWNER(writename,  name, LanguagePack.KEYWORD_ENABLEEDIT);
+											} else {
+												str += LanguagePack.NOTICE_MODIFYATTENDEE_OWNER2(writename, writecount-1,  name, LanguagePack.KEYWORD_ENABLEEDIT);
+											}
+										}
+									}
+								}
+							} else {
+								var auth = LanguagePack.KEYWORD_ENABLEVIEW;
+								if(!data.attendance[0].authority) {
+									console.log('MODIFYAUTHORITY Error');
+									continue;
+								}
+								if(data.attendance[0].authority == 2) {
+									auth = LanguagePack.KEYWORD_ENABLEEDIT;
+								}
+								str = LanguagePack.NOTICE_MODIFYATTENDEE(name, auth);
+							}
+						} else if(data.type == 'REQUESTRESHARE') {
+							if(data.attendance.length) {
+								var isExist = false;
+								for(var j=0; j < data.attendance.length; j++) {
+									if(data.user.email == data.attendance[j].email) {
+										isExist = true;
+										break;
+									}
+								}
+								if(!isExist) {
+									if(data.attendance.length == 1) {
+										str = LanguagePack.NOTICE_OTHER_AUTHENTICATED((data.user.name ? data.user.name : data.user.email), (data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email),name);
+									} else {
+										str = LanguagePack.NOTICE_OTHER_AUTHENTICATEDS((data.user.name ? data.user.name : data.user.email), (data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email), data.attendance.length-1, name);
+									}
+								} else {
+									if(data.attendance.length == 1) {
+										str = LanguagePack.NOTICE_AUTHENTICATED((data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email),name);
+									} else {
+										str = LanguagePack.NOTICE_AUTHENTICATEDS((data.attendance[0].name ? data.attendance[0].name : data.attendance[0].email), data.attendance.length-1, name);
+									}
+								}
+							} else {
+								console.log('REQUESTRESHARE Error');
+								continue;
+							}
+						} else if(data.type == 'SYNCNOTIFYLIST') {
+							if(data.user.id == settings.id) {
+								settings.isReload = true;
+							} else {
+								if(!visible) {
+									settings.isReload = true;
+								}
+							}
+							continue;
+						} else if(data.type == 'CREATETEAMFOLDER') {
+							str = LanguagePack.NOTICE_CREATETEAMFOLDER(data.fileInfo.name);
+						} else if(data.type === 'RENAMETEAMFOLDER') {
+							str =  data.message;
+						} else if(data.type == 'PAYMENT_INGRACEPERIOD' || data.type == 'PAYMENT_SUCCESS_INGRACEPERIOD' || data.type == 'PAYMENT_FAIL_INGRACEPERIOD' || data.type == 'PAYMENT_SUBSCRIPTION_EXPIRE') { // 무료 전환 유예 기간 알림
+							str = data.message;
+						} else if(data.type == 'DISCOUNTCOUPON_ISSUE' || data.type == 'DISCOUNTCOUPON_EXPIRE_BEFORE1DAY' || data.type == 'DISCOUNTCOUPON_EXPIRE_BEFORE7DAYS'){
+							str = data.message;
+							if(typeof data.readNotice == 'undefined' || !data.readNotice) isCouponNoti = true;
+						} else {
+							console.log(data);
+							continue;
+						}
+
+						if(arg[1]) {
+							settings.unreadCount++;
+						}
+						if(typeof data.readNotice == 'undefined' || !data.readNotice){
+							settings.type.push(data.type);
+						}
+						str += '<span class="date">' + covertunixTime7(data.time) + '</span>';
+						$dl.append($dt.append($img).append('<span class="bg"></span>')).append($dd.append(str));
+
+						$dl.data('data', data);
+						if($first) {
+							$first.after($dl);
+						} else {
+							$first = $dl;
+						}
+					}
+
+					if(isCouponNoti && $('#couponNewNoti').length){
+						$('#couponNewNoti').show();
+					} else {
+						$('#couponNewNoti').hide();
+					}
+
+					if(arg[0].length) {
+						if($first) {
+							if(arg[1]) {
+								if(arg[2] != 1) {
+									$this.children().eq(-(settings.group.c * (arg[2] - 1))).after($first);
+								} else {
+									if(!$this.children('dl').length) {
+										$this.append($first);
+									} else {
+										$this.children('dl').first().before($first);
+									}
+								}
+							} else {
+								if(!$this.children('dl').length) {
+									$this.append($first);
+								} else {
+									$this.children('dl').last().after($first);
+								}
+							}
+						}
+
+						if(!settings.mint || settings.mint > arg[0][arg[0].length-1].time) {
+							settings.mint = arg[0][arg[0].length-1].time;
+						}
+
+						if(!settings.maxt || settings.maxt < arg[0][0].time) {
+							settings.maxt = arg[0][0].time;
+						}
+					}
+					if(settings.isReload) {
+						jsonResponse.getUnreadNoticeCount($root);
+					}
+					return true;
+				}
+			}
+	};
+
+	var events = {
+			'eventstop' : function(e) {
+				if(e.stopPropagation) e.stopPropagation();
+			},
+			'checkNotice' : function(e) {
+				var $this = $(this);
+				var data = $this.data('data');
+
+				var $root = $this.parents('#notice_pop');
+				var settings = $root.data('settings');
+				console.log('<<<data.type=' + data.type);
+				var url;
+				if(data.type == 'DELETEFILE') {
+					var result = function(e) {
+						defaultAlertCB(e);
+						jsonResponse.removeNoticeId($root, {'id' : data.fileInfo.id, 'noticeid' : [data.idNotice], 'selector': $this});
+					};
+					var popupMessage = new Array();
+					popupMessage[0] = LanguagePack.NOTICE_UNVERIFY2;
+					var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM_CANCEL, LanguagePack.KEYWORD_ALERT, {popupMessage:popupMessage}, defaultAlertCB, result, defaultAlertCB);
+					popup.create();
+					popup.changebutton({
+						'confirm' : LanguagePack.KEYWORD_CANCEL,
+						'cancel' : LanguagePack.RECENT_DELETE
+					});
+					popup.show();
+				} else if(data.type == 'PAYMENT_SUBSCRIPTION_EXPIRE') {
+					if(settings.isagent) {
+						setFileInfo(data);
+						sendMessageToNative('notice_doc', getFileInfo());
+					} else {
+						location.href = '/withdrawal';
+					}
+				} else if(data.type == 'PAYMENT_INGRACEPERIOD') {
+					if(settings.isagent) {
+						setFileInfo(data);
+						sendMessageToNative('notice_doc', getFileInfo());
+					} else {
+						location.href = '/account#purchase';
+					}
+				} else if(data.type == 'PAYMENT_SUCCESS_INGRACEPERIOD' || data.type == 'PAYMENT_FAIL_INGRACEPERIOD') {
+				} else if(data.type == 'DISCOUNTCOUPON_ISSUE' || data.type == 'DISCOUNTCOUPON_EXPIRE_BEFORE1DAY' || data.type == 'DISCOUNTCOUPON_EXPIRE_BEFORE7DAYS'){
+					var webData = $LOGMODEL.getData();
+					webData['ti'].t = LogType.tracking.event;
+					webData['obj'].dp = "Cowork." + $LOGMODEL.getClientType();
+					webData['obj'].dt = "Notice";
+					webData['obj'].el = data.type;
+					$LOGMODEL.sendData(webData);
+					//console.log(JSON.stringify(webData));	
+
+					if(settings.isagent){
+						if(isMacOffice()){
+							var webdata = {
+								'isPcWebview': true
+							};
+							popcorn.pcofficeOtl(webdata, function (res) {
+								var target = '?target=/coupon';
+								var direction = res.linkUrl + target;
+								try {
+									window.open(direction, '_blank');
+								} catch (err) {
+									/*alert('테스트 예러:' + err.message);*/
+								}
+							}, function (err) {});
+						} else {
+							sendMessageToNative('regist_coupon');
+						}
+					} else {
+						location.href = '/coupon';
+					}
+				} else {
+					if(settings.isagent) {
+						if(typeof clickCountCheck != 'undefined') {
+							if(data.type == 'REQUESTRESHARE') {
+								clickCountCheck = 0;
+							} else {
+								setTimeout(function(){ clickCountCheck = 0; }, 3000);
+							}
+							if(clickCountCheck == 0) {
+								if(data.type == 'ADDCOMMENT' && data.idComment) {
+									jsonResponse.availableNotice($root, data.fileInfo.id, data.idComment, {'id' : data.fileInfo.id, 'noticeid' : [data.idNotice], 'selector': $this});
+								} else {
+									jsonResponse.availableNotice2($root, data.fileInfo.id, {'id' : data.fileInfo.id, 'noticeid' : [data.idNotice], 'selector': $this});
+								}
+								clickCountCheck = 1;
+							} else {
+								if(e.stopPropagation) e.stopPropagation();
+							}
+						}
+					} else {
+						if(data.type == 'ADDCOMMENT' && data.idComment) {
+							jsonResponse.availableNotice($root, data.fileInfo.id, data.idComment, {'id' : data.fileInfo.id, 'noticeid' : [data.idNotice], 'selector': $this});
+						} else {
+							jsonResponse.availableNotice2($root, data.fileInfo.id, {'id' : data.fileInfo.id, 'noticeid' : [data.idNotice], 'selector': $this});
+						}
+					}
+				}
+			}
+	};
+	var jsonResponse = {
+			'getNoticeListAll' : function() {
+				var arg = arguments;
+				var webdata  = {
+						'page' : arg[1],
+						'count' : arg[2],
+						'earlyTime' : arg[3],
+						'lateTime' : arg[4]
+				};
+				if(arg[6]) {
+					webdata.getcheckstate = true;
+				}
+				popcorn.getShareNoticeList(webdata,  function(res) { jsonReceive.getNoticeListAll.onSuccessCB(res, arg[0], arg[1], arg[5]); } , function(res){});
+			},
+			'getUnreadNoticeCount' : function() {
+				var arg = arguments;
+				popcorn.getUnreadNoticeCount(function(res) { jsonReceive.getUnreadNoticeCount.onSuccessCB(res, arg[0]); } , function(res){});
+			},
+			'setReadNoticeList' : function() {
+				var arg = arguments;
+				var webdata  = {
+						'idList' : arg[1],
+						'isReadAll' : arg[2]
+				};
+				popcorn.setReadNoticeList(webdata,  function(res) { jsonReceive.setReadNoticeList.onSuccessCB(res, arg[0]); } , function(res){});
+			},
+			'availableNotice' : function() {
+				var arg = arguments;
+				var webdata  = {
+						'idFile' : arg[1],
+						'idComment' : arg[2]
+				};
+				popcorn.availableNotice(webdata,  function(res) { jsonReceive.availableNotice.onSuccessCB(res, arg[0], arg[3]); } , function(res){});
+			},
+			'availableNotice2' : function() {
+				var arg = arguments;
+				var webdata  = {
+						'fileId' : arg[1]
+				};
+				popcorn.getShareFileInfo(webdata,  function(res) { jsonReceive.availableNotice2.onSuccessCB(res, arg[0], arg[2]); } , function(res){});
+			},
+			'removeNoticeId': function() {
+				var arg = arguments;
+				var webdata  = {
+						'listNoticeId' : arg[1].noticeid,
+						'isClearAll' : arg[1].isClearAll ? arg[1].isClearAll : false
+				};
+				popcorn.removeNoticeId(webdata,  function(res) { jsonReceive.removeNoticeId.onSuccessCB(res, arg[0], arg[1]); } , function(res){});
+			}
+	};
+
+	var jsonReceive = {
+			'getNoticeListAll' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					/*console.log(JSON.stringify(arg[0]));*/
+					if(CheckResult(null, arg[0])) {
+						var settings = arg[1].data('settings');
+
+						if(arg[0].historyList.length) {
+							arg[1].noticePop('set', arg[0].historyList, arg[3], arg[2]);
+						} else {
+							if(!settings.selector.mc_box) {
+								arg[1].noticePop('set', [], arg[3], arg[2]);
+							}
+						}
+						if(arg[3]) {
+							if(arg[0].historyList && arg[0].historyList.length == settings.count) {
+								jsonResponse.getNoticeListAll(arg[1], arg[2] + 1, settings.count, settings.maxt, settings.mint, arg[3]);
+								return;
+							}
+						} else {
+							settings.hm =  arg[0].hasMore;
+							if(settings.hm && (settings.selector.mc_box.children('dl').length < settings.count) || 0 < settings.initCount) {
+								settings.initCount--;
+								jsonResponse.getNoticeListAll(arg[1], 1, settings.count, 0, settings.mint, false);
+							}
+						}
+
+						if(settings.ispolling) {
+							if(!settings.timeout) {
+								settings.timeout = setTimeout(function() {
+									arg[1].noticePop();
+								}, 10000);
+							}
+						}
+					} else {
+						var settings = arg[1].data('settings');
+						//settings.selector.bx.children('.group').removeClass('sloading');
+						if(arg[0].resultCode == Enum.account.UNAUTHENTICATED)  {
+							sock_stop = true;
+						}
+
+					}
+				},
+				'onFailCB' : function() {
+
+				}
+			},
+			'getUnreadNoticeCount' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var settings = arg[1].data('settings');
+					if(CheckResult(null, arg[0])) {
+						if(arg[0].unreadCount) {
+							settings.unreadCount = arg[0].unreadCount;
+							settings.selector.noticeCount.children('em').text(arg[0].unreadCount);
+							settings.selector.noticeCount.show();
+						} else {
+							settings.unreadCount = 0;
+							settings.type = [];
+							settings.selector.noticeCount.hide();
+						}
+						if(settings.init) {
+							settings.init = false;
+							settings.initCount = Math.ceil(settings.unreadCount/settings.count);
+							if(settings.initCount != 0) {
+								settings.initCount--;
+							}
+							jsonResponse.getNoticeListAll(arg[1], 1, settings.count, 0,2000000000, false);
+						}
+					}
+				},
+				'onFailCB' : function() {
+				}
+			},
+			'setReadNoticeList' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var settings = arg[1].data('settings');
+					if(CheckResult(null, arg[0])) {
+						settings.unreadCount = 0;
+						settings.type = [];
+						settings.selector.noticeCount.hide();
+					}
+				},
+				'onFailCB' : function() {
+				}
+			},
+			'availableNotice' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var settings = arg[1].data('settings');
+					if(CheckResult(null, arg[0])) {
+						jsonResponse.availableNotice2(arg[1], arg[2].id, arg[2]);
+					} else {
+						var result = function(e) {
+							defaultAlertCB(e);
+							jsonResponse.removeNoticeId(arg[1], arg[2]);
+						};
+						var popupMessage = new Array();
+						popupMessage[0] = LanguagePack.NOTICE_UNVERIFY;
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM_CANCEL, LanguagePack.KEYWORD_ALERT, {popupMessage:popupMessage}, defaultAlertCB, result, defaultAlertCB);
+						popup.create();
+						popup.changebutton({
+							'confirm' : LanguagePack.KEYWORD_CANCEL,
+							'cancel' : LanguagePack.RECENT_DELETE
+						});
+						popup.show();
+					}
+				},
+				'onFailCB' : function() {
+				}
+			},
+			'availableNotice2' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var settings = arg[1].data('settings');
+					var available = true;
+					var type = arg[2].selector.data('data').type;
+					if(CheckResult(null, arg[0])) {
+						if(type == 'CREATETEAMFOLDER') {
+
+						} else {
+							if(arg[0].work.id) {
+								if(!arg[0].work.publicAuthority) {
+									if(!arg[0].attendanceList.length) {
+										available = false;
+									} else {
+										if($USERINFO.getData('UNVERIFIED')){
+											unverifyMsg();
+											return;
+										}
+										var noSearch = true;
+										for(var i = 0; i< arg[0].attendanceList.length; i++) {
+											if(settings.id == arg[0].attendanceList[i].userId) {
+												noSearch = false;
+												break;
+											}
+										}
+										if(noSearch) {
+											available = false;
+										}
+									}
+								}
+							} else if(type == 'REQUESTRESHARE'){
+								if($USERINFO.getData('UNVERIFIED')){
+									unverifyMsg();
+									return;
+								}
+							} else {
+								available = false;
+							}
+						}
+					} else {
+						available = false;
+					}
+
+					if(available) {
+						var data = arg[2].selector.data('data');
+						var url;
+						if(data.type == 'CREATETEAMFOLDER') {
+							$('body').click();
+							try{
+								if(clientType.isAgent)
+									showViewMydoc(arg[2].id);
+								else
+									showMydocList(null, 'my_list', arg[2].id);
+
+							} catch(e) {
+								location.href = '/drive#' + arg[2].id;
+							}
+						} else if(data.type == 'REQUESTRESHARE') {
+							var data2 = {
+									'fileinfo' : {
+										'id' 		 : arg[2].id,
+										'reqUser'    : data.attendance
+									},
+									'agent' : clientType.isAgent,
+									'isPcHome' : clientType.isAgent,
+									'type' : 'reqAuth'
+							};
+							showCooperation(data2);
+						} else {
+							if(settings.isagent) {
+								var name = data.fileInfo.name;
+								var index = name.lastIndexOf(".");
+								var type = name.substring(index + 1).toLowerCase();
+								if(type == 'csv') {
+									if(getCookie('csv')) {
+										toastMessage(LanguagePack.TOAST_FILEOPENPROGRESS);
+									}
+								} else if(type == 'odt') {
+									if(getCookie('odt')) {
+										toastMessage(LanguagePack.TOAST_FILEOPENPROGRESS);
+									}
+								} else if(type == 'slide' || type == 'sheet' || type == 'word') {
+									//if(getCookie('slide') || getCookie('sheet') || getCookie('word')) {
+										toastMessage(LanguagePack.TOAST_FILEOPENPROGRESS);
+									//}
+								} else {
+									toastMessage(LanguagePack.TOAST_FILEOPENPROGRESS);
+								}
+
+								setFileInfo(data);
+								sendMessageToNative('notice_doc', getFileInfo());
+
+							} else {
+								url = location.protocol + '//' + location.host + '/d/' + $.encodeBase62(arg[2].id.toString());
+								location.href = url;
+							}
+						}
+					} else {
+						if(arg[0].resultCode == '209'){
+							var result = function(e) {
+								defaultAlertCB(e);
+								jsonResponse.removeNoticeId(arg[1], arg[2]);
+							};
+							var popupMessage = new Array();
+							popupMessage[0] = LanguagePack.NOTICE_UNVERIFY;
+							var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM_CANCEL, LanguagePack.KEYWORD_ALERT, {popupMessage:popupMessage}, result, defaultAlertCB, defaultAlertCB);
+							popup.create();
+							popup.changebutton({
+								'confirm' : LanguagePack.RECENT_DELETE/*,
+								'cancel' : LanguagePack.KEYWORD_CANCEL*/
+							});
+							popup.show();
+						}else{
+							var result = function(e) {
+								defaultAlertCB(e);
+								jsonResponse.removeNoticeId(arg[1], arg[2]);
+							};
+
+							var reshare_result = function(e) {
+								defaultAlertCB(e);
+
+								var _sdata = arg[2].selector.data('data');
+								$('#notice_pop').hide();
+
+								var data = {
+										'fileinfo' : {
+											'id' 		: _sdata.fileInfo.id,
+										},
+										'workid'	: _sdata.workId,
+										'type' : ''
+									};
+
+								 	showCooperation(data,function(res){
+										inputEmailInfo(gUserEmail);
+									});
+							};
+							if(arg[0].work.shareDeniedReason == 1){ //GMX-7768
+								var popupMessage = new Array();
+								popupMessage[0] = LanguagePack.NOTICE_UNVERIFY;
+								var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM_CANCEL, LanguagePack.KEYWORD_ALERT, {popupMessage:popupMessage}, defaultAlertCB, result, defaultAlertCB);
+								popup.create();
+								popup.changebutton({
+									'confirm' : LanguagePack.KEYWORD_CANCEL,
+									'cancel' : LanguagePack.RECENT_DELETE
+								});
+								popup.show();
+							} else {
+								var popupMessage = new Array();
+								popupMessage[0] = LanguagePack.NOTICE_UNVERIFY_RESHARE;
+								var popup = new PopupMessage(PopupType.RESHARE, ButtonType.RESHARE, LanguagePack.KEYWORD_ALERT, {popupMessage:popupMessage}, defaultAlertCB, result, defaultAlertCB, reshare_result);
+								popup.create();
+								popup.changebutton({
+									'confirm' : LanguagePack.KEYWORD_CANCEL,
+									'cancel' : LanguagePack.NOTICE_ALRET_DELETE,
+									'reshare' : LanguagePack.COOPERATION_AUTHENTICATED
+								});
+								popup.show();
+							}
+						}
+					}
+				},
+				'onFailCB' : function() {
+				}
+			},
+			'removeNoticeId' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var settings = arg[1].data('settings');
+					if(CheckResult(null, arg[0])) {
+						arg[2].selector.remove();
+						if(settings.hm && settings.selector.mc_box.prop('scrollHeight') == settings.selector.mc_box.height()) {
+							jsonResponse.getNoticeListAll(arg[1], 1, settings.count, 0, settings.mint, false);
+						} else {
+							if(!settings.selector.mc_box.children().length) {
+								var $p = $('<p class="no_data">'+ LanguagePack.NOTICE_NODATA + '</p>');
+								settings.selector.mc_box.append($p);
+							}
+						}
+					}
+				},
+				'onFailCB' : function() {
+				}
+			}
+	};
+
+	var common = {
+			'toast' : function(selector, msg, keep) {
+				selector.children("span").html(msg);
+				selector.fadeIn('fast');
+				if(keep){
+					return;
+				}
+				setTimeout(function(){ selector.fadeOut('slow', function() {
+				});},3000);
+			},
+			'closetoast': function(selector){
+				selector.hide();
+			},
+			'emoji' : function(str){
+				var emojistr = '';
+
+				var spantag = '';
+				var message = str;
+				for (var j=0; j < str.length; j++) {
+					var theUnicode = str.charCodeAt(j).toString(16).toLowerCase();
+					if(theUnicode >= 'd800' && theUnicode <= 'd8ff') {
+						emojistr = str.slice(j,j+2);
+						//console.log(Number(emojistr.codePointAt(0)).toString(16));
+						//emojiclass = emojiclass + 'emoji' + Number(emojistr.codePointAt(0)).toString(16);
+						if(typeof jEmoji == 'undefined') {
+							message = message.replace(emojistr,'__');
+						} else {
+							spantag = jEmoji.unifiedToHTML(emojistr);
+							if(spantag == emojistr)
+								spantag = '<span class="emoji emoji2753"></span>';
+							//spantag = '<span class="' + emojiclass + '"></span>';
+							message = message.replace(emojistr,spantag);
+						}
+					} else {
+						emojistr = str.slice(j,j+1);
+						if(typeof jEmoji != 'undefined') {
+							spantag = jEmoji.unifiedToHTML(emojistr);
+							if(spantag == emojistr)
+								continue;
+							message = message.replace(emojistr,spantag);
+						}
+					}
+				}
+				return message;
+			},
+			'sendLog' : function(logType, gubun_el) {
+				//logTracking
+				var webData = $LOGMODEL.getData();
+				if(logType == 'e'){
+					webData['ti'].t = LogType.tracking.event;
+					webData['obj'].ec = 'ux';
+					webData['obj'].ea = 'cl';
+					webData['obj'].el = gubun_el;
+				} else{
+					webData['ti'].t = LogType.tracking.page;
+				}
+				webData['obj'].dp = "Cowork." + clientType.type;
+
+				webData['obj'].dt = 'GroupMsg';
+				$LOGMODEL.sendData(webData);
+			}
+	};
+
+	$.fn.noticePop = function(method) {
+		if (noticePop[method]) {
+			return noticePop[method].apply(this, Array.prototype.slice.call(arguments, 1));
+		} else if (typeof method === 'object' || !method) {
+			return noticePop.init.apply(this, arguments);
+		} else {
+			$.error('The method ' + method + ' does not exist in $.noticePop');
+		}
+	};
+
+	$.fn.toast = common.toast;
+})($);
+
+$('document').ready(function() {
+	function start() {
+		try {
+			if($.fn.mCustomScrollbar) {
+				initializeNotice();
+			} else {
+				setTimeout(function() {
+					start();
+				}, 100);
+			}
+		} catch(err) {
+			initializeNotice();
+		}
+
+	}
+	start();
+});
+
+/*var logdatasample = '';*/
+
+var support = true;
+var isNotificationSupported = false;
+var isServiceWorkerSupported = false;
+var isBroadcastChannelSupported = false;
+var isFirebaseMessagingSupported = false;
+try{
+	isNotificationSupported = 'Notification' in window;
+	isServiceWorkerSupported = 'serviceWorker' in navigator;
+	isBroadcastChannelSupported = 'BroadcastChannel' in window;
+	isFirebaseMessagingSupported = firebase.messaging.isSupported();
+} catch(e){
+
+}
+
+
+function initializeNotice() {
+	var type = '';
+	var agent = false;
+	var $notice = $('#noticePo');
+	var id = (typeof gUserId == 'undefined') ? 0 : gUserId;
+
+	if($notice.length == 0) return;
+
+	if(typeof sockurl != 'undefined' && sockurl) {
+		type = 'chat';
+	} else {
+		type = 'default';
+	}
+	if(typeof isagent != 'undefined') {
+		agent = true;
+	}
+	if(type == 'chat' && typeof $USERINFO.getData('UNVERIFIED') == 'undefined') {
+		setTimeout(initializeNotice, 200);
+		return;
+	}
+
+	if(type == 'default' || !$notice.length) {
+		if($notice.length) {
+			$notice.remove();
+		}
+	} else {
+		isCowork = true;
+		$notice_pop = $('<div id="notice_pop" class="notice_pop init">');
+		$('#noticePo').append($notice_pop);
+
+		$notice_pop.noticePop({'id' : id, 'isagent' : agent});
+	}
+
+	var rv;
+	if (navigator.appName == 'Microsoft Internet Explorer') {
+		var ua = navigator.userAgent,
+		re  = new RegExp("MSIE ([0-9]{1,}[\\.0-9]{0,})");
+		if (re.exec(ua) !== null){
+			rv = parseFloat( RegExp.$1 );
+		}
+		if(ua.lastIndexOf("Trident/6.0") !== -1) {
+			rv = 10;
+		}
+		if(rv < 10) {
+			support = false;
+		}
+
+	}
+
+	if(isWebFcmSupported())
+		askNotificationPermission();
+
+	if(isWebFcmSupported() && Notification.permission === "granted") {
+		initializeWebFcm();
+	} else if(isSockJsSupported()) {
+		initializeSocket();
+	} else if(isPollingSupported()) {
+		initializePolling();
+	}
+}
+
+function isWebFcmSupported() {
+	var ua = typeof gUA != 'undefined' ? gUA.toLowerCase() : navigator.userAgent.toLowerCase();
+	var isWebview = (ua.search("polarispcoffice") != -1 || ua.indexOf('podialog') != -1 || ua.indexOf('macdialog') != -1);
+	return isNotificationSupported && isServiceWorkerSupported && isFirebaseMessagingSupported && isBroadcastChannelSupported && !isWebview;
+}
+
+function isSockJsSupported() {
+	return support && newshare == 'true' && typeof sockurl != 'undefined' && sockurl && !$USERINFO.getData('UNVERIFIED');
+}
+
+function isPollingSupported() {
+	return $('#notice_pop').length;
+}
+
+function useOldWay() {
+	if(isSockJsSupported()) {
+		initializeSocket();	
+	} else if(isPollingSupported()) {
+		initializePolling();
+	}
+}
+
+function initializeWebFcm() {
+	if(isCowork) {
+		$notice_pop.noticePop('closepolling');
+	}
+	navigator.serviceWorker.register('/drive/service_worker.js', { scope: '/drive/' }).then(function(registration) {
+		//console.log("service worker 등록 성공 : ", registration);
+		initializeFirebase(registration);
+	}).catch(function(error) {
+		console.log("service worker 등록 실패 : ", error);
+		useOldWay();
+	});
+
+	const channel = new BroadcastChannel('service-worker');
+	channel.addEventListener('message', function(event) {
+		console.log("[pcpopup_socket channel] event received : ", event);
+
+		if(event.data.realtimeData) {
+			var data = JSON.parse(event.data.realtimeData);
+
+			if(data.t >= 16 && data.t <= 30) {
+				if(isCowork) {
+					$notice_pop.noticePop('set', [data.p.notice], true, 1);
+				}
+			} else if(data.t >= 3030 && data.t <= 3032){
+				data.p.notice.message = data.msg;
+				$notice_pop.noticePop('set', [data.p.notice], true, 1);
+			}
+
+		}
+	});
+}
+
+function initializeFirebase(registration) {
+
+	var firebaseConfig = null;
+	var certification = null;
+
+	var hostname = extractHostName(window.location.href);
+
+	//includes 함수는 IE 지원 안되지만 initializeFirebase 함수가 호출 되었다는 것은 IE는 아니라는 뜻이므로 상관없음.
+	if(hostname.includes("vf-ca-cloud.polarisoffice.com") || hostname.includes("localhost")) {
+		firebaseConfig = {
+			apiKey: "AIzaSyCUyvQk_2rNcF3fer7lbR_9_8xmfKhMOSg",
+			authDomain: "polarisoffice-realdev.firebaseapp.com",
+			databaseURL: "https://polarisoffice-realdev.firebaseio.com",
+			projectId: "polarisoffice-realdev",
+			storageBucket: "polarisoffice-realdev.appspot.com",
+			messagingSenderId: "1086797455765",
+			appId: "1:1086797455765:web:e787162378c97ca7da169c"
+		};
+
+		certification = "BIOWvDt0jGQA5HLs8RM_wK6_i0d5sTwkQR9OZ-oW-xU9c5SNiasy0Y2Lse8VKx69XwFUdfWK9HekCaXBYIk6okI";
+	} else {
+		firebaseConfig = {
+			apiKey: "AIzaSyAy8HT6xxT3YRp7cYxiQNlOghK151WA0bM",
+			authDomain: "polarisforlink.firebaseapp.com",
+			databaseURL: "https://polarisforlink.firebaseio.com",
+			projectId: "polarisforlink",
+			storageBucket: "polarisforlink.appspot.com",
+			messagingSenderId: "201214562975",
+			appId: "1:201214562975:web:f56d2635d85c339a2288aa",
+			measurementId: "G-G8QVXBXT8P"
+		};
+
+		certification = "BMo1msnJmhhPflIRfu3apPNbJ6qgFE9PZetfpgTHaUIqlZPCHBjfzFW2RCH-EmyK5apbzCQVk4Vjz__22zSDhp0";
+	}
+
+	firebase.initializeApp(firebaseConfig);	
+	// firebase.analytics();
+
+	var messaging = firebase.messaging();
+	messaging.useServiceWorker(registration);
+
+	//FCM에서 다른 푸시 서비스로 메시지 요청을 보낼 때 VAPID 키 사용자 인증 정보를 사용할 수 있다.
+	messaging.usePublicVapidKey(certification);
+
+	messaging.getToken().then(function(token){
+		//console.log("토큰 발행 완료 : ", token);
+		sendTokenToServer(token);
+	}).catch(function(error){
+		//console.log("토큰 발행 오류 : ", error);
+		useOldWay();
+	});
+
+	function sendTokenToServer(token) {
+		var callBack = function(response) {
+			//console.log("update pushId response : ", response);
+		};
+		var data = { "pushId" : token };
+		popcorn.updatePushId(data, callBack, callBack);
+	}
+
+	function extractHostName(url) {
+		var hostname;
+		//find & remove protocol (http, ftp, etc.) and get hostname
+	
+		if (url.indexOf("//") > -1) {
+			hostname = url.split('/')[2];
+		} else {
+			hostname = url.split('/')[0];
+		}
+	
+		//find & remove port number
+		hostname = hostname.split(':')[0];
+		//find & remove "?"
+		hostname = hostname.split('?')[0];
+	
+		return hostname;
+	}
+}
+
+function askNotificationPermission() {
+
+	Notification.requestPermission(function(permission) {
+		handlePermission(permission);
+	});
+
+	function handlePermission(permission) {
+		if(!('permission' in Notification)) {
+			Notification.permission = permission;
+		}
+	}
+
+}
+
+function initializeSocket() {
+	/* getkey */
+	var key = null;
+	var cookies = [];
+	var $notice_pop = $('#notice_pop');
+	cookies = document.cookie.split('; ');
+
+	for(var i = 0; i < cookies.length; i++) {
+		var cookie = new Array();
+		cookie = cookies[i].split('=');
+		if(cookie[0] == 'SID') {
+			key = cookie[1];
+			break;
+		}
+	}
+	if(!key) return;
+
+	//console.log('sock url: ' + sockurl);
+
+	try {
+		clearInterval(recInterval);
+		sock = new SockJS(sockurl);
+
+		var checkHeartbeat = function(t){
+			if(hbTimer) clearInterval(hbTimer);
+			hbTimer = setInterval(function(){
+				if(sock) {
+					sock.send('{"t":3,"p":{"k":"' + key + '"}}');
+					//console.log('sock - hb');
+				}
+			}, t * 1000);
+		};
+
+		sock.onopen = function() {
+			if(sock)
+				sock.send('{"t":1,"p":{"k":"' + key + '"}}');
+		    //console.log('sock.onopen: ' + key);
+		};
+
+		sock.onmessage = function(e) {
+			var data = JSON.parse(e.data);
+			if(data.t == 3){
+				checkHeartbeat(data.p.hi);
+			} else if(data.t == 15) {
+				if(data.p) {
+					if(data.p.e == 1){
+						if(isCowork) {
+							$notice_pop.noticePop('closepolling');
+						}
+					} else if (data.p.e == 7){
+						if(hbTimer) clearInterval(hbTimer);
+					}
+				}
+			} else if(data.t >= 16 && data.t <= 30) {
+				if(isCowork) {
+					$notice_pop.noticePop('set', [data.p.notice], true, 1);
+				}
+			} else if(data.t >= 3030 && data.t <= 3032){
+				data.p.notice.message = data.msg;
+				$notice_pop.noticePop('set', [data.p.notice], true, 1);
+			}
+
+			//console.log(e);
+			/*console.log('socket.onmessage: ' + new Date().getTime());*/
+		};
+
+		sock.onclose = function(e) {
+			if(isCowork) {
+				$notice_pop.noticePop('startpolling');
+			}
+			//console.log('sock.onclose ');
+	/*		logdatasample += count + '.sock.onclose key:' + key + '\n';
+			logdatasample += JSON.stringify(e) + '\n';*/
+			/*count++;*/
+			sock = null;
+			if(hbTimer) clearInterval(hbTimer);
+			if(sock_stop) {
+				recInterval = setTimeout(function() {
+					initializeSocket();
+				}, 1000*60*2);
+			}
+
+		};
+	} catch(err) {
+		sock_stop = true;
+	}
+}
+
+function initializePolling() {
+	$('#notice_pop').noticePop('startpolling');
+}
+
+function readNotice() {
+	var $notice_pop = $('#notice_pop');
+
+	if(!$notice_pop.length)
+		return;
+
+	$notice_pop.noticePop('getUnreadNoticeCount', null);
+}
+
+function onNoticeEvent(event) {
+	var $notice_pop = $('#notice_pop');
+	var settings = $notice_pop.data('settings');
+	commonPreventEvent(event);
+	commonStopPropagation(event);
+
+	var isshow = true;
+	if($notice_pop.css('display') != 'none') {
+		$notice_pop.hide();
+		isshow = false;
+	}
+
+	$('body').trigger('click');
+
+	if(!isshow) {
+		return;
+	}
+
+	if($USERINFO.getData('STATUS') == "TEMPORARY") {
+		openSetInfo(null, 3);
+		return;
+	}
+
+	if(isCowork) {
+		if(!$notice_pop.length) {
+			return;
+		}
+		$notice_pop.noticePop({'nocheck' : true});
+		$notice_pop.show();
+		$notice_pop.noticePop('setReadNoticeList', null);
+
+		$('body').one('click', function() {
+			$notice_pop.noticePop('setReadNoticeList', null, true);
+			$notice_pop.hide();
+		});
+	}
+
+	if(settings.type.length){
+		//logTracking
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.page;
+		webData['obj'].dp = "Cowork." + $LOGMODEL.getClientType();
+		webData['obj'].dt = "Notice";
+		$.extend(webData, {
+			'cobj': {
+				'new' : true,
+				'data': settings.type
+			}
+		});
+
+		$LOGMODEL.sendData(webData);
+		//console.log(JSON.stringify(webData));
+	}
+
+}
+
+

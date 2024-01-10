@@ -1,0 +1,100 @@
+class WebOffice {
+    instance = null;
+    constructor(config, containerId){
+       this.config = config;
+       this.containerId = containerId;
+    }
+    
+
+    async getInstance() {
+        if(this.instance === null){
+            let API;
+            if(gVendorType === "whale" && gMode == 'edit'){
+                const configs = await insertBanner(gUserId);
+                API = await PolarisWebOffice(this.containerId, {...this.config, ...configs});
+            } else {
+                API = await PolarisWebOffice(this.containerId, this.config);
+            }
+            this.instance = API[this.config.documentType];
+            return this.instance;
+        } else {
+            return this.instance;
+        }
+    }
+
+    async openDocument({name, blob}){
+        if(!this.instance){
+            const webofficeAPI = await this.getInstance();
+            return webofficeAPI.openDocument({name: name, blob: blob});
+        } else {
+            return this.instance.openDocument({name: name, blob: blob});
+        }
+    }
+    async openNewDocument(){
+        if(!this.instance){
+            const webofficeAPI = await this.getInstance();
+            return webofficeAPI.openNewDocument();
+        } else {
+            return this.instance.openNewDocument();
+        }
+    }
+    async saveDocument() {
+        if(!this.instance){
+            const webofficeAPI = await this.getInstance();
+            return webofficeAPI.saveDocument();
+        } else {
+            return this.instance.saveDocument();
+        }
+    }
+    async insertTextData (text) {
+        if(!this.instance){
+            const webofficeAPI = await this.getInstance();
+            return webofficeAPI.insertHtmlData(text);
+        } else {
+            return this.instance.insertHtmlData(text);
+        }
+    }
+    async insertString (text) {
+        if(!this.instance){
+            const webofficeAPI = await this.getInstance();
+            return webofficeAPI.insertString(text);
+        } else {
+            return this.instance.insertString(text);
+        }
+    }
+    async InsertPicture (blob) {
+        return this.instance.insertImage(blob);         
+    }
+    getMarkString() {
+        return this.instance.getMarkString()
+    }
+    getCaretInfo() {
+        return this.instance.getCaretInfo()
+    }
+    getFrameToImage() {
+        return this.instance.getFrameToImageBlob()
+    }
+    getCellRange () { 
+        return this.instance.getCellRange()
+    }
+    getFormulaBarFieldText() {
+        return this.instance.getFormulaBarFieldText();
+    }
+    colseSheetCellEdit() {
+        return this.instance.colseSheetCellEdit();
+    }
+    async movePage(page) {
+        if(!this.instance){
+            const webofficeAPI = await this.getInstance();
+            return webofficeAPI.movePage(page);
+        } else {
+            return this.instance.movePage(page);
+        }
+    }
+    async exportAsPDF() {
+        return this.instance.exportAsPDF({
+            target:'all',
+            isPdfAExport: false
+        });
+    }
+}

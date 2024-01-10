@@ -1,0 +1,2094 @@
+var _publicKey = null;
+
+var ACCOUNT_UPDATE_PUSHID = "/api/1/account/updatepushid";
+var ACCOUNT_ISEXIST_API = "/api/1/account/isexist";
+var ACCOUNT_REGIST_API = "/api/1/account/regist";
+var ACCOUNT_POSHARE_REGIST_API = "/api/2/account/registbyoauth"
+var ACCOUNT_POSHARE_LOGIN_API = "/api/2/account/loginbyoauth"
+var ACCOUNT_REGIST_EVENT_API = "/api/2/account/registbycoupon";
+var ACCOUNT_LOGIN_API = "/api/1/account/login";
+var ACCOUNT_LOGOUT_API = "/api/1/account/logout";
+var ACCOUNT_USERINFO_API = "/api/1/account/userinfo";
+var ACCOUNT_SIMPLE_USERINFO_API = "/api/2/account/userinfo/simple";
+var ACCOUNT_PASSWORD_FIND = "/api/1/account/findpw";
+var ADDRESS_SYNC = "/api/1/friend/sync";
+var CANCLE_UPLOAD = "/api/1/drive/cancelupload";
+var DOCUMENT_SEND = "/api/1/fileshare/send";
+var FILE_UPLOAD = "/api/1/drive/upload";
+var GET_LIST_API = "/api/1/drive/list";
+var GET_RECENTLIST_API = "/api/1/drive/recentlist";
+var GET_RECENTLIST_API2 = "/api/1/drive/recentlistv2";
+var GET_CONVERT_INFO = "/api/1/web/get/convertinfo";
+var GET_POSHARE_ISAGREE = "/api/1/account/get/externalagreement"
+var SET_POSHARE_ISAGREE = "/api/1/account/set/externalagreement"
+
+var GET_WEBLINK_SLIDE_INFO = "/api/1/weblink/get/memo/ppt";
+var GET_SHARED_SLIDE_INFO = "/api/1/viewer/share/memo/ppt";
+var GET_DOCCAST_SLIDE_INFO = "/api/1/viewer/task/doccast/get/memo/ppt";
+var GET_DRIVE_LIST = "/api/1/account/devicelist";
+var GET_PAGE_IMAGE = "/api/web/download/image";
+var GET_CONVERT_INFO_DOCLINK = "/api/1/weblink/get/convertinfo";
+var GET_PAGE_IMAGE_DOCLINK = "/api/doclink/download/image/";
+var GET_LINK = "/api/1/weblink/create";
+var LAST_RIVISION = "/api/1/drive/lastrevision";
+var REMOVE_DIVE_LIST = "/view/devicedisconnect";
+var SEARCHFILE = "/api/1/drive/search/filename";
+var SEARCHKEYWORD = "/api/1/search/keyword";
+var SEND_EMAIL = "/api/1/weblink/send/email";
+var SEND_EMAL_LIST = "/api/1/fileshare/list";
+var SET_LASTACCESS = "/api/1/drive/setlastaccess";
+var SYNC_DRIVE_SYNC = "/api/1/drive/sync";
+var DELETA_WEBLINK = "/api/1/weblink/delete";
+var DELETA_TRASHCAN = "/api/1/drive/sweephiddenfiles";
+var GET_ARARM_API = "/api/1/notice/list";
+var CHECK_ARARM_API = "/api/1/notice/check";
+var DELETE_ARARM_API = "/api/1/notice/delete";
+var DOWNLOAD_API = "/api/2/drive/download/";
+var SAVE_DRIVE = "/api/1/weblink/save";
+var FILE_INFO = "/api/1/drive/fileinfo";
+var MULTI_FILE_INFO = "/api/1/drive/file/infos";
+var GET_DRIVE_AMOUNT = "/api/1/drive/usage";
+var GET_SEND_LIST = "/api/1/fileshare/list";
+var GET_TRASHCAN_LIST = "/api/1/drive/hiddenbyuseroperationlist";
+var REQUEST_VERIFY_EMAIL = "/api/1/account/resendverifymail";
+var MODIFY_USER_INFO = "/api/1/account/modifyinfo";
+var DISCONNECT_DEVICE = "/api/1/account/disconnectdevice";
+var GETPORTRAIT = "/api/1/account/downloadportrait";
+var SETPORTRAIT = "/api/1/account/registportrait";
+var ACCOUNT_REMOVE = "/api/1/account/deleteaccount";
+var GET_SHARED_CONVERT_INFO = "/api/1/viewer/share/convertinfo";
+var GET_DOCCAST_CONVERT_INFO = "/api/1/viewer/task/doccast/convertinfo";
+var SAVE_SHARED_DOC = "/api/1/shares/copy";
+var SAVE_WEBLINK_DOC = "/api/1/weblink/copytodrive";
+var CHANGE_DOCCAST_DOCUMENT = "/api/1/viewer/task/doccast/docchange";
+var CREATE_SHARE_TASK = "/api/1/task/create/share";
+var BONUS_GET_INFO = "/api/1/promotion/info";
+var SEND_INVITATION = "/api/1/promotion/invite";
+var BONUS_GET_HISTORY = "/api/1/promotion/getHistoryList";
+var SEND_SUPPORT_EMAIL = '/api/1/customer/sendmail';
+var BONUS_GET_TARGETINFO = "/api/1/promotion/targetInfo";
+var REFUSE_MAIL = "/api/1/account/refusemail";
+var REQUEST_CONVERT_INFO = '/api/1/web/request/convert';
+var REQUEST_CONVERT_INFO_DOCLINK = "/api/1/weblink/request/convert";
+var REQUEST_SHARED_CONVERT_INFO = "/api/1/viewer/share/convert";
+var REQUEST_DOCCAST_CONVERT_INFO = "/api/1/viewer/task/doccast/request/convert";
+var SET_LOCALE = "/api/1/locale/selectlocale";
+var CHECK_SERVICE_STATE = "/status/1/get";
+var TASK_ADD_ATTENDEE = "/api/1/task/add/attendee/";
+var GET_TASK_INFO = "/api/1/task/get/";
+var SENDMAILTOWEBLINK = "/api/1/weblink/sendmail";
+var GET_FILE_HISTORY_LIST = "/api/1/drive/filehistory";
+var GET_FILE_HISTORY_LIST_EXCLUSIVE = "/api/2/polarisdocument/history";
+var GET_FILE_HISTORY_LIST_EXCLUSIVE_V2 = "/api/2/polarisdocument/history/v2";
+var RESTORE_FILE_SELECTED_VERSION = "/api/1/drive/restorerevision";
+var RESTORE_FILE_SELECTED_VERSION_EXCLUSIVE = "/api/2/polarisdocument/revision/restore";
+var RESTORE_FILE_SELECTED_VERSION_EXCLUSIVE_V2 = "/api/2/polarisdocument/revision/restore/v2";
+var PAYMENT_LIST = '/api/1/payment/history/list';
+var ADDRESS_REVISION = '/api/1.1/friend/revision';
+var ADDRESS_LIST = '/api/1.1/friend/list';
+var ADDRESS_CHANGE_LIST = '/api/1.1/friend/changedlist';
+var ADDRESS_HIDE_LIST = '/api/1.1/friend/hide';
+var ADDRESS_SHOW_LIST = '/api/1.1/friend/show';
+var ADDRESS_REMOVE_RECENT_LIST = '/api/1.1/friend/deletelastsendtime';
+var ADDRESS_ADDFRIEND = '/api/1.1/friend/add';
+var ISPAYCHECK = '/api/1/payment/concurrency';
+var REQUESTPAYMENTTOSERVER = '/api/1/payment/payment';
+var REQUESTFAILPAYMENT = '/api/1/payment/failedtransaction';
+var CANCELPAYMENT = '/api/1/payment/cancel';
+var SETSTARTPAGESUCCESS = '/api/1/account/completetutorial';
+var CHAT_LISTALL = '/api/1/msg/groups';
+var CHAT_CREATE = '/api/1/msg/groups/create';
+var CHAT_LEAVE = '/api/1/msg/groups/leave';
+var CHAT_GETMESSAGE = '/api/1/msg/groups/msgs';
+var CHAT_ADDMESSAGE = '/api/1/msg/groups/msgs/add';
+var CHAT_ADDATTENDEES = '/api/1/msg/groups/attendees/add';
+var CHAR_RENAMEGROUPTITLE = '/api/1/msg/groups/rename';
+var REGIST_REGIST = '/api/1/coupon/apply';
+var CHAT_SHAREDFILE = '/api/1/msg/groups/shares/add';
+var CHAT_CANCELFILE = '/api/1/shares/delete';
+var CHAT_FINDGROUP = '/api/1/msg/groups/search';
+var CHAT_REINVITE = '/api/1/msg/groups/attendees/reinvite';
+var CHAT_GETSHAREDFILE = '/api/1/msg/groups/shares';
+var CHAT_SETSHAREDTYPE = '/api/1/shares/update';
+var CHAT_GETSHAREDGROUP = '/api/1/shares/get';
+var CHAT_GETSHAREDGROUPINFO = '/api/1/msg/groups/get';
+var GETSHAREDLIST = '/api/1/shares';
+var SENDPCADOWNLOAD = '/api/1/sendmail/pcadownload';
+var SENDMACPCADOWNLOAD = '/api/1/sendmail/macpcadownload';
+var GETEXTERNALALLLIST = '/api/1/connect/contacts/oauthlist';
+var GETEXTERNALEMAIL = '/api/1/connect/contacts/list';
+var GETEXTERNALGMAIL = '/api/1/connect/contacts/google/oauthurl';
+var DISCONNECTEXTERNALEMAIL = '/api/1/connect/contacts/disconnect';
+var GETPRODUCTINFOLIST = '/api/1/payment/productinfolist';
+var GETBASICPRODUCTINFOLIST = '/api/1/payment/basicproductinfolist';
+var GETBASICPRODUCTDETAILLIST ='/api/1/payment/product/detaillist';
+var USEINFO = '/api/1/account/useraction/action';
+var POSYNC_REMOVE = "/api/1/account/deleteapp";
+//var PCOFFICE_REMOVE = '/api/2/account/deletepcoffice';
+var PCOFFICE_REMOVE_NEW = '/api/2/survey/deleteapp';
+var ADDPEOPLE = '/api/1.1/friend/add';
+var UPDATEMSGMARK = '/api/1/msg/groups/msgs/mark';
+var REQUESTALIPAY = '/api/1/payment/alipay/preorder';
+var HIDESHAREFILE = '/api/1/shares/hide';
+
+var PCOFFICEDOWNLOAD = '/api/1/sendmail/pcofficebeta/download';
+var SEND_INQUIRY = '/api/1/survey/inquiry';
+var SEND_BUSINESS_INQUIRY = '/api/1/survey/businessinquiry';
+var SEND_ERRORREPORT = '/api/1/survey/errorreport';
+var CANCELAUTOPAYMENT = '/api/1/account/cancelpayment';
+var GET_BINDING_LIST = '/api/1/connect/binding/oauthlist';
+var CANCEL_BINDING = '/api/1/connect/binding/disconnect';
+
+var TEAM_REGIST = '/api/1/team/regist';
+var TEAM_INFO = '/api/1/team/info';
+var TEAM_ADDPEOPLE = '/api/1/team//member/add';
+var TEAM_REMOVEPEOPLE = '/api/1/team/member/remove';
+var TEAM_INVITEPEOPLE = '/api/1/team/member/invite';
+var TEAM_CHANGELEVEL = '/api/1/team/member/updatelevel';
+var TEAM_RENAME = '/api/1/team/rename';
+var TEAM_REMOVE = '/api/1/team/remove';
+var TEAMFOLDDER_INFO = '/api/1/team/sharefolder/list';
+var TEAMFOLDDER_CREATE = '/api/1/team/sharefolder/add';
+var TEAMFOLDDER_REMOVE = '/api/1/team/sharefolder/remove';
+var TEAMFOLDDER_HIDE_LIST = '/api/1/drive/sharedfolder/hiddenfile/list';
+var TEAMFOLDDER_HIDE_LIST_ALL = '/api/1/drive/sharedfolder/hiddenfile/list/all';
+var TEAM_UPDATE_PAID_LICENSE = '/api/1/team/changepaidlicensecount';
+var TEAM_UPDATE_USE_LICENSE = '/api/1/team/changeuselicensecount';
+var TEAM_DELEGATEMANAGER = '/api/1/team/delegate';
+var TEAM_RESEND_EMAIL = '/api/1/team/member/resendinvitaion';
+var TEAM_ACCEPT = '/api/1/team/member/accept';
+var TEAM_ACCEPTWITHREGIST = '/api/1/team/member/acceptwithregist';
+var TEAM_VERIFYINVITATION = '/api/1/team/member/verifyinvitation';
+var TEAM_EXTERNAL_SHARE = '/api/1/team/setexternalshare';
+var TEAM_GET_PROPERTY = '/api/2/team/getproperties';
+var TEAM_SET_PROPERTY = '/api/2/team/setproperties';
+var TEAM_GET_MYLEVEL = '/api/1/team/myauthinfo';
+var TEAM_GET_EXTERNAL_SHARE = '/api/1/team/getexternalshare';
+var TEAM_IS_VAILID_SHARE = '/api/1/team/availableshare';
+var TEAM_GET_LIST = '/api/1/drive/sharedfolder/list';
+var TEAM_SYNC_LIST = '/api/1/drive/sharedfolder/eventlist';
+var TEAM_STORAGEINFO = '/api/1/team/storageinfo';
+var TEAM_LOG = '/api/1/team/log';
+var TEAM_VALIDATEREGIST = '/api/1/team/validateregist';
+var TEAM_SET_SSO = '/api/2/team/sso/metadata/set';
+var TEAM_GET_SSO_METADATA = '/api/2/team/sso/metadata';
+var TEAM_GET_SSO_METADATAID = '/api/2/team/sso/metadata/id';
+var TEAM_MEMBER_INFO = '/api/1/team/member/info';
+var TEAM_FREE_TRIAL = '/api/1/team/registfreetrial';
+var TEAM_REMOVE_FREETRIAL = '/api/1/team/removefreetrial';
+
+var COMMENT_GETLISTS = '/api/1/filecomment/getfilecommentlist';
+var COMMENT_CREATE = '/api/1/filecomment/createfilecomment';
+var COMMENT_UPDATE = '/api/1/filecomment/updatefilecomment';
+var COMMENT_DELETE = '/api/1/filecomment/deletefilecomment';
+var SHARE_CREATE = '/api/1/cowork/create';
+var SHARE_GET_FILEINFO = '/api/1/cowork/get';
+var SHARE_GETATTENDEE = '/api/1/cowork/list/attendee';
+var SHARE_ADDATTENDEE = '/api/1/cowork/add/attendee';
+var SHARE_REMOVEATTENDEE = '/api/1/cowork/delete/attendee';
+var GET_SHAREFILE_LIST = '/api/1/cowork/list';
+var SHARE_MODIFYAUTHORITY = '/api/1/cowork/modify/authority';
+var SHARE_FILE_DELETE = '/api/1/cowork/delete';
+var SHARE_FILE_HIDE = '/api/1/cowork/hide';
+var GET_SHARE_NOTICE_LIST = '/api/1/cowork/notice/list';
+var GET_UNREAD_NOTICE_COUNT = '/api/1/cowork/notice/unreadcount';
+var SET_READ_NOTICE = '/api/1/cowork/notice/readmark';
+var SHARE_MODIFYAUTHORITY_WEBLINK = '/api/1/cowork/weblink';
+var SHARE_RESHARE = '/api/1/cowork/reshare';
+var NOTICE_AVAILABLE = '/api/1/filecomment/isvalidcomment';
+var NOTICE_AVAILABLE2 = '/api/1/cowork/available';
+var NOTICE_REMOVE_ONE = '/api/1/cowork/notice/clear';
+var NOTICE_GET = '/api/1/cowork/notice/get';
+
+var GET_PREMIUM_INFO = '/api/2/account/downgrade/recent';
+var HIDE_PREMIUM_EXPIRED_INFO = '/api/2/account/downgrade/recent/hide';
+var GET_WEBLINK_THUMBNAIL = '/api/1/weblink/get/thumbnail/';
+var GET_WEBLINK_PAGEIMAGE = '/api/1/weblink/download/weblinkimage/';
+var GET_PUBLIC_FILEINFO = '/api/1/cowork/commoninfo';
+var SAVE_POFORMAT_DOC = '/api/2/polarisdocument/exporttodrive';
+var REQUEST_POFORMAT_CONVERT_INFO = '/api/1/viewer/polarisdocument/convert';
+var GET_POFORMAT_CONVERT_INFO = '/api/1/viewer/polarisdocument/convertinfo';
+var GET_POFORMAT_PAGEIMAGE = '/api/1/viewer/polarisdocument/image/';
+var GET_POFORMAT_SLIDE_INFO = '/api/1/viewer/polarisdocument/memo/ppt';
+var RESTORE_POFORMAT = '/api/2/polarisdocument/revision/restore';
+if (typeof newShareDoucments != "undefined" && newShareDoucments == 'true') {
+	REQUEST_CONVERT_INFO = "/api/1/weblink/request/weblinkconvert";
+	GET_CONVERT_INFO = "/api/1/weblink/get/weblinkconvertinfo";
+	SAVE_SHARED_DOC = "/api/1/cowork/copy/file";
+	GET_WEBLINK_THUMBNAIL = "/api/1/weblink/get/weblinkthumbnail/";
+	SEND_EMAIL = "/api/1/weblink/send/sendweblinkmail";
+	SENDMAILTOWEBLINK = "/api/1/weblink/sendweblinkmail";
+	SAVE_WEBLINK_DOC = "/api/1/weblink/copytodriveweblink";
+	_publicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDJjEmhRIdgfs26PrbmGpN9rfQifDXzvUdy4slB+EIRxyzkOLitBWAK2DEyKXSKwPlN2jMlwvkupCaRL4peHMKhOQsw6sSPrDJi0OFocU68KVSKWY2XXLO9kywfliy8LbQKPl1ztMNtMPUL9v4UqioVgX1yDoieZSRxOutRUVh/CQIDAQAB";
+	//	REQUEST_SHARED_CONVERT_INFO = "/api/1/weblink/request/weblinkconvert";
+	//	GET_SHARED_CONVERT_INFO = "/api/1/weblink/get/weblinkconvertinfo";
+	//	REQUEST_CONVERT_INFO_DOCLINK = "/api/1/weblink/request/weblinkconvert";
+	//	GET_CONVERT_INFO_DOCLINK = "/api/1/weblink/get/weblinkconvertinfo";
+}
+
+var CHECK_LGPLAN = '/api/2/account/device/preload';
+var CHECK_ACCOUNTPWD_API = '/api/2/account/password/check';
+var GET_SHAREFOLDER_LIST = '/api/2/team/sharefolder/list/all';
+var GET_SHAREFOLDER_AUTHORITY_LIST = '/api/2/team/sharefolder/authority/list';
+var SET_SHAREFOLDER_AUTHORITY = '/api/2/team/sharefolder/authority/set';
+var GET_PARTIALPRICE = '/api/1/payment/partialprice';
+var RESTORE_AUTHORITY = '/api/2/team/sharefolder/authority/refuse/restore';
+var GET_TEAMFOLDER_AUTHORITY_INFO = '/api/2/team/sharefolder/authority/info';
+var CREATE_TEAMFOLDER = '/api/2/team/sharefolder/add';
+var RENAME_TEAMFOLDER = '/api/2/team/sharefolder/rename';
+var GET_CARDINFO = '/api/1/payment/teampayinfo';
+var GET_USERCARDINFO = '/api/1/payment/cardinfo';
+var FORCE_CHANGEAUTH = '/api/1/team/forcechangeauth';
+var ADD_LOG = '/api/1/team/log/add';
+var MARK_WEB_PAYMENT = '/api/1/payment/markwebpayment';
+var GET_TEAM_PAYINFO = '/api/1/payment/teamhistory/list';
+var SET_TEAMNAME = '/api/1/team/setname';
+var GET_FILEREPUTATION = '/api/2/drive/file/reputation';
+var GET_TEMPLATELIST = '/api/2/document/template/list';
+var PCOFFICE_OTL = '/api/1/account/createotl';
+var WEBVIEW_INCREASE_VIEWCOUNT = '/api/2/drive/file/viewcount/increase';
+var GET_COUPONINFO = '/api/2/coupon/info';
+
+var RECENT_GET_INIVATE_LIST = '/api/1/cowork/recentinvite';
+var RECENT_DELETE_INIVATE_LIST = '/api/1/cowork/recentinvitedelete';
+var RESTORE_PAYMENT = '/api/1/payment/restorecancel';
+var CHECK_STORAGE_COEDIT = '/api/2/account/exceededstorage/info';
+var DEVICELIST_ALL = '/api/2/account/device/list/all';
+
+var LogCollector = 'https://log.polarisoffice.com/api/2/logcollect/collector';
+var GET_AGREESTATUS = '/api/2/account/conditions/agree/status';
+var SET_AGREEMENT = '/api/2/account/conditions/agree';
+var GET_LOGIN_INFO = '/api/2/account/login/info';
+var CHECK_ORANGE_STATUS = '/api/2/orange/access/status';
+var CHECK_ORANGEPRO_STATUS = '/api/2/orange/access/right';
+var SURVEY_POSTPOLL = '/api/2/survey/pcoffice/satisfaction/save';
+
+var FAVORITE_GET_STAR_LIST = '/api/2/drive/star/list';
+var FAVORITE_UPDATE_STAR_LIST = '/api/2/drive/star/update';
+var FAVORITE_GET_STAR_SUBLIST = '/api/2/drive/star/sublist';
+var GET_REVIEWRATINGLIST = '/api/2/review/rating/list';
+var GET_REVIEWLIST = '/api/2/review/list';
+//var GET_REVIEW = '/api/2/review/get';
+var DELETE_REVIEW = '/api/2/review/delete';
+var GET_DATEFORMAT = '/api/2/account/dateformat';
+
+var GET_USAGE_API = '/api/2/usage/get';
+
+//var KTTEAM_REGIST_NEW = '/api/2/ktucloud/team/regist/new';
+//var KTTEAM_REGIST_EXIST = '/api/2/ktucloud/team/regist/exist';
+var KTTEAM_REMOVE = '/api/2/ktucloud/team/remove';
+//var KTTEAM_REGIST_CHECK = '/api/2/ktucloud/team/regist/check';
+//var KTTEAM_BIZ_CONFIRM = '/api/2/ktucloud/confirm';
+
+var EXT_CLOUD_ADD = '/api/2/externalservice/cloud/add';
+var EXT_CLOUD_LIST = '/api/2/externalservice/cloud/list';
+var EXT_CLOUD_UPDATE = '/api/2/externalservice/cloud/update';
+var EXT_CLOUD_DELETE = '/api/2/externalservice/cloud/delete';
+
+var USER_ACTION_CHECK = "/api/1/account/useraction/check";
+var USER_ACTION_CLICK = "/api/1/account/useraction/click";
+var NAMEIDCHECK_ORANGEPRO = "/api/2/orange/association/nameidcheck";
+var CREATE_ORANGEPRO = "/api/2/orange/association/registexist";
+var REGISTNEW_ORANGEPRO = "/api/2/orange/association/registnew";
+
+var LAST_NOTICE_API = "/api/2/inappmedia/lastnotify";
+
+var GETNATIONCODE = "/api/1/sms/getnationcode";
+var SEND_MESSAGE = "/api/1/sms/sendmessage";
+var SESSIONINFO = "/api/2/account/sessioninfo/simple";
+
+var PROMOTIONASUSINFO = "/api/1/payment/promotionasusinfo";
+var PROMOTIONASUSINFOLIST = "/api/1/payment/productinfolist";
+
+var ACCOUNT_ADINFO_API = "/api/2/account/getWebAdvertiseinfo ";
+
+var EXTERNAL_URLS = "/api/2/config/externalurls";
+
+var VERIFYMAIL_VALIDATE = "/api/2/account/verifymail/validate";
+var FINDPW_VALIDATE = "/api/2/account/findpw/validate";
+var GET_TEAMFOLDER_INFO = '/api/2/drive/sharedfolder/authority/get';
+var UPDATE_TEAMFOLDER_INFO = '/api/2/drive/sharedfolder/authority/update';
+
+var PAYMENT_PREORDER = '/api/1/payment/kginicis/preorder';
+var PAYMENT_TOSS_PREORDER = '/api/1/payment/toss/preorder';
+var GET_LICENSEORDERLIST = '/api/1/license/get';
+var FIND_LICENSEEMAIL = '/api/1/license/search/email';
+var EXIST_LISENSEUSER = '/api/1/license/exist/user';
+var CHANGE_LICENSEPASSWORD = '/api/1/license/change/password';
+var SEND_CERTIFICATION = '/api/1/license/send/certificationmail';
+var SAVE_LICENSE_INFO = '/api/1/license/save';
+
+var EVENT_GET_LIST = '/api/1/storeevent/getlist';
+var EVENT_GET_DETAIL = '/api/1/storeevent/detail';
+var EVENT_GET_COMMENTLIST = '/api/1/storeevent/comment/getlist';
+var EVENT_GET_COMMENTSAVE = '/api/1/storeevent/comment/save';
+var EVENT_GET_COMMENTCHANGE = '/api/1/storeevent/comment/change';
+var EVENT_GET_COMMENTDELETE = '/api/1/storeevent/comment/delete';
+var EVENT_GET_COUPON_TYPE = '/api/1/coupon/event/apply';
+var WHALE_USER_INFO = '/api/1/account/whale/userinfo';
+var STORE_REVIEW_GET_RATING = '/api/1/storereview/rating/get';
+var STORE_REVIEW_ADD_RATING = '/api/1/storereview/rating/add';
+var STORE_REVIEW_SET_RATING = '/api/1/storereview/rating/set';
+var STORE_REVIEW_GET_LIKE = '/api/1/storereview/like/get';
+var STORE_REVIEW_ADD_LIKE = '/api/1/storereview/like/add';
+var STORE_REVIEW_SET_LIKE = '/api/1/storereview/set/like';
+
+var PAYMENT_REPAYGATE = '/api/1/payment/transfer';
+var APPDOWNLOAD_USER = '/api/v3/appdownload/user';
+var EVENT_POPUP = '/api/1/popup/list';
+
+var APPLY_PROMOTION = '/api/1/promotion/apply';
+var APPLY_PROMOTION_LIST = '/api/1/promotion/apply/list';
+var GIFT_COUPON = '/api/1/promotion/gift';
+var GIFT_INFO = '/api/1/promotion/gift/info';
+var PROMOTION_LIST = '/api/1/promotion/list';
+var GETCOUPONLIST = '/api/1/discountcoupon/list';
+var GETCOUPONHISTORY = '/api/1/discountcoupon/history';
+var CREATECOUPON = '/api/1/discountcoupon/create';
+var APPLYCOUPON = '/api/1/discountcoupon/apply';
+var GETPROMOTIONBANNER = '/api/1/promotion/banner';
+var GETPROMOTIONBANNERLIST = '/api/1/promotion/banner/list';
+var GET_TAPFILIATE_INFO = '/api/1/partnership/tapfiliate/program';
+var ROLLING_BANNER = '/api/1/rollingbanner/list';
+var BLOG_BANNER = '/api/1/blogbanner/list';
+var GET_VOUCHER_INFO = '/api/1/coupon/event/info';
+var GET_VOUCHER_PAYMENT_INFO = '/api/1/coupon/voucher';
+var TOSS_RESULT_INFO = '/api/1/payment/toss/get/result';
+var DELETEACCOUNT_NOTPW = '/api/2/account/deleteaccount';
+var ADD_FILE_DRIVE = '/api/1/drive/addfile'
+var SEARCH_FILE = '/api/1/drive/search/filename';
+var UPDATE_FILE_DRIVE = '/api/1/drive/updatefile';
+var AI_TEMPLATE = '/api/1/ai/template/cover-letter';
+var AI_WRITE = '/api/1/ai/write/gpt3stream/text';
+var AI_WRITE_STOP = '/api/1/ai/write/stop';
+var AI_WORD_CLOUD = '/api/1/ai/image/wordcloud';
+var AI_WORD_CLOUD_MASKING = '/api/1/ai/image/wordcloud-img';
+var AI_TEXT_TO_IMAGE = '/api/1/ai/diffusion/texttoimage';
+var AI_REMOVE_BACKGROUND = '/api/1/ai/image/background/remove';
+var AI_RESOLUTION_IMAGE = '/api/1/ai/image/resolution'
+var AI_STYLE_TRANSFER = '/api/1/ai/image/transfer';
+var AI_GENHWP = '/api/1/ai/template/genhwp/download';
+var GET_AI_USERINFO = '/api/1/ai/userinfo';
+var GET_AI_SERVICE_LIST = '/api/1/ai/service/list';
+var GET_SERVICE_CREDIT_HISTORY = '/api/1/ai/credit/history';
+var GET_GOODS_CREDIT_HISTORY = '/api/1/ai/consumergoods/history';
+var GET_OFFER_CREDITINFO = '/api/1/ai/offer/creditinfo/list';
+var SEND_PAYMENTLOG = '/api/1/payment/log';
+var GET_PRODUCT_DETAILLIST = '/api/1/payment/product/detaillist';
+var ASK_DOC_UPLOAD_FILE = '/api/v2/askdoc/upload-file';
+var KNOWLEDGE_BASE_LIST = '/api/1/ai/askdoc/list';
+
+if (window.XDomainRequest) {
+	jQuery.ajaxTransport(function (s) {
+		if (s.crossDomain && s.async) {
+			if (s.timeout) {
+				s.xdrTimeout = s.timeout;
+				delete s.timeout;
+			}
+			var xdr;
+			return {
+				send: function (_, complete) {
+					function callback(status, statusText, responses, responseHeaders) {
+						xdr.onload = xdr.onerror = xdr.ontimeout = jQuery.noop;
+						xdr = undefined;
+						complete(status, statusText, responses, responseHeaders);
+					}
+					xdr = new XDomainRequest();
+					xdr.onload = function () {
+						callback(200, "OK", {
+							text: xdr.responseText
+						}, "Content-Type: " + xdr.contentType);
+					};
+					xdr.onerror = function () {
+						callback(404, "Not Found");
+					};
+					xdr.onprogress = jQuery.noop;
+					xdr.ontimeout = function () {
+						callback(0, "timeout");
+					};
+					xdr.timeout = s.xdrTimeout || Number.MAX_VALUE;
+					xdr.open(s.type, s.url);
+					xdr.send((s.hasContent && s.data) || null);
+				},
+				abort: function () {
+					if (xdr) {
+						xdr.onerror = jQuery.noop;
+						xdr.abort();
+					}
+				}
+			};
+		}
+	});
+}
+var popcorn = {
+	'logCollector': function (data, successCB, errorCB) {
+		network.useAjaxCORS("POST", LogCollector, JSON.stringify(data), successCB, errorCB);
+		// if (typeof IsProdouctionDomain == 'function') {
+		// 	if (IsProdouctionDomain() == 'prod') {
+		// 		network.useAjaxCORS("POST", LogCollector, JSON.stringify(data), successCB, errorCB);
+		// 	} else {
+		// 		if (location.protocol.lastIndexOf('https') == -1) {
+		// 			network.useAjaxCORS("POST", 'http://172.25.0.114:8080/api/2/logcollect/collector', JSON.stringify(data), successCB, errorCB);
+		// 		}
+		// 	}
+		// } else {
+		// 	network.useAjaxCORS("POST", LogCollector, JSON.stringify(data), successCB, errorCB);
+		// }
+	},
+	'generalLogCollector': function (data, logType, successCB, errorCB) {
+		if (typeof IsProdouctionDomain == 'function') {
+			if (IsProdouctionDomain() == 'prod') {
+				network.useAjaxCORS("POST", 'https://analysis.polarisoffice.com/api/2/log/generallog/clientlog', JSON.stringify(data), successCB, errorCB);
+			} else {
+				network.useAjaxCORS("POST", 'https://vf-ca-analysis.polarisoffice.com/api/2/log/generallog/clientlog', JSON.stringify(data), successCB, errorCB);
+			}
+		}
+	},
+	'updatePushId': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_UPDATE_PUSHID, JSON.stringify(data), successCB, errorCB);
+	},
+	'getlistComment': function (data, successCB, errorCB) {
+		network.useAjax("POST", COMMENT_GETLISTS, JSON.stringify(data), successCB, errorCB);
+	},
+	'createComment': function (data, successCB, errorCB) {
+		network.useAjax("POST", COMMENT_CREATE, JSON.stringify(data), successCB, errorCB);
+	},
+	'updateComment': function (data, successCB, errorCB) {
+		network.useAjax("POST", COMMENT_UPDATE, JSON.stringify(data), successCB, errorCB);
+	},
+	'deleteComment': function (data, successCB, errorCB) {
+		network.useAjax("POST", COMMENT_DELETE, JSON.stringify(data), successCB, errorCB);
+	},
+	'accountRegist': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_REGIST_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'accountRegistbyPoShare': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_POSHARE_REGIST_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'accountLoginbyPoShare': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_POSHARE_LOGIN_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'accountRegist2': function (data, header, successCB, errorCB) {
+		network.useAjax2("POST", ACCOUNT_REGIST_API, JSON.stringify(data), header, successCB, errorCB);
+	},
+	'accountRegistEvent': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_REGIST_EVENT_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'accountcheck': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_ISEXIST_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'addressSync': function (data, successCB, errorCB) {
+		network.useAjax("POST", ADDRESS_SYNC, JSON.stringify(data), successCB, errorCB);
+	},
+	'getPOShareAgree': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_POSHARE_ISAGREE, JSON.stringify(data), successCB, errorCB);
+	},
+	'setPOShareAgree': function (data, successCB, errorCB) {
+		network.useAjax("POST", SET_POSHARE_ISAGREE, JSON.stringify(data), successCB, errorCB);
+	},
+	'login': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_LOGIN_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'logout': function (successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_LOGOUT_API, null, successCB, errorCB);
+	},
+	'findpw': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_PASSWORD_FIND, JSON.stringify(data), successCB, errorCB);
+	},
+	'getlist': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_LIST_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'getrecentlist': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_RECENTLIST_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'getrecentlist2': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_RECENTLIST_API2, JSON.stringify(data), successCB, errorCB);
+	},
+	'getAlarmlist': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_ARARM_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'checkAlarmfile': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHECK_ARARM_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'deleteAlarmfile': function (data, successCB, errorCB) {
+		network.useAjax("POST", DELETE_ARARM_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'download': function (data, successCB, errorCB) {
+		network.useAjax("POST", DOWNLOAD_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'getDriveList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_DRIVE_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getKnowledgeList': function (data, successCB, errorCB) {
+		network.useAjax("POST", KNOWLEDGE_BASE_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getDocumentInfo': function (data, successCB, errorCB, type) {
+		if (typeof type != 'undefined' && type == 'poformat' && haveNewCommand) {
+			network.useAjax("POST", GET_POFORMAT_CONVERT_INFO, JSON.stringify(data), successCB, errorCB);
+		} else {
+			network.useAjax("POST", GET_CONVERT_INFO, JSON.stringify(data), successCB, errorCB);
+		}
+	},
+	'getPageImage': function (url, data, successCB, errorCB) {
+		network.useAjax("POST", url, JSON.stringify(data), successCB, errorCB);
+	},
+	'getDocumentInfoDocLink': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_CONVERT_INFO_DOCLINK, JSON.stringify(data), successCB, errorCB);
+	},
+	'getPageImageDocLink': function (url, data, successCB, errorCB) {
+		network.useAjax("POST", url, JSON.stringify(data), successCB, errorCB);
+	},
+	'getLink': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_LINK, JSON.stringify(data), successCB, errorCB);
+	},
+	'getTrashcanList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_TRASHCAN_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getFileInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", FILE_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'getFilesInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", MULTI_FILE_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'sendEmail': function (data, successCB, errorCB) {
+		network.useAjax("POST", SEND_EMAIL, JSON.stringify(data), successCB, errorCB);
+	},
+	'fileUpload': function (data, cur, successCB, errorCB) {
+		return network.useAjaxform("POST", FILE_UPLOAD, data, cur, successCB, errorCB);
+	},
+	'getrevision': function (successCB, errorCB) {
+		network.useAjax("POST", LAST_RIVISION, null, successCB, errorCB);
+	},
+	'sync': function (data, successCB, errorCB) {
+		network.useAjax("POST", SYNC_DRIVE_SYNC, JSON.stringify(data), successCB, errorCB);
+	},
+	'setlastaccess': function (data, successCB, errorCB) {
+		network.useAjax("POST", SET_LASTACCESS, JSON.stringify(data), successCB, errorCB);
+	},
+	'increaseviewcount': function (data, successCB, errorCB) {
+		network.useAjax("POST", WEBVIEW_INCREASE_VIEWCOUNT, JSON.stringify(data), successCB, errorCB);
+	},
+	'searchfile': function (data, successCB, errorCB) {
+		data.isIncludeSharedFile = true;
+		network.useAjax("POST", SEARCHFILE, JSON.stringify(data), successCB, errorCB);
+	},
+	'searchContents': function (data, successCB, errorCB) {
+		network.useAjax("POST", SEARCHKEYWORD, JSON.stringify(data), successCB, errorCB);
+	},
+	'cancleupload': function (data, successCB, errorCB) {
+		network.useAjax("POST", CANCLE_UPLOAD, JSON.stringify(data), successCB, errorCB);
+	},
+	'getuserinfo': function (data, successCB, errorCB) {
+		if (data == null) {
+			data = {
+				'socialProvider': true
+			};
+		} else {
+			data.socialProvider = true;
+		}
+
+
+		network.useAjax("POST", ACCOUNT_USERINFO_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'getsimpleuserinfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_SIMPLE_USERINFO_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'deleteweblink': function (data, successCB, errorCB) {
+		network.useAjax("POST", DELETA_WEBLINK, JSON.stringify(data), successCB, errorCB);
+	},
+	'deletetrashcan': function (data, successCB, errorCB) {
+		network.useAjax("POST", DELETA_TRASHCAN, JSON.stringify(data), successCB, errorCB);
+	},
+	'savetodrive': function (data, successCB, errorCB) {
+		network.useAjax("POST", SAVE_DRIVE, JSON.stringify(data), successCB, errorCB);
+	},
+	'removeDriveList': function (data, successCB, errorCB) {
+		network.useAjax("GET", REMOVE_DIVE_LIST, data, successCB, errorCB);
+	},
+	'getSendlist': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_SEND_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getSlideNote': function (type, data, successCB, errorCB) {
+		if (typeof type != 'undefined' && type == 'poformat') {
+			network.useAjax("POST", GET_POFORMAT_SLIDE_INFO, JSON.stringify(data), successCB, errorCB);
+		} else {
+			network.useAjax("POST", GET_WEBLINK_SLIDE_INFO, JSON.stringify(data), successCB, errorCB);
+		}
+	},
+	'setchangepw': function (protocol, data, successCB, errorCB) {
+		network.useAjax("POST", protocol, JSON.stringify(data), successCB, errorCB);
+	},
+	'RequestVerifyEmail': function (data, successCB, errorCB) {
+		network.useAjax("POST", REQUEST_VERIFY_EMAIL, JSON.stringify(data), successCB, errorCB);
+	},
+	'getexceldata': function (protocol, successCB, errorCB) {
+		var data = "/api/2/web/download/image/" + protocol;
+		network.GetAjaxform("GET", data, successCB, errorCB);
+	},
+	'getsharedexceldata': function (protocol, successCB, errorCB) {
+		var data = "/api/1/viewer/task/share/image/" + protocol;
+		network.GetAjaxform("GET", data, successCB, errorCB);
+	},
+	'getDoccastexceldata': function (protocol, successCB, errorCB) {
+		var data = "/api/1/viewer/task/doccast/image/" + protocol;
+		network.GetAjaxform("GET", data, successCB, errorCB);
+	},
+	'getlinkexceldata': function (protocol, successCB, errorCB) {
+		var data = "/api/1/weblink/download/image/" + protocol;
+		if (typeof newShareDoucments != 'undefined' && newShareDoucments == 'true')
+			data = GET_WEBLINK_PAGEIMAGE + protocol;
+		network.GetAjaxform("GET", data, successCB, errorCB);
+	},
+	'Modifyuserinfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", MODIFY_USER_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'Disconnectdevice': function (data, successCB, errorCB) {
+		network.useAjax("POST", DISCONNECT_DEVICE, JSON.stringify(data), successCB, errorCB);
+	},
+	'ImageUpload': function (data, successCB, errorCB) {
+		return network.useAjaxform("POST", SETPORTRAIT, data, null, successCB, errorCB);
+	},
+	'accountRemove': function (data, successCB, errorCB) {
+		return network.useAjax("POST", ACCOUNT_REMOVE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getSharedDocumentInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_SHARED_CONVERT_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'getDoccastDocumentInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_DOCCAST_CONVERT_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'saveSharedDoc': function (data, successCB, errorCB) {
+		network.useAjax("POST", SAVE_SHARED_DOC, JSON.stringify(data), successCB, errorCB);
+	},
+	'saveWeblinkDoc': function (data, successCB, errorCB) {
+		network.useAjax("POST", SAVE_WEBLINK_DOC, JSON.stringify(data), successCB, errorCB);
+	},
+	'savePoformatDoc': function (data, successCB, errorCB) {
+		network.useAjax("POST", SAVE_POFORMAT_DOC, JSON.stringify(data), successCB, errorCB);
+	},
+	'changeDoccastDocument': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHANGE_DOCCAST_DOCUMENT, JSON.stringify(data), successCB, errorCB);
+	},
+	'pCreateShareTask': function (data, successCB, errorCB) {
+		network.useAjax("POST", CREATE_SHARE_TASK, JSON.stringify(data), successCB, errorCB);
+	},
+	'getBonusInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", BONUS_GET_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'sendInvitation': function (data, successCB, errorCB) {
+		network.useAjax("POST", SEND_INVITATION, JSON.stringify(data), successCB, errorCB);
+	},
+	'getBonusHistory': function (data, successCB, errorCB) {
+		network.useAjax("POST", BONUS_GET_HISTORY, JSON.stringify(data), successCB, errorCB);
+	},
+	'sendSupportEmail': function (data, successCB, errorCB) {
+		network.useAjax("POST", SEND_SUPPORT_EMAIL, JSON.stringify(data), successCB, errorCB);
+	},
+	'bonusGetTargetInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", BONUS_GET_TARGETINFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'refuseMail': function (data, successCB, errorCB) {
+		network.useAjax("POST", REFUSE_MAIL, JSON.stringify(data), successCB, errorCB);
+	},
+	'requestConvert': function (data, type, successCB, errorCB) {
+		if (type == 'poformat' && haveNewCommand) {
+			network.useAjax("POST", REQUEST_POFORMAT_CONVERT_INFO, JSON.stringify(data), successCB, errorCB);
+		} else {
+			network.useAjax("POST", REQUEST_CONVERT_INFO, JSON.stringify(data), successCB, errorCB);
+		}
+	},
+	'setlocale': function (data, successCB, errorCB) {
+		network.useAjax("POST", SET_LOCALE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getServiceState': function (successCB, errorCB) {
+		network.useAjax("POST", CHECK_SERVICE_STATE, null, successCB, errorCB);
+	},
+	'AddAttendance': function (data, successCB, errorCB) {
+		network.useAjax("POST", TASK_ADD_ATTENDEE, JSON.stringify(data), successCB, errorCB);
+	},
+	'sendMailToWeblink': function (data, successCB, errorCB) {
+		network.useAjax("POST", SENDMAILTOWEBLINK, JSON.stringify(data), successCB, errorCB);
+	},
+	'getFileHistoryList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_FILE_HISTORY_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getFileHistoryListExclusive_v2': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_FILE_HISTORY_LIST_EXCLUSIVE_V2, JSON.stringify(data), successCB, errorCB);
+	},
+	'getFileHistoryListExclusive': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_FILE_HISTORY_LIST_EXCLUSIVE, JSON.stringify(data), successCB, errorCB);
+	},
+	'restoreFileSelectedVersion': function (data, successCB, errorCB) {
+		network.useAjax("POST", RESTORE_FILE_SELECTED_VERSION, JSON.stringify(data), successCB, errorCB);
+	},
+	'restoreFileSelectedVersionExclusive': function (data, successCB, errorCB) {
+		network.useAjax("POST", RESTORE_FILE_SELECTED_VERSION_EXCLUSIVE, JSON.stringify(data), successCB, errorCB);
+	},
+	'restoreFileSelectedVersionExclusive_v2': function (data, successCB, errorCB) {
+		network.useAjax("POST", RESTORE_FILE_SELECTED_VERSION_EXCLUSIVE_V2, JSON.stringify(data), successCB, errorCB);
+	},
+	'socialLogin': function (providerId, scope, autologin, coupon, devicename, nameid, supplement, successCB, errorCB, pc_locale) {
+		var date = new Date().getTime().toString();
+
+		var newscope = "autologin=" + autologin;
+		if (scope) {
+			newscope += "&scope=" + scope;
+		}
+		if (coupon) {
+			newscope += "&couponId=" + coupon;
+		}
+		if (nameid) {
+			newscope += "&orangeNameId=" + nameid;
+		}
+
+		var deviceName = devicename;
+		var deviceSupplement;
+		var manufacturerId;
+		if (supplement) {
+			try {
+				var obj = JSON.parse(supplement);
+				if (obj.supplement) {
+					deviceSupplement = obj.supplement;
+				}
+				if (obj.manufacturerId) {
+					manufacturerId = obj.manufacturerId;
+				} else {
+					manufacturerId = 'ASUS';
+				}
+			} catch (err) {
+				deviceSupplement = supplement;
+				manufacturerId = 'ASUS';
+			}
+
+			if (deviceName == null) {
+				if (manufacturerId == 'ASUS') {
+					deviceName = 'ASUS-GIFTBOX';
+				} else if (manufacturerId == 'HP') {
+					deviceName = 'HP-SOLUTION';
+				} else if (manufacturerId == 'HQASUSBOX') {
+					deviceName = 'HQASUSBOX-NEWBOX';
+				}
+			}
+		}
+		if (deviceName) {
+			newscope += "&deviceName=" + deviceName;
+		}
+		if (deviceSupplement) {
+			newscope += "&deviceSupplement=" + deviceSupplement;
+		}
+		if (manufacturerId) {
+			newscope += "&manufacturerId=" + manufacturerId;
+		}
+		if (typeof pc_locale != 'undefined' && pc_locale) {
+			newscope += "&locale=" + pc_locale;
+		}
+		newscope += "&" + date;
+		var url = "/api/1/connect/login/" + providerId + "/oauthurl?" + newscope + "&" + date;
+		network.GetAjaxform("GET", url, successCB, errorCB);
+	},
+	'socialRegist': function (providerId, scope, autologin, coupon, linkId, devicename, target, platform, nameid, supplement, receivedMail, socialState, socialCode, eventType, optionalPersonalInfo, successCB, errorCB) {
+		var date = new Date().getTime().toString();
+		var optionalPersonal = typeof optionalPersonalInfo == 'undefined' ? false : optionalPersonalInfo;
+
+		var newscope = "autologin=" + autologin;
+		if (scope) {
+			newscope += "&scope=" + scope;
+		}
+
+		if (coupon) {
+			newscope += "&couponId=" + coupon;
+		}
+		if (linkId) {
+			newscope += "&linkId=" + linkId;
+		}
+		if (nameid) {
+			newscope += "&orangeNameId=" + nameid;
+		}
+		if (target) {
+			newscope += "&app=" + target;
+		}
+		if (platform) {
+			newscope += "&platform=" + platform;
+		}
+
+		var deviceName = devicename;
+		var deviceSupplement;
+		var manufacturerId;
+		if (supplement) {
+			try {
+				var obj = JSON.parse(supplement);
+				if (obj.supplement) {
+					deviceSupplement = obj.supplement;
+				}
+				if (obj.manufacturerId) {
+					manufacturerId = obj.manufacturerId;
+				} else {
+					manufacturerId = 'ASUS';
+				}
+			} catch (err) {
+				deviceSupplement = supplement;
+				manufacturerId = 'ASUS';
+			}
+
+			if (deviceName == null) {
+				if (manufacturerId == 'ASUS') {
+					deviceName = 'ASUS-GIFTBOX';
+				} else if (manufacturerId == 'HP') {
+					deviceName = 'HP-SOLUTION';
+				} else if (manufacturerId == 'HQASUSBOX') {
+					deviceName = 'HQASUSBOX-NEWBOX';
+				}
+			}
+		}
+		if (deviceName) {
+			newscope += "&deviceName=" + deviceName;
+		}
+		if (deviceSupplement) {
+			newscope += "&deviceSupplement=" + deviceSupplement;
+		}
+		if (manufacturerId) {
+			newscope += "&manufacturerId=" + manufacturerId;
+		}
+		if (socialState) {
+			newscope += "&state=" + socialState;
+		}
+		if (socialCode) {
+			newscope += "&code=" + socialCode;
+		}
+		if (eventType) {
+			newscope += "&eventType=" + eventType;
+		}
+
+		//경기도교육청 - 회원가입(web)
+		if (providerId == 'azure') {
+			var login_hint = '';
+			if (getCookie('AZUREEMAIL')) {
+				login_hint = getCookie('AZUREEMAIL');
+
+				deleteCookie('AZUREEMAIL');
+			}
+			newscope += '&login_hint=' + login_hint + '&prompt=none&domain_hint=organizations';
+		}
+
+		newscope += '&receivedMail=' + receivedMail;
+		if(typeof local != 'undefined' && local.indexOf('ko') > -1){
+			newscope += "&optionalPersonalInfoCollect=" + optionalPersonal;
+		}
+
+		var url = "/api/1/connect/regist/" + providerId + "/oauthurl?" + newscope + "&" + date;
+		if (providerId == "appleService") {
+			url = "/api/1/connect/regist/" + providerId + "?" + newscope + "&" + date;
+		}
+		network.GetAjaxform("GET", url, successCB, errorCB);
+	},
+	'socialRegistPW': function (providerId, pw, scope, autologin, coupon, linkId, devicename, target, platform, nameid, supplement, socialState, socialCode, successCB, errorCB) {
+		var url = "/api/1/connect/regist/" + providerId + "/oauthurl";
+		if (providerId == "appleService") {
+			url = "/api/1/connect/regist/" + providerId;
+		}
+		var date = new Date().getTime().toString();
+		var newscope = "autologin=" + autologin;
+		if (scope) {
+			newscope += "&scope=" + scope;
+		}
+		if (coupon) {
+			newscope += "&couponId=" + coupon;
+		}
+		if (linkId) {
+			newscope += "&linkId=" + linkId;
+		}
+		if (nameid) {
+			newscope += "&orangeNameId=" + nameid;
+		}
+		if (target) {
+			newscope += "&app=" + target;
+		}
+		if (platform) {
+			newscope += "&platform=" + platform;
+		}
+		if (pw) {
+			newscope += "&password=" + pw;
+		}
+		if (socialState) {
+			newscope += "&state=" + socialState;
+		}
+		if (socialCode) {
+			newscope += "&code=" + socialCode;
+		}
+
+		var deviceName = devicename;
+		var deviceSupplement;
+		var manufacturerId;
+		if (supplement) {
+			try {
+				var obj = JSON.parse(supplement);
+				if (obj.supplement) {
+					deviceSupplement = obj.supplement;
+				}
+				if (obj.manufacturerId) {
+					manufacturerId = obj.manufacturerId;
+				} else {
+					manufacturerId = 'ASUS';
+				}
+			} catch (err) {
+				deviceSupplement = supplement;
+				manufacturerId = 'ASUS';
+			}
+
+			if (deviceName == null) {
+				if (manufacturerId == 'ASUS') {
+					deviceName = 'ASUS-GIFTBOX';
+				} else if (manufacturerId == 'HP') {
+					deviceName = 'HP-SOLUTION';
+				} else if (manufacturerId == 'HQASUSBOX') {
+					deviceName = 'HQASUSBOX-NEWBOX';
+				}
+			}
+		}
+		if (deviceName) {
+			newscope += "&deviceName=" + deviceName;
+		}
+		if (deviceSupplement) {
+			newscope += "&deviceSupplement=" + deviceSupplement;
+		}
+		if (manufacturerId) {
+			newscope += "&manufacturerId=" + manufacturerId;
+		}
+		if (providerId == 'google' && typeof email != 'undefined' && email) {
+			newscope += "&login_hint=" + email;
+		}
+		network.useAjaxform1("POST", url, newscope + "&" + date, successCB, errorCB);
+	},
+	'socialModify': function (providerId, scope, autologin, coupon, devicename, nameid, supplement, successCB, errorCB) {
+		var date = new Date().getTime().toString();
+
+		var newscope = "autologin=" + autologin;
+		if (scope) {
+			newscope += "&scope=" + scope;
+		}
+		if (coupon) {
+			newscope += "&couponId=" + coupon;
+		}
+		if (nameid) {
+			newscope += "&orangeNameId=" + nameid;
+		}
+
+		var deviceName = devicename;
+		var deviceSupplement;
+		var manufacturerId;
+		if (supplement) {
+			try {
+				var obj = JSON.parse(supplement);
+				if (obj.supplement) {
+					deviceSupplement = obj.supplement;
+				}
+				if (obj.manufacturerId) {
+					manufacturerId = obj.manufacturerId;
+				} else {
+					manufacturerId = 'ASUS';
+				}
+			} catch (err) {
+				deviceSupplement = supplement;
+				manufacturerId = 'ASUS';
+			}
+
+			if (deviceName == null) {
+				if (manufacturerId == 'ASUS') {
+					deviceName = 'ASUS-GIFTBOX';
+				} else if (manufacturerId == 'HP') {
+					deviceName = 'HP-SOLUTION';
+				} else if (manufacturerId == 'HQASUSBOX') {
+					deviceName = 'HQASUSBOX-NEWBOX';
+				}
+			}
+		}
+		if (deviceName) {
+			newscope += "&deviceName=" + deviceName;
+		}
+		if (deviceSupplement) {
+			newscope += "&deviceSupplement=" + deviceSupplement;
+		}
+		if (manufacturerId) {
+			newscope += "&manufacturerId=" + manufacturerId;
+		}
+
+		newscope += "&" + date;
+		var url = "/api/1/connect/modify/" + providerId + "/oauthurl?" + newscope + "&" + date;
+		network.GetAjaxform("GET", url, successCB, errorCB);
+	},
+	'socialModifyPw': function (providerId, pw, scope, autologin, coupon, linkId, devicename, target, platform, nameid, supplement, successCB, errorCB) {
+		var url = "/api/1/connect/modify/" + providerId + "/oauthurl";
+		var date = new Date().getTime().toString();
+		var newscope = "autologin=" + autologin;
+		if (scope) {
+			newscope += "&scope=" + scope;
+		}
+		if (coupon) {
+			newscope += "&couponId=" + coupon;
+		}
+		if (linkId) {
+			newscope += "&linkId=" + linkId;
+		}
+		if (nameid) {
+			newscope += "&orangeNameId=" + nameid;
+		}
+		if (target) {
+			newscope += "&app=" + target;
+		}
+		if (platform) {
+			newscope += "&platform=" + platform;
+		}
+		if (pw) {
+			newscope += "&password=" + pw;
+		}
+
+		var deviceName = devicename;
+		var deviceSupplement;
+		var manufacturerId;
+		if (supplement) {
+			try {
+				var obj = JSON.parse(supplement);
+				if (obj.supplement) {
+					deviceSupplement = obj.supplement;
+				}
+				if (obj.manufacturerId) {
+					manufacturerId = obj.manufacturerId;
+				} else {
+					manufacturerId = 'ASUS';
+				}
+			} catch (err) {
+				deviceSupplement = supplement;
+				manufacturerId = 'ASUS';
+			}
+
+			if (deviceName == null) {
+				if (manufacturerId == 'ASUS') {
+					deviceName = 'ASUS-GIFTBOX';
+				} else if (manufacturerId == 'HP') {
+					deviceName = 'HP-SOLUTION';
+				} else if (manufacturerId == 'HQASUSBOX') {
+					deviceName = 'HQASUSBOX-NEWBOX';
+				}
+			}
+		}
+		if (deviceName) {
+			newscope += "&deviceName=" + deviceName;
+		}
+		if (deviceSupplement) {
+			newscope += "&deviceSupplement=" + deviceSupplement;
+		}
+		if (manufacturerId) {
+			newscope += "&manufacturerId=" + manufacturerId;
+		}
+		if (providerId == 'google' && typeof email != 'undefined' && email) {
+			newscope += "&login_hint=" + email;
+		}
+		network.useAjaxform1("POST", url, newscope + "&" + date, successCB, errorCB);
+	},
+	'getDriveAmount': function (successCB, errorCB) {
+		network.useAjax("POST", GET_DRIVE_AMOUNT, null, successCB, errorCB);
+	},
+	'getPaymentList': function (data, successCB, errorCB) {
+		network.useAjax("POST", PAYMENT_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getAddressRevision': function (successCB, errorCB) {
+		network.useAjax("POST", ADDRESS_REVISION, null, successCB, errorCB);
+	},
+	'getAddressList': function (data, successCB, errorCB) {
+		network.useAjax("POST", ADDRESS_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getAddressChangeList': function (data, successCB, errorCB) {
+		network.useAjax("POST", ADDRESS_CHANGE_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'hideAddress': function (data, successCB, errorCB) {
+		network.useAjax("POST", ADDRESS_HIDE_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'showAddress': function (data, successCB, errorCB) {
+		network.useAjax("POST", ADDRESS_SHOW_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'removeRecentAddress': function (data, successCB, errorCB) {
+		network.useAjax("POST", ADDRESS_REMOVE_RECENT_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'addAddress': function (data, successCB, errorCB) {
+		network.useAjax("POST", ADDRESS_ADDFRIEND, JSON.stringify(data), successCB, errorCB);
+	},
+	'isPayCheck': function (data, successCB, errorCB) {
+		network.useAjax("POST", ISPAYCHECK, JSON.stringify(data), successCB, errorCB);
+	},
+	'requestPayment': function (data, successCB, errorCB) {
+		network.useAjax("POST", REQUESTPAYMENTTOSERVER, JSON.stringify(data), successCB, errorCB);
+	},
+	'requestFailPayment': function (data, successCB, errorCB) {
+		network.useAjax("POST", REQUESTFAILPAYMENT, JSON.stringify(data), successCB, errorCB);
+	},
+	'cancelPayment': function (data, successCB, errorCB) {
+		network.useAjax("POST", CANCELPAYMENT, JSON.stringify(data), successCB, errorCB);
+	},
+	'getchatListAll': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_LISTALL, JSON.stringify(data), successCB, errorCB);
+	},
+	'createChatGroup': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_CREATE, JSON.stringify(data), successCB, errorCB);
+	},
+	'leaveChatGroup': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_LEAVE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getGroupMessage': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_GETMESSAGE, JSON.stringify(data), successCB, errorCB);
+	},
+	'addChatMessage': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_ADDMESSAGE, JSON.stringify(data), successCB, errorCB);
+	},
+	'addChatAttendees': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_ADDATTENDEES, JSON.stringify(data), successCB, errorCB);
+	},
+	'renameChatTitle': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAR_RENAMEGROUPTITLE, JSON.stringify(data), successCB, errorCB);
+	},
+	'setStartPageSuccess': function (data, successCB, errorCB) {
+		network.useAjax("POST", SETSTARTPAGESUCCESS, JSON.stringify(data), successCB, errorCB);
+	},
+	'shareFileGroup': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_SHAREDFILE, JSON.stringify(data), successCB, errorCB);
+	},
+	'cancelFileGroup': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_CANCELFILE, JSON.stringify(data), successCB, errorCB);
+	},
+	'findGroup': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_FINDGROUP, JSON.stringify(data), successCB, errorCB);
+	},
+	'reinvite': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_REINVITE, JSON.stringify(data), successCB, errorCB);
+	},
+	'askdocUpload' : function(data, successCB, errorCB) {
+		network.useAjax("POST", ASK_DOC_UPLOAD_FILE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getShareFile': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_GETSHAREDFILE, JSON.stringify(data), successCB, errorCB);
+	},
+	'setShareFile': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_SETSHAREDTYPE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getShareFileGroup': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_GETSHAREDGROUP, JSON.stringify(data), successCB, errorCB);
+	},
+	'getShareFileGroupInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHAT_GETSHAREDGROUPINFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'getSharedList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GETSHAREDLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'registCoupon': function (data, successCB, errorCB) {
+		network.useAjax("POST", REGIST_REGIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'sendPCADownLoad': function (data, type, successCB, errorCB) {
+		if (type == "mac")
+			network.useAjax("GET", SENDMACPCADOWNLOAD, data, successCB, errorCB);
+		else
+			network.useAjax("GET", SENDPCADOWNLOAD, data, successCB, errorCB);
+	},
+	'getExternalList': function (successCB, errorCB) {
+		network.useAjax("GET", GETEXTERNALALLLIST + '?' + new Date().getTime(), null, successCB, errorCB);
+	},
+	'getExternalEmail': function (data, successCB, errorCB) {
+		network.useAjax("POST", GETEXTERNALEMAIL, JSON.stringify(data), successCB, errorCB);
+	},
+	'getExternalGmail': function (data, successCB, errorCB) {
+		network.useAjax("GET", GETEXTERNALGMAIL + '?' + new Date().getTime(), data, successCB, errorCB);
+	},
+	'disconnectExternalMail': function (data, successCB, errorCB) {
+		network.useAjax("POST", DISCONNECTEXTERNALEMAIL, JSON.stringify(data), successCB, errorCB);
+	},
+	'getProductInfoList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GETPRODUCTINFOLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getBasicProductInfoList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GETBASICPRODUCTINFOLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getBasicProductDetailList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GETBASICPRODUCTDETAILLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'useinfo': function (successCB, errorCB) {
+		network.useAjax("POST", USEINFO, null, successCB, errorCB);
+	},
+	'removePosync': function (data, successCB, errorCB) {
+		network.useAjax("POST", POSYNC_REMOVE, JSON.stringify(data), successCB, errorCB);
+	},
+	/* 'removePCOffice': function(data, successCB, errorCB) {
+	  network.useAjax("POST", PCOFFICE_REMOVE, JSON.stringify(data), successCB, errorCB);
+	},*/
+	'newRemovePCOffice': function (data, successCB, errorCB) {
+		network.useAjax("POST", PCOFFICE_REMOVE_NEW, JSON.stringify(data), successCB, errorCB);
+	},
+	'addPeople': function (data, successCB, errorCB) {
+		network.useAjax("POST", ADDPEOPLE, JSON.stringify(data), successCB, errorCB);
+	},
+	'updateMsgMark': function (data, successCB, errorCB) {
+		network.useAjax("POST", UPDATEMSGMARK, JSON.stringify(data), successCB, errorCB);
+	},
+	'requestAlipay': function (data, successCB, errorCB) {
+		network.useAjax("POST", REQUESTALIPAY, JSON.stringify(data), successCB, errorCB);
+	},
+	'hideShareFile': function (data, successCB, errorCB) {
+		network.useAjax("POST", HIDESHAREFILE, JSON.stringify(data), successCB, errorCB);
+	},
+	'downlloadPCOffice': function (data, successCB, errorCB) {
+		network.useAjax("GET", PCOFFICEDOWNLOAD, JSON.stringify(data), successCB, errorCB);
+	},
+	'sendInquiry': function (data, successCB, errorCB) {
+		if (typeof data.append === 'function')
+			network.useAjaxform("POST", SEND_INQUIRY, data, null, successCB, errorCB);
+		else network.useAjaxform1("POST", SEND_INQUIRY, data, successCB, errorCB);
+	},
+	'sendBusinessInquiry': function (data, successCB, errorCB) {
+		if (typeof data.append === 'function')
+			network.useAjaxform("POST", SEND_BUSINESS_INQUIRY, data, null, successCB, errorCB);
+		else network.useAjaxform1("POST", SEND_BUSINESS_INQUIRY, data, successCB, errorCB);
+	},
+	'sendErrorReport': function (data, successCB, errorCB) {
+		if (typeof data.append === 'function') {
+			network.useAjaxform("POST", SEND_ERRORREPORT, data, null, successCB, errorCB);
+		} else {
+			network.useAjaxform1("POST", SEND_ERRORREPORT, data, successCB, errorCB);
+		}
+	},
+	'cancleAutoPayment': function (data, successCB, errorCB) {
+		network.useAjax("POST", CANCELAUTOPAYMENT, JSON.stringify(data), successCB, errorCB);
+	},
+	'getBindingList': function (data, successCB, errorCB) {
+		network.useAjax("GET", GET_BINDING_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamRegist': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_REGIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamRename': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_RENAME, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamRemove': function (successCB, errorCB) {
+		network.useAjax("POST", TEAM_REMOVE, null, successCB, errorCB);
+	},
+	'teaminfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamAddMember': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_ADDPEOPLE, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamRemoveMember': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_REMOVEPEOPLE, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamInviteMember': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_INVITEPEOPLE, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamChangeLevel': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_CHANGELEVEL, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamFolderinfo': function (successCB, errorCB) {
+		network.useAjax("POST", TEAMFOLDDER_INFO, null, successCB, errorCB);
+	},
+	'teamFolderCreate': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAMFOLDDER_CREATE, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamFolderRemove': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAMFOLDDER_REMOVE, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamFolderHideList': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAMFOLDDER_HIDE_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamFolderHideListAll': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAMFOLDDER_HIDE_LIST_ALL, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamUpdatePaidLicense': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_UPDATE_PAID_LICENSE, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamUpdateUseLicense': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_UPDATE_USE_LICENSE, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamdelegateManager': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_DELEGATEMANAGER, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamResendEmail': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_RESEND_EMAIL, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamAccept': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_ACCEPT, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamAcceptNRegist': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_ACCEPTWITHREGIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamVerifyInvitation': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_VERIFYINVITATION, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamExternalShare': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_EXTERNAL_SHARE, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamGetProperty': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_GET_PROPERTY, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamSetProperty': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_SET_PROPERTY, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamGetMyTeamLevel': function (successCB, errorCB) {
+		network.useAjax("POST", TEAM_GET_MYLEVEL, null, successCB, errorCB);
+	},
+	'teamGetExternalShare': function (successCB, errorCB) {
+		network.useAjax("POST", TEAM_GET_EXTERNAL_SHARE, null, successCB, errorCB);
+	},
+	'availableShare': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_IS_VAILID_SHARE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getTeamlist': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_GET_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'syncTeam': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_SYNC_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'storageInfo': function (successCB, errorCB) {
+		network.useAjax("POST", TEAM_STORAGEINFO, null, successCB, errorCB);
+	},
+	'cancelBinding': function (data, successCB, errorCB) {
+		network.useAjax("POST", CANCEL_BINDING, JSON.stringify(data), successCB, errorCB);
+	},
+	'socialbinding': function (providerId, scope, successCB, errorCB) {
+		var date = new Date().getTime().toString();
+
+		var data = "/api/1/connect/binding/" + providerId + "/oauthurl?scope=" + scope + "&" + date;
+
+
+		network.GetAjaxform("GET", data, successCB, errorCB);
+	},
+	'getTeamLog': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_LOG, JSON.stringify(data), successCB, errorCB);
+	},
+	'teamValidateRegist': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_VALIDATEREGIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'setMetadata': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_SET_SSO, JSON.stringify(data), successCB, errorCB);
+	},
+	'getMetadata': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_GET_SSO_METADATA, JSON.stringify(data), successCB, errorCB);
+	},
+	'getTeamSSOMetadataId': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_GET_SSO_METADATAID, JSON.stringify(data), successCB, errorCB);
+	},
+	'getTeamMemberInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_MEMBER_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'createSharedFile': function (data, successCB, errorCB) {
+		network.useAjax("POST", SHARE_CREATE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getShareFileInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", SHARE_GET_FILEINFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'getPublicFileInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_PUBLIC_FILEINFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'addShareUser': function (data, successCB, errorCB) {
+		network.useAjax("POST", SHARE_ADDATTENDEE, JSON.stringify(data), successCB, errorCB);
+	},
+	'removeShareUser': function (data, successCB, errorCB) {
+		network.useAjax("POST", SHARE_REMOVEATTENDEE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getSharedFileList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_SHAREFILE_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'modifyAuthority': function (data, successCB, errorCB) {
+		network.useAjax("POST", SHARE_MODIFYAUTHORITY, JSON.stringify(data), successCB, errorCB);
+	},
+	'modifyAuthorityWeblink': function (data, successCB, errorCB) {
+		network.useAjax("POST", SHARE_MODIFYAUTHORITY_WEBLINK, JSON.stringify(data), successCB, errorCB);
+	},
+	'reshare': function (data, successCB, errorCB) {
+		network.useAjax("POST", SHARE_RESHARE, JSON.stringify(data), successCB, errorCB);
+	},
+	'availableNotice': function (data, successCB, errorCB) {
+		network.useAjax("POST", NOTICE_AVAILABLE, JSON.stringify(data), successCB, errorCB);
+	},
+	'availableNotice2': function (data, successCB, errorCB) {
+		network.useAjax("POST", NOTICE_AVAILABLE2, JSON.stringify(data), successCB, errorCB);
+	},
+	'removeNoticeId': function (data, successCB, errorCB) {
+		network.useAjax("POST", NOTICE_REMOVE_ONE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getNoticeOne': function (data, successCB, errorCB) {
+		network.useAjax("POST", NOTICE_GET, JSON.stringify(data), successCB, errorCB);
+	},
+	'deleteSharedFile': function (data, successCB, errorCB) {
+		network.useAjax("POST", SHARE_FILE_DELETE, JSON.stringify(data), successCB, errorCB);
+	},
+	'hideSharedFile': function (data, successCB, errorCB) {
+		network.useAjax("POST", SHARE_FILE_HIDE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getShareNoticeList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_SHARE_NOTICE_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getUnreadNoticeCount': function (successCB, errorCB) {
+		network.useAjax("POST", GET_UNREAD_NOTICE_COUNT, JSON.stringify({}), successCB, errorCB);
+	},
+	'setReadNoticeList': function (data, successCB, errorCB) {
+		network.useAjax("POST", SET_READ_NOTICE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getPremiumInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_PREMIUM_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'hidePremiumExpiredInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", HIDE_PREMIUM_EXPIRED_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'checkLgPlan': function (successCB, errorCB) {
+		network.useAjax("POST", CHECK_LGPLAN, null, successCB, errorCB);
+	},
+	'checkAccountPwd': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHECK_ACCOUNTPWD_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'getSharefolderList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_SHAREFOLDER_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getSharefolderAuthorityList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_SHAREFOLDER_AUTHORITY_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'setSharefolderAuthority': function (data, successCB, errorCB) {
+		network.useAjax("POST", SET_SHAREFOLDER_AUTHORITY, JSON.stringify(data), successCB, errorCB);
+	},
+	'getPartialPrice': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_PARTIALPRICE, JSON.stringify(data), successCB, errorCB);
+	},
+	'restoreAuthority': function (data, successCB, errorCB) {
+		network.useAjax("POST", RESTORE_AUTHORITY, JSON.stringify(data), successCB, errorCB);
+	},
+	'getAuthorityInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_TEAMFOLDER_AUTHORITY_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'createTeamFolder': function (data, successCB, errorCB) {
+		network.useAjax("POST", CREATE_TEAMFOLDER, JSON.stringify(data), successCB, errorCB);
+	},
+	'renameTeamfolder': function (data, successCB, errorCB) {
+		network.useAjax("POST", RENAME_TEAMFOLDER, JSON.stringify(data), successCB, errorCB);
+	},
+	'getCardInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_CARDINFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'getUserCardInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_USERCARDINFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'forceChangeAuth': function (successCB, errorCB) {
+		network.useAjax("POST", FORCE_CHANGEAUTH, null, successCB, errorCB);
+	},
+	'addLog': function (data, successCB, errorCB) {
+		network.useAjax("POST", ADD_LOG, JSON.stringify(data), successCB, errorCB);
+	},
+	'markWebPayment': function (data, successCB, errorCB) {
+		network.useAjax("POST", MARK_WEB_PAYMENT, JSON.stringify(data), successCB, errorCB);
+	},
+	'getTeamPayHistory': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_TEAM_PAYINFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'setTeamName': function (data, successCB, errorCB) {
+		network.useAjax("POST", SET_TEAMNAME, JSON.stringify(data), successCB, errorCB);
+	},
+	'getFileReputation': function (successCB, errorCB) {
+		network.useAjax("POST", GET_FILEREPUTATION, null, successCB, errorCB);
+	},
+	'getTemplateList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_TEMPLATELIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'pcofficeOtl': function (data, successCB, errorCB) {
+		network.useAjax("POST", PCOFFICE_OTL, JSON.stringify(data), successCB, errorCB);
+	},
+	'restorePOFormat': function (data, successCB, errorCB) {
+		network.useAjax("POST", RESTORE_POFORMAT, JSON.stringify(data), successCB, errorCB);
+	},
+	'getCouponInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_COUPONINFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'getInvitedList': function (data, successCB, errorCB) {
+		network.useAjax("POST", RECENT_GET_INIVATE_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'deleteInvitedList': function (data, successCB, errorCB) {
+		network.useAjax("POST", RECENT_DELETE_INIVATE_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'restorePayment': function (data, successCB, errorCB) {
+		network.useAjax("POST", RESTORE_PAYMENT, JSON.stringify(data), successCB, errorCB);
+	},
+	'chekcCoeditStorage': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHECK_STORAGE_COEDIT, JSON.stringify(data), successCB, errorCB);
+	},
+	'getDeviceListAll': function (successCB, errorCB) {
+		network.useAjax("POST", DEVICELIST_ALL, null, successCB, errorCB);
+	},
+	'getAgreeStatus': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_AGREESTATUS, JSON.stringify(data), successCB, errorCB);
+	},
+	'setAgreement': function (data, successCB, errorCB) {
+		network.useAjax("POST", SET_AGREEMENT, JSON.stringify(data), successCB, errorCB);
+	},
+	'getLoginInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_LOGIN_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'checkOrangeStatus': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHECK_ORANGE_STATUS, JSON.stringify(data), successCB, errorCB);
+	},
+	'checkOrangeProStatus': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHECK_ORANGEPRO_STATUS, JSON.stringify(data), successCB, errorCB);
+	},
+	'sendSurveyPostPoll': function (data, successCB, errorCB) {
+		network.useAjax("POST", SURVEY_POSTPOLL, JSON.stringify(data), successCB, errorCB);
+	},
+	'getFavoriteList': function (successCB, errorCB) {
+		network.useAjax("GET", FAVORITE_GET_STAR_LIST, null, successCB, errorCB);
+	},
+	'updateFavoriteList': function (data, successCB, errorCB) {
+		network.useAjax("POST", FAVORITE_UPDATE_STAR_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getFavoriteSubList': function (data, successCB, errorCB) {
+		network.useAjax("POST", FAVORITE_GET_STAR_SUBLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getReviewScore': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_REVIEWRATINGLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getReviewList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_REVIEWLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	/*'getReview':function(data,successCB,errorCB) {
+		network.useAjax("POST", GET_REVIEW, JSON.stringify(data), successCB, errorCB);
+	}, */
+	'deleteReview': function (data, successCB, errorCB) {
+		network.useAjax("POST", DELETE_REVIEW, JSON.stringify(data), successCB, errorCB);
+	},
+	'getDateFormat': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_DATEFORMAT, null, successCB, errorCB);
+	},
+	'getCurrentUsage': function (data, successCB, errorCB) {
+		network.useAjax("GET", GET_USAGE_API, null, successCB, errorCB);
+	},
+	/*'ktteamRegistNew':function(data,successCB,errorCB) {
+		network.useAjax("POST", KTTEAM_REGIST_NEW, JSON.stringify(data), successCB, errorCB);
+	},*/
+	/*'ktteamRegistExist':function(data,successCB,errorCB) {
+		network.useAjax("POST", KTTEAM_REGIST_EXIST, JSON.stringify(data), successCB, errorCB);
+	}, */
+	/*'ktteamRegistCheck':function(data,successCB,errorCB) {
+		network.useAjax("POST", KTTEAM_REGIST_CHECK, JSON.stringify(data), successCB, errorCB);
+	}, */
+	'ktteamRemove': function (data, successCB, errorCB) {
+		network.useAjax("POST", KTTEAM_REMOVE, JSON.stringify(data), successCB, errorCB);
+	},
+	/*'ktteamBizConfirm':function(data,successCB,errorCB) {
+		network.useAjax("POST", KTTEAM_BIZ_CONFIRM, JSON.stringify(data), successCB, errorCB);
+	}, */
+	'getUserActionCheck': function (data, successCB, errorCB) {
+		network.useSyncAjax("POST", USER_ACTION_CHECK, JSON.stringify(data), successCB, errorCB);
+	},
+	'clickUserAction': function (data, successCB, errorCB) {
+		network.useSyncAjax("POST", USER_ACTION_CLICK, JSON.stringify(data), successCB, errorCB);
+	},
+	'nameidCheckOrangePro': function (data, successCB, errorCB) {
+		network.useAjax2("POST", NAMEIDCHECK_ORANGEPRO, JSON.stringify(data), {}, successCB, errorCB);
+	},
+	'createOrangePro': function (data, successCB, errorCB) {
+		network.useAjax2("POST", CREATE_ORANGEPRO, JSON.stringify(data), {}, successCB, errorCB);
+	},
+	'registOrangePro': function (data, successCB, errorCB) {
+		network.useAjax2("POST", REGISTNEW_ORANGEPRO, JSON.stringify(data), {}, successCB, errorCB);
+	},
+	'lastNotice': function (data, successCB, errorCB) {
+		network.useAjax2("POST", LAST_NOTICE_API, JSON.stringify(data), {}, successCB, errorCB);
+	},
+	'getnationcode': function (successCB, errorCB) {
+		network.useAjax("GET", GETNATIONCODE, null, successCB, errorCB);
+	},
+	'sendMessage': function (data, successCB, errorCB) {
+		network.useAjax2("POST", SEND_MESSAGE, JSON.stringify(data), {}, successCB, errorCB);
+	},
+	'sessioninfo': function (successCB, errorCB) {
+		network.useAjax("POST", SESSIONINFO, null, successCB, errorCB);
+	},
+	'promotionasusinfo': function (successCB, errorCB) {
+		network.useAjax("POST", PROMOTIONASUSINFO, null, successCB, errorCB);
+	},
+	'promotionasusinfolist': function (data, successCB, errorCB) {
+		network.useAjax("POST", PROMOTIONASUSINFOLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'applyFreeTrial': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_FREE_TRIAL, JSON.stringify(data), successCB, errorCB);
+	},
+	'removeFreeTrial': function (data, successCB, errorCB) {
+		network.useAjax("POST", TEAM_REMOVE_FREETRIAL, JSON.stringify(data), successCB, errorCB);
+	},
+	/**
+	 * get external cloud list set of item
+	 */
+	'getTeamfolderInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_TEAMFOLDER_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'updateTeamfolderInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", UPDATE_TEAMFOLDER_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	getExtCloudList: function (data, successCB, errorCB) {
+		network.useAjax('POST', EXT_CLOUD_LIST, null, successCB, errorCB);
+	},
+
+	'getAdvertiseinfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", ACCOUNT_ADINFO_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'getExternalUrls': function (data, successCB, errorCB) {
+		network.useAjax("POST", EXTERNAL_URLS, JSON.stringify(data), successCB, errorCB);
+	},
+	'getValidateVerifyMail': function (data, successCB, errorCB) {
+		network.useAjax("POST", VERIFYMAIL_VALIDATE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getValidateFindPW': function (data, successCB, errorCB) {
+		network.useAjax("POST", FINDPW_VALIDATE, JSON.stringify(data), successCB, errorCB);
+	},
+	'paymentPreorder': function (data, successCB, errorCB) {
+		network.useAjax("POST", PAYMENT_PREORDER, JSON.stringify(data), successCB, errorCB);
+	},
+	'paymentTossPreorder': function (data, successCB, errorCB) {
+		network.useAjax("POST", PAYMENT_TOSS_PREORDER, JSON.stringify(data), successCB, errorCB);
+	},
+	'getLicenseOrderlist': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_LICENSEORDERLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'findLicenseEmail': function (data, successCB, errorCB) {
+		network.useAjax("POST", FIND_LICENSEEMAIL, JSON.stringify(data), successCB, errorCB);
+	},
+	'existLicenseUser': function (data, successCB, errorCB) {
+		network.useAjax("POST", EXIST_LISENSEUSER, JSON.stringify(data), successCB, errorCB);
+	},
+	'changeLicensePassword': function (data, successCB, errorCB) {
+		network.useAjax("POST", CHANGE_LICENSEPASSWORD, JSON.stringify(data), successCB, errorCB);
+	},
+	'sendCertification': function (data, successCB, errorCB) {
+		network.useAjax("POST", SEND_CERTIFICATION, JSON.stringify(data), successCB, errorCB);
+	},
+	'saveLicenseInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", SAVE_LICENSE_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'getEventList': function (data, successCB, errorCB) {
+		network.useAjax("POST", EVENT_GET_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getEventDetail': function (data, successCB, errorCB) {
+		network.useAjax("POST", EVENT_GET_DETAIL, JSON.stringify(data), successCB, errorCB);
+	},
+	'getEventCommentList': function (data, successCB, errorCB) {
+		network.useAjax("POST", EVENT_GET_COMMENTLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getEventCommentSave': function (data, successCB, errorCB) {
+		network.useAjax("POST", EVENT_GET_COMMENTSAVE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getEventCommentChange': function (data, successCB, errorCB) {
+		network.useAjax("POST", EVENT_GET_COMMENTCHANGE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getEventCommentDelete': function (data, successCB, errorCB) {
+		network.useAjax("POST", EVENT_GET_COMMENTDELETE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getEventCouponType': function (data, successCB, errorCB) {
+		network.useAjax("POST", EVENT_GET_COUPON_TYPE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getWhaleUserInfo': function (successCB, errorCB) {
+		network.useAjax("POST", WHALE_USER_INFO, null, successCB, errorCB);
+	},
+	'getStoreRating': function (data, successCB, errorCB) {
+		network.useAjax("POST", STORE_REVIEW_GET_RATING, JSON.stringify(data), successCB, errorCB);
+	},
+	'addStoreRating': function (data, successCB, errorCB) {
+		network.useAjax("POST", STORE_REVIEW_ADD_RATING, JSON.stringify(data), successCB, errorCB);
+	},
+	'setStoreRating': function (data, successCB, errorCB) {
+		network.useAjax("POST", STORE_REVIEW_SET_RATING, JSON.stringify(data), successCB, errorCB);
+	},
+	'getStoreLike': function (data, successCB, errorCB) {
+		network.useAjax("POST", STORE_REVIEW_GET_LIKE, JSON.stringify(data), successCB, errorCB);
+	},
+	'addStoreLike': function (data, successCB, errorCB) {
+		network.useAjax("POST", STORE_REVIEW_ADD_LIKE, JSON.stringify(data), successCB, errorCB);
+	},
+	'setStoreLike': function (data, successCB, errorCB) {
+		network.useAjax("POST", STORE_REVIEW_SET_LIKE, JSON.stringify(data), successCB, errorCB);
+	},
+	'appdownloadUser': function (data, successCB, errorCB) {
+		network.useAjax("POST", APPDOWNLOAD_USER, JSON.stringify(data), successCB, errorCB);
+	},
+	'eventPopup': function (data, successCB, errorCB) {
+		network.useAjax("POST", EVENT_POPUP, JSON.stringify(data), successCB, errorCB);
+	},
+	'applyPromotion': function (data, successCB, errorCB) {
+		network.useAjax("POST", APPLY_PROMOTION, JSON.stringify(data), successCB, errorCB);
+	},
+	'applyPromotionList': function (data, successCB, errorCB) {
+		network.useAjax("POST", APPLY_PROMOTION_LIST, JSON.stringify(data), successCB, errorCB);
+	},	
+	'giftCoupon': function (data, successCB, errorCB) {
+		network.useAjax("POST", GIFT_COUPON, JSON.stringify(data), successCB, errorCB);
+	},
+	'giftCouponInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GIFT_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'promotionList': function (data, successCB, errorCB) {
+		network.useAjax("POST", PROMOTION_LIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getCouponList': function (data, successCB, errorCB) {
+		if(data.serviceType === 'AIBASIC') data.serviceType = 'AI_BASIC'
+		else if (data.serviceType === 'AIPLUS') data.serviceType = 'AI_PLUS'
+		network.useAjax("POST", GETCOUPONLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'createCoupon': function (data, successCB, errorCB) {
+		network.useAjax("POST", CREATECOUPON, JSON.stringify(data), successCB, errorCB);
+	},
+	'applyCoupon': function (data, successCB, errorCB) {
+		network.useAjax("POST", APPLYCOUPON, JSON.stringify(data), successCB, errorCB);
+	},
+	'getCouponHistory': function (data, successCB, errorCB) {
+		network.useAjax("POST", GETCOUPONHISTORY, JSON.stringify(data), successCB, errorCB);
+	},
+	'getPromotionBanner': function (data, successCB, errorCB) {
+		network.useAjax("POST", GETPROMOTIONBANNER, JSON.stringify(data), successCB, errorCB);
+	},
+	'getPromotionBannerList': function (data, successCB, errorCB) {
+		network.useAjax("POST", GETPROMOTIONBANNERLIST, JSON.stringify(data), successCB, errorCB);
+	},
+	'getTapfiliateInfo' : function(successCB, errorCB) {
+		network.useAjax("GET", GET_TAPFILIATE_INFO, null, successCB, errorCB);
+	},
+	'rollingBanner' : function(data, successCB, errorCB) {
+		network.useAjax("POST", ROLLING_BANNER,  JSON.stringify(data), successCB, errorCB);		
+	},
+
+	'blogBanner' : function(data, successCB, errorCB) {
+		network.useAjax("POST", BLOG_BANNER,  JSON.stringify(data), successCB, errorCB);		
+	},
+	'getVoucherInfo' : function(data, successCB, errorCB) {
+		network.useAjax("POST", GET_VOUCHER_INFO,  JSON.stringify(data), successCB, errorCB);		
+	},
+	'getVoucherPaymentInfo' : function(data, successCB, errorCB) {
+		network.useAjax("POST", GET_VOUCHER_PAYMENT_INFO,  JSON.stringify(data), successCB, errorCB);		
+	},
+	'getTossResultInfo' : function(data, successCB, errorCB) {
+		network.useAjax("POST", TOSS_RESULT_INFO,  JSON.stringify(data), successCB, errorCB);		
+	},
+	'deleteAccountNotPW' : function(data, successCB, errorCB) {
+		network.useAjax("POST", DELETEACCOUNT_NOTPW,  JSON.stringify(data), successCB, errorCB);		
+	},
+	'getAIUserInfo' : function(successCB, errorCB) {
+		network.useAjax("POST", GET_AI_USERINFO,  null, successCB, errorCB);		
+	},
+	'getAIServiceInfo' : function(successCB, errorCB) {
+		network.useAjax("POST", GET_AI_SERVICE_LIST,  null, successCB, errorCB);		
+	},
+	'getServiceCreditHistory' : function(data, successCB, errorCB) {
+		network.useAjax("POST", GET_SERVICE_CREDIT_HISTORY,  JSON.stringify(data), successCB, errorCB);		
+	},
+	'getGoodsCreditHistory' : function(data, successCB, errorCB) {
+		network.useAjax("POST", GET_GOODS_CREDIT_HISTORY,  JSON.stringify(data), successCB, errorCB);		
+	},
+	'getOfferCreditInfo' : function(successCB, errorCB) {
+		network.useAjax("POST", GET_OFFER_CREDITINFO,  null, successCB, errorCB);		
+	},
+	'sendPaymentLog' : function(data, successCB, errorCB) {
+		network.useAjax("POST", SEND_PAYMENTLOG,  JSON.stringify(data), successCB, errorCB);		
+	},
+	'getProductDetailList' : function(data, successCB, errorCB) {
+		network.useAjax("POST", GET_PRODUCT_DETAILLIST,  JSON.stringify(data), successCB, errorCB);		
+	},
+	/**
+	 * add to po server that external cloud item information
+	 * data = {
+	 * 	displayName: presented to view that name.
+	 * 	externalCloudType: GD, DB, BX, OD, UC, WD, FT, VD, SS, AC
+	 * 	cloudId: account or email of external cloud service
+	 * 	accessToken: access token
+	 * }
+	 */
+	addExtCloudItem: function (data, successCB, errorCB) {
+		network.useAjax('POST', EXT_CLOUD_ADD, data, successCB, errorCB);
+	},
+
+	/**
+	 * data = {
+	 * 	id: id.
+	 * 	displayName: changed
+	 * 	externalCloudType: changed
+	 * 	cloudId: changed
+	 * 	accessToken: changed
+	 * }
+	 */
+	updateExtCloudItem: function (data, successCB, errorCB) {
+		network.useAjax('POST', EXT_CLOUD_UPDATE, data, successCB, errorCB);
+	},
+
+	/**
+	 * delete item of external cloud in po server
+	 * data = {
+	 * 	id: id.
+	 * }
+	 */
+	deleteExtCloudItem: function (data, successCB, errorCB) {
+		network.useAjax('POST', EXT_CLOUD_DELETE, data, successCB, errorCB);
+	},
+	/**
+	 * delete item of external cloud in po server
+	 * data = {
+	 * 	id: id.
+	 * }
+	 */
+	paymentRePaygate: function (data, successCB, errorCB) {
+		network.useAjax('POST', PAYMENT_REPAYGATE, JSON.stringify(data), successCB, errorCB);
+	},
+	getGlobalLicenseNum: function (data, successCB, errorCB) {
+		var url = '/api/1/license/getuser/' + data;
+		network.useAjax('GET', url, null, successCB, errorCB);
+	}
+};
+
+var TASK_GET_LIST_API = "/api/1/task/list";
+var TASK_THUMB_IMAGE = "/api/1/task/download/thumbnail/";
+var TASK_SHARE_VIEWER = "/view/viewer/task/share/";
+var TASK_DOCCAST_VIEWER = "/view/viewer/task/doccast/";
+var TASK_GET_USERPICTURE = "/api/1/account/download/portrait/";
+var TASK_GET_PUSERPICTURE = "/api/1/account/publicdownload/portrait/";
+var TASK_GET_ATTENDENCE = "/api/1/task/list/attendee/";
+var TASK_GET_DOCUMENT = "/api/1/task/list/file/";
+var TASK_GET_LOG = "/api/1/task/list/log/";
+var TASK_DELETE = "/api/1/task/delete/";
+var TASK_ADD_COMMENT = "/api/1/task/add/comment/";
+var TASK_DELETE_ATTENDEE = "/api/1/task/delete/attendee/";
+var TASK_SET_UPDATE = "/api/1/task/update";
+
+var TaskAPI = {
+	'getTaskList': function (data, successCB, errorCB) {
+		network.useAjax("POST", TASK_GET_LIST_API, JSON.stringify(data), successCB, errorCB);
+	},
+	'getAttendeeList': function (data, successCB, errorCB) {
+		network.useAjax("POST", TASK_GET_ATTENDENCE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getTaskFileList': function (data, successCB, errorCB) {
+		network.useAjax("POST", TASK_GET_DOCUMENT, JSON.stringify(data), successCB, errorCB);
+	},
+	'getTasklog': function (data, successCB, errorCB) {
+		network.useAjax("POST", TASK_GET_LOG, JSON.stringify(data), successCB, errorCB);
+	},
+	'deleteTask': function (data, successCB, errorCB) {
+		network.useAjax("POST", TASK_DELETE, JSON.stringify(data), successCB, errorCB);
+	},
+	'addComment': function (data, successCB, errorCB) {
+		network.useAjax("POST", TASK_ADD_COMMENT, JSON.stringify(data), successCB, errorCB);
+	},
+	'deleteAttendee': function (data, successCB, errorCB) {
+		network.useAjax("POST", TASK_DELETE_ATTENDEE, JSON.stringify(data), successCB, errorCB);
+	},
+	'getTaskInfo': function (data, successCB, errorCB) {
+		network.useAjax("POST", GET_TASK_INFO, JSON.stringify(data), successCB, errorCB);
+	},
+	'setTaskUpdate': function (data, successCB, errorCB) {
+		network.useAjax("POST", TASK_SET_UPDATE, JSON.stringify(data), successCB, errorCB);
+	}
+};
+
+var network = {
+	'SyncXMLhttpreq': function (url, processCB) {
+		if (!isOnline())
+			return;
+		http = new XMLHttpRequest();
+		http.onreadystatechange = processCB;
+		http.open("GET", url, false);
+		try {
+			http.send(null);
+		} catch (error) {
+			util.trace("SyncXMLhttpreq : " + error);
+			return null;
+		}
+		return http.responseText;
+	},
+	'AsyncXMLhttpreq': function (method, url, successCB, failCB) {
+		if (!isOnline())
+			return;
+		var http = new XMLHttpRequest();
+		http.open(method, url, true);
+		http.onreadystatechange = function () {
+			if (http.readyState == 4) {
+				if (http.status == 200) {
+					successCB(http.responseText);
+				} else {
+					failCB(http.status);
+				}
+			}
+		};
+		http.send(null);
+	},
+	'useAjax': function (method, reqUrl, reqData, successCB, errorCB) {
+		if (!isOnline())
+			return;
+
+		$.ajax({
+			type: method,
+			url: reqUrl,
+			data: reqData,
+			dataType: "json",
+			contentType: "application/json",
+			beforeSend: function (request) {
+				var XInfraBid = getCookie('BID');
+				if (XInfraBid) {
+					request.setRequestHeader("X-INFR_BID", XInfraBid);
+				}
+			},
+			success: function (response, textStatus, request) {
+				var XInfraBid = request.getResponseHeader('X-INFR_BID');
+				if (XInfraBid) {
+					if (XInfraBid != getCookie('BID')) {
+						var popupMessage = new Array();
+						popupMessage[0] = LanguagePack.POPUP_EXPIRED_SESSION;
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {
+							popupMessage: popupMessage
+						}, logout, logout, logout);
+						popup.create();
+						popup.show();
+						return;
+					}
+				}
+				successCB(response);
+			},
+			error: function (response) {
+				if (typeof errorCB === "function") {
+					errorCB(response);
+				}
+				toastMessage(LanguagePack.POPUP_VIEWERERROR_DIFFICUTTOCONNECT_RETRY);
+			},
+			timeout: 240000
+		});
+	},
+	'useAjax2': function (method, reqUrl, reqData, header, successCB, errorCB) {
+		if (!isOnline())
+			return;
+
+		$.ajax({
+			type: method,
+			url: reqUrl,
+			data: reqData,
+			headers: header,
+			dataType: "json",
+			contentType: "application/json",
+			success: successCB,
+			error: errorCB,
+			timeout: 240000
+		});
+	},
+	'useAjaxform': function (method, reqUrl, reqData, cur, successCB, errorCB) {
+		if (!isOnline())
+			return;
+		var xhr = new XMLHttpRequest(),
+			upload = xhr.upload;
+		//xhr.timeout = 240000;
+
+		if (reqUrl != SETPORTRAIT && reqUrl != SEND_INQUIRY && reqUrl != SEND_ERRORREPORT && reqUrl != SEND_BUSINESS_INQUIRY) {
+			upload.addEventListener("progress", function (ev) {
+				progress(cur, ev);
+				/*cur.parents('#upload').upload('progress', ev, cur);*/
+			}, false);
+		}
+		upload.addEventListener("error", errorCB, false);
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState == 4) {
+				if (xhr.status == 200) {
+					successCB(xhr.responseText);
+				} else {
+					successCB("");
+				}
+			}
+		};
+		xhr.open("POST", reqUrl);
+		xhr.setRequestHeader("Cache-Control", "no-cache");
+		xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+		xhr.setRequestHeader("X-File-Name", "TEST");
+		xhr.send(reqData);
+		return xhr;
+	},
+	'useAjaxform1': function (method, reqUrl, reqData, successCB, errorCB) {
+		if (!isOnline())
+			return;
+		$.ajax({
+			type: "POST",
+			url: reqUrl,
+			data: reqData,
+			success: successCB,
+			//beforeSend:showRequest,
+			error: function (e) {
+				errorCB(e);
+			}
+		});
+	},
+	'GetAjaxform': function (method, requrl, successCB, errorCB) {
+		$.ajax({
+			type: method,
+			url: requrl,
+			async: false
+		}).error(function (msg) {
+			alert(msg);
+		}).done(successCB);
+	},
+	'useAjaxCORS': function (method, reqUrl, reqData, successCB, errorCB) {
+		if (!isOnline())
+			return;
+
+		$.ajax({
+			type: method,
+			url: reqUrl,
+			data: reqData,
+			dataType: "json",
+			contentType: "application/json",
+			beforeSend: function (request) {
+
+			},
+			success: function (response, textStatus, request) {
+				successCB(response);
+			},
+			error: function (response) {
+				//errorCB(response);
+				//toastMessage(LanguagePack.POPUP_VIEWERERROR_DIFFICUTTOCONNECT_RETRY);
+			},
+			timeout: 240000
+		});
+	},
+	'useSyncAjax': function (method, reqUrl, reqData, successCB, errorCB) {
+		if (!isOnline())
+			return;
+		$.ajaxSetup({
+			async: false
+		});
+		$.when($.ajax({
+				type: method,
+				url: reqUrl,
+				data: reqData,
+				dataType: "json",
+				contentType: "application/json",
+				beforeSend: function (request) {
+					var XInfraBid = getCookie('BID');
+					if (XInfraBid) {
+						request.setRequestHeader("X-INFR_BID", XInfraBid);
+					}
+				},
+				timeout: 240000
+			})).done(function (response, textStatus, request) {
+				var XInfraBid = request.getResponseHeader('X-INFR_BID');
+				if (XInfraBid) {
+					if (XInfraBid != getCookie('BID')) {
+						var popupMessage = new Array();
+						popupMessage[0] = LanguagePack.POPUP_EXPIRED_SESSION;
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {
+							popupMessage: popupMessage
+						}, logout, logout, logout);
+						popup.create();
+						popup.show();
+						return;
+					}
+				}
+				$.ajaxSetup({
+					async: true
+				});
+				successCB(response);
+			})
+			.fail(function (response) {
+				errorCB(response);
+				toastMessage(LanguagePack.POPUP_VIEWERERROR_DIFFICUTTOCONNECT_RETRY);
+			});
+	}
+
+};

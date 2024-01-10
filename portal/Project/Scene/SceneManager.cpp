@@ -25,6 +25,18 @@ void SceneManager::PreRender()
 		scene->PreRender();
 }
 
+void SceneManager::P1ReRender()
+{
+	for (Scene* scene : curScenes)
+		scene->P1ReRender();
+}
+
+void SceneManager::P2ReRender()
+{
+	for (Scene* scene : curScenes)
+		scene->P2ReRender();
+}
+
 void SceneManager::Render()
 {
 	for (Scene* scene : curScenes)

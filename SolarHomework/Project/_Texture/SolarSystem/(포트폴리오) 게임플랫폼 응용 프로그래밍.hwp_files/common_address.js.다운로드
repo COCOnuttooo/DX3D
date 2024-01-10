@@ -1,0 +1,2480 @@
+(function($) {
+	var sendEmail = {
+			'init' : function(options) {
+				var settings;
+				if(options.layout == 'panel') {
+					$('#panel').hide();
+				} else {
+					layout.dim.create();
+				}
+				if(this.children().length) {
+					settings = this.data('settings');
+					settings.handle.update.apply(this, [options]);
+				} else {
+					settings = $.extend({
+						'selector' : {
+							'content' : null, 
+							'input': null,
+							'search' : null,
+							'bx' : null,
+						},
+						'log' : {},
+						'revision' : 0,
+						'page' : 0,
+						'limit' : 50, 
+						'isPublic' : true,
+						'owner' : true,
+						'owneremail' : null,
+						'type' : '',
+						'fileId' : '',
+						'json' : [],
+						'gmailjson' : [],
+						'locale' : '',
+						'fileType' : 'ppt',
+						'fileName' : '',
+						'searchtext' : '',
+						'title' : '',
+						'usercnt' : 0,
+						'click' : "ontouchend" in document ? true : false
+					}, options);
+					
+
+					var handle = {
+							'create' : layout.create,
+							'bxAdd' : layout.bx.add, 
+							'bxRemove' : layout.bx.remove,
+							'update' : layout.update,
+							
+							'messageboxCount'  	: layout.messageboxCount,
+							
+							'searchboxHide' 	: layout.searchbox.searchboxHide,
+							'searchboMove'  	: layout.searchbox.searchboMove,
+							'searchboxShow' 	: layout.searchbox.searchboxShow,
+
+							"userAdd"     		: layout.user.userAdd,
+							'userCancel'  		: layout.user.userCancel,
+							'userRemove' 		: layout.user.userRemove,
+							'userLabelChange' 	: layout.user.userLabelChange, 
+					};
+					settings.handle = $.extend(settings.handle, handle);
+					this.data('settings', settings);
+					this.addClass('ad');
+					settings.handle.create.apply(this);
+					jsonResponse.getAddressRevision(this);
+				}
+			},
+			'reset' : function() {
+				var settings = this.data('settings');
+				var $seleterList = settings.selector.bx.children('.bx_scroll');
+				settings.json = [];
+				
+				for(var i=0; i < $seleterList.length-1; i++) {
+					var $selecter = $seleterList.eq(i);
+					if(!$selecter.hasClass('init')) {
+						$selecter.addClass('init').find('div > ul > li').remove();
+					}
+				} 
+			},
+			'close' : function() { 
+				var settings = this.data('settings');
+				var $tab = settings.selector.content.children('.tab');
+				var $scroll = settings.selector.bx.children('.bx_scroll');
+				$tab.children('.on').removeClass('on');
+				$tab.children().first().addClass('on');
+				
+				for(var i=0; i < $scroll.length; i++) {
+					$scroll.eq(i).scrollTop(0);
+				}
+				$scroll.addClass('off').first().removeClass('off');
+				
+				if(settings.layout != 'panel') {
+					this.children().children().removeClass('other');
+					this.hide();
+					layout.dim.remove();
+				}
+			},
+			'share' : function() {
+				var arg = arguments;
+				var settings = this.data('settings');
+
+				var attendList = [];
+				for(var i=0; i < arg[0].length ; i++) {
+					var data = arg[0][i];
+					var attendee = {
+							"friendId" : 0,
+							"email" : null,
+							"name" : null
+					};
+					if (data.id) {
+						attendee.friendId = data.id;
+					}
+					if(data.uid) {
+						attendee.userId = data.uid;
+					}
+					attendee.name = data.n;
+					attendee.email = data.e;
+					attendList.push(attendee);
+				}
+				var fileList = [];
+				for(var i=0; i < settings.fileId.length; i++) {
+					var file = {
+							'order' : i,
+							'id' : settings.fileId[i]
+					};
+					fileList.push(file);
+				}
+				jsonResponse.shareFile(this, 'Task', attendList, fileList, false/*settings.isPublic*/);
+			},
+			'task' : function() {
+				var arg = arguments;
+				var settings = this.data('settings');
+
+				var attendList = [];
+				for(var i=0; i < arg[0].length ; i++) {
+					var data = arg[0][i];
+					var attendee = {
+							"friendId" : 0,
+							"email" : null,
+							"name" : null
+					};
+					if (data.id) {
+						attendee.friendId = data.id;
+					}
+					if(data.uid) {
+						attendee.userId = data.uid;
+					}
+					attendee.name = data.n;
+					attendee.email = data.e;
+					attendList.push(attendee);
+				}
+				jsonResponse.taskFile(this, attendList, settings.fileId[0]);
+			},
+			'invite' : function() {
+				var arg = arguments;
+				var settings = this.data('settings');
+
+				var emailList = [];
+				var datalist = [];
+				for(var i=0; i < arg[0].length ; i++) {
+					var data = arg[0][i];
+					emailList.push(data.e);
+					datalist.push(data);
+				}
+				jsonResponse.invite(this, emailList, datalist);
+			},
+			'weblink' : function() {
+				var arg = arguments;
+				var settings = this.data('settings');
+				var $messagebox = settings.selector.message;
+				var body = $messagebox.find("label > textarea").val();
+				var attendList = [];
+				var datalist = [];
+				var locationlist = [];
+				for(var i=0; i< arg[0].length; i++) {
+					var data = arg[0][i];
+					if(data.uid) {
+						attendList.push({"userId" : data.uid, "email" : data.e});
+					} else {
+						attendList.push({"email" : data.e});
+					}
+					datalist.push(data);
+				}
+				if(settings.location){
+					locationlist.push({'fileId' : settings.fileId, 'location' : settings.location});
+				}
+				jsonResponse.weblink(this, settings.fileId, attendList, body, datalist, locationlist);
+			},
+			'updateJson' : function() {
+				var arg = arguments;
+				var updateJson = arg[0];
+				
+				if(updateJson.length) {
+					var $seleterList; 
+					var settings = this.data('settings');
+					$seleterList = settings.selector.bx.children('.bx_scroll');
+					var removeList = []; 
+					for(var i=0; i < updateJson.length; i++) {
+						var index = common.getJsonIndex(settings.json, updateJson[i].id);
+						if(index != -1) {
+							settings.json[index] = $.extend(settings.json[index], updateJson[i]);
+							updateJson[i] = settings.json[index];
+							removeList.push(settings.json[index]);
+						} else {
+							settings.json.push(updateJson[i]);
+						}
+					}
+					var length;
+					if(settings.agent) {
+						length = $seleterList.length;
+					} else {
+						length = $seleterList.length-1;
+					}
+					for(var i=0; i < length; i++) {
+						var $selecter = $seleterList.eq(i);
+						if(!$selecter.hasClass('init')) {
+							settings.handle.bxRemove.apply($selecter, [removeList]);
+							settings.handle.bxAdd.apply($selecter, [updateJson]);
+						}
+					} 
+				}
+			},
+			'pchangeHeight' : function(height) {
+				if(this.children().length) {
+					var settings = this.data('settings');
+					settings.selector.bx.css('height', height);
+				}
+			},
+			'showGmail' : function() {
+				var settings = this.data('settings');
+				settings.handle.bxAdd.apply(settings.selector.bx.children('.gmail'));
+			}
+	}; 
+
+	var layout = {
+			'dim' : {
+				'create' : function() {
+					var $dim = $('#dim');
+					if(!$dim.length) {
+						$('body').append('<div id="dim" class="dim"></div>');
+						return;
+					} else {
+						$dim.css('z-index', parseInt($dim.css('z-index')) + 1);
+					}
+				},
+				'remove' : function() {
+					var $dim = $('#dim');
+					var zindex = $dim.css('z-index');
+					if(zindex == '9') {
+						$dim.remove();
+					} else {
+						$dim.css('z-index', parseInt($dim.css('z-index')) - 1);
+					}
+				},
+				'getZindex' : function() {
+					var $dim = $('#dim');
+					return parseInt($dim.css('z-index'));
+				}
+			},
+			'element' : {
+				'pWrapper' : function(top) {
+					return $('<div />', {
+						'class'    : 'ConfirmtPopup_external',
+						'css' : {
+							'width' : 'width:100%',
+							'margin-top' : top + 'px',
+							'z-index' : layout.dim.getZindex() + 1
+						}
+					});
+				},
+				'popup' : function(width) {
+					return  $('<div />', {
+						'class'    : 'popup other',
+						'css' : {
+							'width' : width + 'px',
+							'margin' : 'auto'
+						}
+					});
+				},
+				'div' : function(className) {
+					return  $('<div />', {
+						'class'    : className
+					});
+				},
+				'usertextarea' : function(id) {
+					return $('<textarea />', {
+						'id' : id,
+						'class' : 'txt',
+						'type' : 'text',
+						'blur' :  events.user.blur,
+						'keyup' : events.user.keyup,
+						'focus' : events.user.focus
+					});
+				},
+				'a' : function(className, text/*, event*/) {
+					return $('<a />', {
+						'href' : '#',
+						'class'    : className,
+						'html' : text
+						/*'click' : event*/
+					});
+				},
+				'input' : function(id, type, name/*, event*/) {
+					return $('<input />', {
+						'id' : id,
+						'type' : type,
+						'name' : name
+						/*'click' : event*/
+					});
+				},
+				'label' : function(id) {
+					return  $('<label />', {
+						'for' : id
+					});
+				},
+				'span' : function(className, title, text) {
+					return $('<span />', {
+						'class' : className,
+						'title' : title,
+						'html' : text
+					});
+				},
+				'tabfbxSub' : function(key) {
+					return $('<div><h2><span>' + key + '</span></h2> <ul class="list"></ul></div>');
+				}
+			},
+			'create' : function() {
+				var $this = this;
+				var settings = this.data('settings');
+				this.addClass(settings.type);
+				
+				if(settings.layout == 'panel') {
+					this.bind('selectstart', function() { if ((event.target || event.srcElement).nodeName !== 'INPUT') return false; });
+					var $h3 = $('<h3 />', {
+						'class' : 'tit_share'
+					});
+					var $prevbutton = layout.element.a('btn_prev', '<img src="' + CF_PATH + '/resources/image/Polaris/panel/btn_arrow.png" alt="">'/*, events.pclose*/); 
+					$prevbutton.tclick(settings.click, events.pclose);
+					var $okbuttion = layout.element.a('btn_action', LanguagePack.KEYWORD_CONFIRM/*, events.send*/); 
+					$okbuttion.tclick(settings.click, events.send);
+					$h3.append($prevbutton).append(settings.title).append($okbuttion);
+					
+					var $contents = layout.element.div('address');
+					var $subcontents1 = layout.element.div('bx_invite_search');
+					var $userList = layout.element.div('search_id bd_none showLabel').html('<label for="sharelinkUser" class="label_invite">' + LanguagePack.POPUP_ADDRESS_SEARCH_INPUT + '</label>');
+					var $insertUser = layout.element.usertextarea('sharelinkUser');
+
+					$subcontents1.append($userList.append($insertUser)); 
+
+					var $subcontents2 = layout.element.div('tab gmailAdded');
+					var $tab_default = layout.element.a('addr on default', LanguagePack.KEYWORD_ADDRBOOK_PANEL/*, events.tabShow*/);
+					$tab_default.tclick(settings.click, events.tabShow);
+					var $tab_recent = layout.element.a('addr recent', LanguagePack.KEYWORD_RECENTOUTGOING_PANEL/*, events.tabShow*/);
+					$tab_recent.tclick(settings.click, events.tabShow);
+					var $tab_gmail = layout.element.a('addr gmail', LanguagePack.KEYWORD_GMAILCONTACTS_PANEL/*, events.tabShow*/);
+					$tab_gmail.tclick(settings.click, events.tabShow);
+					
+					$subcontents2.append($tab_default).append($tab_recent).append($tab_hide).append($tab_gmail);
+
+					var $subcontents3 = layout.element.div('bx');
+					var $searchResult = layout.element.div('search_auto off');
+					$tab_default = layout.element.div('bx_scroll default');
+					var array;
+					if(settings.locale == 'ko_KR') {
+						array = common.array.ko;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.en;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.num;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						$tab_default.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+					} else if(settings.locale == 'ja_JP') {
+						array = common.array.ja;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.en;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.num;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						$tab_default.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+					} else /*if(settings.locale == 'en_US')*/ {
+						array = common.array.en;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.num;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						$tab_default.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+					} 
+					$tab_default.append('<p class="no_data">' + LanguagePack.KEYWORD_NOADDR + '</p>');
+					
+					$tab_recent = layout.element.div('bx_scroll off recent init');
+					$tab_recent.append('<div><ul class="list"></ul></div>'); 
+					$tab_recent.append('<p class="no_data">' + LanguagePack.KEYWORD_NORECENTOUTGOING + '</p>');
+					
+					$tab_gmail = layout.element.div('bx_scroll off gmail init');
+					var array;
+					if(settings.locale == 'ko_KR') {
+						array = common.array.ko;
+						for(var i=0; i< array.length; i++) {
+							$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.en;
+						for(var i=0; i< array.length; i++) {
+							$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.num;
+						for(var i=0; i< array.length; i++) {
+							$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+						}
+						$tab_gmail.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+					} else if(settings.locale == 'ja_JP') {
+						array = common.array.ja;
+						for(var i=0; i< array.length; i++) {
+							$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.en;
+						for(var i=0; i< array.length; i++) {
+							$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.num;
+						for(var i=0; i< array.length; i++) {
+							$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+						}
+						$tab_gmail.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+					} else /*if(settings.locale == 'en_US')*/ {
+						array = common.array.en;
+						for(var i=0; i< array.length; i++) {
+							$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.num;
+						for(var i=0; i< array.length; i++) {
+							$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+						}
+						$tab_gmail.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+					} 
+					
+					$subcontents3.append($searchResult).append($tab_default).append($tab_recent).append($tab_gmail);
+					
+					$contents/*.append($subcontents0)*/.append($subcontents1).append($subcontents2).append($subcontents3);
+
+					this.append($h3).append($contents); 
+					$subcontents3.css('height', settings.height);
+				} else {
+					var $wrapper = layout.element.pWrapper(-284.5);
+					if(settings.click) {
+						$wrapper.css('position', 'absolute');
+					}
+					$wrapper.bind('selectstart', function() { if ((event.target || event.srcElement).nodeName !== 'INPUT') return false; });
+					var title = '';
+					if(settings.type == 'weblink') {
+						title = LanguagePack.KEYWORD_MYACTIVITY;//title = LanguagePack.POPUP_URL_COPY;
+					}
+					var $contentsAll = layout.element.popup(360).html('<h1>' + title + '</h1>');
+					var $contents = layout.element.div('popup_content address');
+					var name = settings.fileName ;
+					if(settings.fileType == 'slide' || settings.fileType == 'sheet' || settings.fileType == 'word') {
+						var index = name.lastIndexOf(".");
+						if(index != -1) {
+							name = name.substr(0, index);	
+						}
+					}
+					var $subcontents0_1 = $('<p />', {
+						'class'    : 'link_send'
+					}).html('<img src="' + CF_PATH + '/maxage1/common/img/v4/s_' + settings.fileType + '.svg" alt="">')
+					.append('<span>' + name + '</span>');
+					
+					var $subcontents1 = layout.element.div('bx_invite_search').html('<h3>' + LanguagePack.KEYWORD_RECIPIENT + '</h3>');
+					var $userList = layout.element.div('search_id bd_none showLabel').html('<label for="sharelinkUser1" class="label_invite">' + LanguagePack.POPUP_ADDRESS_SEARCH_INPUT + '</label>');
+					var $insertUser = layout.element.usertextarea('sharelinkUser1');
+
+					$subcontents1.append($userList.append($insertUser)); 
+
+					var $subcontents2 = layout.element.div('tab gmailAdded');
+					var $tab_default = layout.element.a('addr on default', LanguagePack.KEYWORD_ADDRBOOK_PANEL/*, events.tabShow*/);
+					$tab_default.tclick(settings.click, events.tabShow);
+					var $tab_recent = layout.element.a('addr recent', LanguagePack.KEYWORD_RECENTOUTGOING_PANEL/*, events.tabShow*/);
+					$tab_recent.tclick(settings.click, events.tabShow);
+					
+					var $tab_hide;
+					var $tab_gmail;
+					if(!settings.agent) {
+						$tab_hide = layout.element.a('addr hideA', LanguagePack.KEYWORD_HIDELIST/*, events.tabShow*/);
+						$tab_hide.tclick(settings.click, events.tabShow);
+						$tab_gmail = layout.element.a('addr gmail', LanguagePack.KEYWORD_GMAILCONTACTS_PANEL/*, events.tabShow*/);
+						$tab_gmail.tclick(settings.click, events.tabShow);
+					}
+					$subcontents2.append($tab_default).append($tab_recent).append($tab_hide).append($tab_gmail);
+
+					var $subcontents3 = layout.element.div('bx');
+					var $searchResult = layout.element.div('search_auto off');
+					$tab_default = layout.element.div('bx_scroll default');
+					var array;
+					if(settings.locale == 'ko_KR') {
+						array = common.array.ko;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.en;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.num;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						$tab_default.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+					} else if(settings.locale == 'ja_JP') {
+						array = common.array.ja;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.en;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.num;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						$tab_default.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+					} else /*if(settings.locale == 'en_US')*/ {
+						array = common.array.en;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						array = common.array.num;
+						for(var i=0; i< array.length; i++) {
+							$tab_default.append(layout.element.tabfbxSub(array[i]));
+						}
+						$tab_default.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+					} 
+					$tab_default.append('<p class="no_data">' + LanguagePack.KEYWORD_NOADDR + '</p>');
+					
+					$tab_recent = layout.element.div('bx_scroll off recent init');
+					$tab_recent.append('<div><ul class="list"></ul></div>'); 
+					$tab_recent.append('<p class="no_data">' + LanguagePack.KEYWORD_NORECENTOUTGOING + '</p>');
+					
+					if(!settings.agent) {
+						$tab_hide = layout.element.div('bx_scroll off hideA init');
+
+						var array;
+						if(settings.locale == 'ko_KR') {
+							array = common.array.ko;
+							for(var i=0; i< array.length; i++) {
+								$tab_hide.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.en;
+							for(var i=0; i< array.length; i++) {
+								$tab_hide.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.num;
+							for(var i=0; i< array.length; i++) {
+								$tab_hide.append(layout.element.tabfbxSub(array[i]));
+							}
+							$tab_hide.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+						} else if(settings.locale == 'ja_JP') {
+							array = common.array.ja;
+							for(var i=0; i< array.length; i++) {
+								$tab_hide.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.en;
+							for(var i=0; i< array.length; i++) {
+								$tab_hide.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.num;
+							for(var i=0; i< array.length; i++) {
+								$tab_hide.append(layout.element.tabfbxSub(array[i]));
+							}
+							$tab_hide.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+						} else /*if(settings.locale == 'en_US')*/ {
+							array = common.array.en;
+							for(var i=0; i< array.length; i++) {
+								$tab_hide.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.num;
+							for(var i=0; i< array.length; i++) {
+								$tab_hide.append(layout.element.tabfbxSub(array[i]));
+							}
+							$tab_hide.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+						} 
+						$tab_hide.append('<p class="no_data">' + LanguagePack.KEYWORD_NOHIDELIST + '</p>');
+
+						$tab_gmail = layout.element.div('bx_scroll off gmail init');
+						var array;
+						if(settings.locale == 'ko_KR') {
+							array = common.array.ko;
+							for(var i=0; i< array.length; i++) {
+								$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.en;
+							for(var i=0; i< array.length; i++) {
+								$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.num;
+							for(var i=0; i< array.length; i++) {
+								$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+							}
+							$tab_gmail.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+						} else if(settings.locale == 'ja_JP') {
+							array = common.array.ja;
+							for(var i=0; i< array.length; i++) {
+								$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.en;
+							for(var i=0; i< array.length; i++) {
+								$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.num;
+							for(var i=0; i< array.length; i++) {
+								$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+							}
+							$tab_gmail.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+						} else/* if(settings.locale == 'en_US') */{
+							array = common.array.en;
+							for(var i=0; i< array.length; i++) {
+								$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+							}
+							array = common.array.num;
+							for(var i=0; i< array.length; i++) {
+								$tab_gmail.append(layout.element.tabfbxSub(array[i]));
+							}
+							$tab_gmail.append(layout.element.tabfbxSub(LanguagePack.KEYWORD_ETC));
+						} 
+
+						var $sendMessage = layout.element.div('email_send');
+						var $messageLabel =  $('<label for=shareMessage> <span class="">' + LanguagePack.WEBLINK_LABEL + '</span> </label>')
+						var $messageText =  $('<textarea />', {
+							'id' : 'shareMessage',
+							'keyup' : events.weblink.keyup
+						});
+						var $messageLength =  $('<p />', {
+							'class' : 'text_number'
+						}).html('<span>0/1000</span>');
+						$messageLabel.append($messageText);
+						$sendMessage.append($messageLabel).append($messageLength);
+						$subcontents3.append($searchResult).append($tab_default).append($tab_recent).append($tab_hide).append($tab_gmail).append($sendMessage);
+					} else {
+						$subcontents3.append($searchResult).append($tab_default).append($tab_recent);
+					}
+					
+					var $subcontents5 = $('<p />', {
+						'class' : 'btn_finish',
+					});
+					
+					var $send2 = layout.element.a('', LanguagePack.KEYWORD_COMPLETED/*, events.send*/);
+					$send2.tclick(settings.click, events.send);
+					
+					$subcontents5.append($send2);
+					
+					$contents/*.append($subcontents0)*/.append($subcontents0_1).append($subcontents1).append($subcontents2).append($subcontents3).append($subcontents5);
+
+					var $subcontents4 = layout.element.div('bx_btn address');
+					var $send = layout.element.a('btn', LanguagePack.KEYWORD_CONFIRM/*, events.send*/);
+					$send.tclick(settings.click, events.send);
+					var $cancel;
+					
+					if(settings.agent) {
+						$cancel = layout.element.a('btn', LanguagePack.KEYWORD_CANCEL/*, null*/);
+						$send.attr('id', 'addressPopup_button_ok');
+						$cancel.attr('id', 'addressPopup_button_cancel'); 
+					} else {
+						$cancel = layout.element.a('btn', LanguagePack.KEYWORD_CANCEL/*, events.close*/);
+						$cancel.tclick(settings.click, events.close);
+					}
+					$subcontents4.append($send).append(' ').append($cancel);
+					
+					var $close = $('<span class="btn_close"></span>');
+					var $closebutton = layout.element.a('', '<img src="' + CF_PATH + '/resources/image/Polaris/popup_button_close.png">'/*, events.close*/);
+					$closebutton.tclick(settings.click, events.close);
+					$close.append($closebutton);
+
+					$wrapper.append(($contentsAll)
+							.append($contents)
+							.append($subcontents4)
+							.append($close));
+
+					this.append($wrapper);
+					
+					if(settings.agent) {
+						$wrapper.css({'margin-top': '0px', 'top': '0px', 'width' : '360px'});  
+						$contentsAll.children('h1').css('display','none');
+						$contents.css('border', 'none');
+						$userList.addClass('bd_agent');
+						$close.css('display','none');
+						$subcontents2.removeClass('gmailAdded');
+						$subcontents4.css({'border': 'none', 'border-top': '1px solid #e6e6e6','box-shadow': 'none'});
+					} 
+					$contentsAll.show();
+				}
+			
+				settings.selector.content = $contents;
+				settings.selector.input = $userList;
+				settings.selector.search = $searchResult;
+				settings.selector.message = $sendMessage;
+				settings.selector.bx = $subcontents3;
+			},
+			'update' : function(option) {
+				var settings = this.data('settings');
+				if(settings.onSuccsssCB) settings.onSuccsssCB = '';
+				if(settings.onSetFileCB) settings.onSetFileCB = '';
+				if(option.title != settings.title) {
+					var title; 
+					if(option.type == 'default') {
+						title = '';
+					} else if(option.type  == 'share') {
+						title = '';
+					} else if(option.type == 'task') {
+						title = '';
+					} else if(option.type == 'invite') {
+						title = '';
+					} else if(option.type == 'weblink') {
+						title = LanguagePack.KEYWORD_MYACTIVITY;
+						//title = LanguagePack.POPUP_URL_COPY;
+					}
+					this.removeClass(settings.type).addClass(option.type);
+					if(settings.layout != 'panel') {
+						settings.selector.content.prev('h1').html(title); 
+					}
+				}
+				/*if(typeof option.isPublic !== 'undefined' && option.isPublic != settings.isPublic) {
+					var str;
+					var $input;
+					var $openclose = settings.selector.content.children('.open_closed');
+					if(option.isPublic) {
+						str = LanguagePack.Shared_Public;
+						$input = $openclose.children('label').first().children();
+					} else {
+						str = LanguagePack.Shared_Private;
+						$input = $openclose.children('label').last().children();
+					}
+					$input.attr('checked','checked');
+					$openclose.children('p').text(str);
+				}
+				if(typeof option.owner !== 'undefined' && option.owner != settings.owner) {
+					var $openclose = settings.selector.content.children('.open_closed');
+					if(option.owner) {
+						$openclose.children('label').children().removeAttr('disabled');
+					} else {
+						$openclose.children('label').children().attr('disabled', true);
+					}
+				}*/
+				if(option.type == 'weblink') {
+					var $link_send = settings.selector.content.children('.link_send');
+					$link_send.children('img').attr('src', CF_PATH + '/maxage1/common/img/v4/s_' + option.fileType + '.svg');
+					var name = option.fileName ;
+					if(option.fileType == 'slide' || option.fileType == 'sheet' || option.fileType == 'word') {
+						var index = name.lastIndexOf(".");
+						if(index != -1) {
+							name = name.substr(0, index);	
+						}	
+					}
+					$link_send.children('span').text(name);
+				}
+				settings = $.extend(settings, option);
+				jsonResponse.getChangeAddress(this, settings.revision);
+				if(settings.layout != 'panel') {
+					this.children('.ConfirmtPopup_external').css('z-index', layout.dim.getZindex() + 1).children().addClass('other');
+				}
+				if(option.type != 'default') {
+					var $userList = settings.selector.input;
+					$userList.addClass('bd_none').addClass('showLabel');
+					$userList.children('span').remove();
+					$userList.children('textarea').val('').css('height', '17px');
+					if(option.type == 'weblink') { 
+						var $label = settings.selector.message.children("label");
+						$label.children('textarea').val(''); 
+						$label.children('span').removeClass("off"); 
+						settings.selector.message.find('p > span').html('0/1000');
+					}	
+				}
+				this.show(); 
+			},
+			'bx' : {
+				'add' : function() {
+					var arg = arguments; 
+					var $this = this;
+					var $root = $this.parents('.ad');
+					var settings = $root.data('settings');
+					var list; 
+					var index; 
+					var event;
+					var eventStr;
+					var $subindex;
+					var type = 'pc';
+					if(settings.click) {
+						type = 'mobile';
+					}
+					if($this.hasClass('default')) {
+						index = 1; 
+						list = common.getShowList(arg[0]);
+						event = events.list.hide;
+						eventStr = LanguagePack.KEYWORD_HIDE;
+					} else if($this.hasClass('recent')) {
+						index = 2; 
+						list = common.getRecentlyList(arg[0]);
+						event = events.list.remove;
+						eventStr = LanguagePack.KEYWORD_DELETE;
+					} else if($this.hasClass('hideA')) {
+						index = 3; 
+						list = common.getHideList(arg[0]);
+						event = events.list.show;
+						eventStr = LanguagePack.KEYWORD_UNHIDE;
+					} else if($this.hasClass('gmail')) {
+						index = 4; 
+						event = null;
+						eventStr = null;
+						list = common.getGmailList($root);	
+						if(list.length) {
+							if(!$this.hasClass('init')) {
+								$this.children().find('ul > li').remove();
+							} else {
+								$this.removeClass('init');
+							}
+							settings.gmailjson = list = common.changeGmail(list);
+						} else {
+							return;
+						}
+					}
+					var $index = $this.children();
+					for(var i=0; i < list.length; i++) {
+						var myimgSrc, emailStr, plink; 
+						
+						if(typeof list[i].n == 'undefined') {
+							list[i].n = list[i].e;
+						}
+						if(index == 2 || index == 4) {
+							emailStr = list[i].e;
+							if(list[i].uid) {
+								myimgSrc = '/api/1/account/download/portrait/' + list[i].uid + '?' + getTime();
+								plink = '';
+							} else {
+								myimgSrc = CF_PATH + '/maxage1/common/img/socket/no_thum.png';
+								plink = 'off';
+							}
+							
+						} else {
+							if(list[i].uid) {
+								myimgSrc = '/api/1/account/download/portrait/' + list[i].uid + '?' + getTime();
+								emailStr = list[i].e;
+								plink = '';
+							} else {
+								myimgSrc = CF_PATH + '/maxage1/common/img/socket/no_thum.png';
+								emailStr = list[i].e;
+								plink = 'off';
+							}
+						}
+						var $li = $('<li />', {
+							'id' : 'address_' + list[i].id,
+							'class' : type
+							/*'click' : events.user.userAdd*/
+						});
+						$li.tclick(settings.click, events.user.userAdd);
+						
+						var data = {
+								'e' : emailStr,
+								'n' : list[i].n,
+								'lst' : list[i].lst,
+								'id' : list[i].id,
+								'uid' : list[i].uid
+						};
+						
+						$li.data('UserInfo', data);
+						
+						var $span = layout.element.span('img', list[i].n, '<img src="' + myimgSrc + '" />');	
+						var $name = layout.element.span('name', list[i].n, list[i].n);	
+						var $email = layout.element.span('mail_id', emailStr, '(' + emailStr + ')');				
+						var $bg = layout.element.span('bg', '', ''); 
+						var $plinkspan = layout.element.span('polaris ' + plink, '', '<img src="' + CF_PATH + '/resources/image/Polaris/new/msg/link_check.png" />');
+						
+						var $hide=''; 
+						if(!(settings.layout == 'panel' && index == 1) && index != 4) {
+							$hide = layout.element.a('hide btn_popup', '<span>' + eventStr + '</span>'/*, event */);
+							$hide.tclick(settings.click, event);
+						}
+						
+						if(index == 2) {
+							$subindex = $index;
+						} else {
+							$subindex = $index.eq(common.getEmailIndex(list[i].n, settings.locale));
+						}
+						var $ul = $subindex.children('ul');
+						$li.append($span).append($bg).append($name).append($email).append($plinkspan).append($hide);
+						if($this.hasClass('init')) {
+							$ul.append($li);	
+						} else {
+							var rows = $ul.children();
+							var isAppend = false;
+							if(index == 2) {
+								for(var j=0; j < rows.length; j++) {
+									var $row = rows.eq(j); 
+									var rowData = $row.data('UserInfo');
+									if(''+ rowData.lst < ''+ ''+ list[i].lst) {
+										$row.before($li);
+										isAppend = true;
+										break;
+									}
+								}
+								
+							} else {
+								for(var j=0; j < rows.length; j++) {
+									var $row = rows.eq(j); 
+									var rowData = $row.data('UserInfo');
+									if(''+ rowData.n > ''+ ''+ list[i].n) {
+										$row.before($li);
+										isAppend = true;
+										break;
+									}
+								}
+							} 
+							if(!isAppend) {
+								$ul.append($li);
+							}
+						}
+						$subindex.addClass('show');
+					}
+					
+					if(list.length && $this.children('.show').length) {
+						if($this.hasClass('init')) {
+							var $div = $this.children('.show');
+							for(var i=0; i < $div.length; i++) {
+								var $ul = $div.eq(i).children('ul');
+								var $row = $ul.children('li');
+								if(index == 2) {
+									$row.sort(function(a, b) {
+										var cur = $(a).data('UserInfo');
+										var next = $(b).data('UserInfo');
+										if("" + cur.lst < "" + next.lst) {
+											return 1;
+										} else {
+											return -1;
+										}
+									});
+								} else {
+									$row.sort(function(a, b) {
+										var cur = $(a).data('UserInfo');
+										var next = $(b).data('UserInfo');
+										if("" + cur.n < "" + next.n) {
+											return -1;
+										} else {
+											return 1;
+										}
+									});
+								}
+								$ul.append($row);
+							}
+						}
+						$this.children('.no_data').hide();
+					}
+				},
+				'remove' : function(list) {
+					var isChanged = false;
+					var $ul = this.find('div > ul');
+					for(var i=0; i < list.length; i++) {
+						var $this = $ul.children('li#address_'+list[i].id);
+						if($this.length) {
+							var $parent = $this.parents('ul');
+							$this.remove();
+							if(!$parent.children().length) {
+								$parent.parent('div').removeClass('show');
+								isChanged = true;
+							}
+						}
+					}
+					
+					if(isChanged) {
+						if(!this.children('.show').length) {
+							this.children('.no_data').show();
+						}
+					}
+				} 
+			},
+			'messageboxCount' : function(count) {
+				this.text(count + '/1000');
+			},
+			'user' : {
+				'userAdd' : function() {
+					var arg = arguments;
+					var checkReuslt = 'right';
+					var count = 0;
+					var imagepath = '';
+					var settings = this.data('settings');
+					
+					if(!settings.owneremail) {
+						if(userEmail) {
+							settings.owneremail = userEmail;
+						} else {
+							settings.owneremail = gUserEmail;
+						}
+					}
+					
+					if(settings.usercnt > 49) {
+						var str = LanguagePack.TOAST_SHAREFIALBYMAXFRIENDLENGTH; 
+						if(settings.type == 'invite') {
+							str = LanguagePack.TOAST_INVATEFIALBYMAXFRIENDLENGTH
+						}
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {popupMessage:[str(50)]}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+						popup.create();
+						popup.show();
+						return; 
+					}
+					if(settings.type == 'default') {
+						return;
+					}
+					var $input = settings.selector.input;
+					var $textarea = settings.selector.input.children('textarea');
+					var $searchbox = settings.selector.search;
+					var userInfo = {
+							'id' : null,
+							'n' : '',
+							'e' : '',
+							'lst' : 0,
+							'uid' : null,
+					};
+					if(arg[0]) {
+						if(!$textarea.val().length) {
+							return;
+						} else {
+							if($searchbox.hasClass('off')) {
+								userInfo.n = $textarea.val();
+								userInfo.e = $textarea.val();
+							} else {
+								var $selected = $searchbox.find('ul > li.selected');
+								if(!$selected.length) {
+									userInfo.n = $textarea.val();
+									userInfo.e = $textarea.val();
+								} else {
+									userInfo = $selected.data("UserInfo");
+								}
+								$searchbox.addClass('off');
+							}
+							$textarea.val('');
+							$textarea.css("height", '17px'); 
+							
+							if(!settings.click) {
+								setTimeout(function(){ 
+									$textarea.focus(); 
+								}, 400);
+							}
+						}
+					} else {
+						if(arg[2]) {
+							$textarea.val(''); 
+							$textarea.css("height", '17px');
+							if(!settings.click) {
+								setTimeout(function(){ 
+									$textarea.focus(); 
+								}, 400);
+							}
+						} else {
+							return;
+						}
+						userInfo = arg[1].data("UserInfo");
+					}
+
+					if(settings.type != 'weblink' && userInfo.e == settings.owneremail) {
+						toastMessage(LanguagePack.NOTSHAREUSER);
+						return;
+					}
+					
+					var $span = $input.children('span');
+					for(var i=0; i < $span.length; i++) {
+						var data = $span.eq(i).data('UserInfo');
+						if(data.e === userInfo.e) {
+							return;
+						}
+						count++;
+					}
+
+					
+					if(!common.checkEmailType(userInfo.e)) {
+						toastMessage(LanguagePack.BUBBLE_ENTEREMAILFORMAT);
+						return;
+					}
+
+					var $span = layout.element.span('id ' + checkReuslt, userInfo.e, userInfo.n);
+
+					$span.data("UserInfo", userInfo);
+
+					var $a = layout.element.a('', '<img alt="" src="' + CF_PATH + '/resources/image/Polaris/btn_search_id'+ imagepath +'.png">'/*, events.user.userRemove*/);
+					$a.tclick(settings.click, events.user.userRemove);
+					
+					$span.append($a);
+
+					$input.children().last().before($span);
+					if(!count) {
+						$input.removeClass('bd_none').removeClass('showLabel'); 
+					} 
+					if(settings.layout == 'panel'){
+						$(document).trigger('resize', settings.selector.input.parent().height());
+					}
+				},
+				'userRemove' : function() {
+					var arg = arguments;
+					var settings = this.data('settings');
+					if(settings.type == 'default') {
+						return;
+					}
+					settings.usercnt--;
+
+					arg[0].remove();
+					if(!settings.selector.input.children('span').length) {
+						settings.selector.input.addClass('bd_none');
+						if(!settings.selector.input.find('textarea').val().length) {
+							settings.selector.input.addClass('showLabel');
+						}
+						if(settings.agent) {
+							settings.selector.input.find('textarea').css('height', '53px');
+						}
+					}
+					var $textarea = settings.selector.input.children('textarea');
+					setTimeout(function(){ 
+						if(!settings.selector.input.hasClass('focus')) {
+							$textarea.focus(); 
+						}
+					}, 200);
+				
+					if(settings.layout == 'panel') {
+						$(document).trigger('resize', settings.selector.input.parent().height());
+					}
+				},
+				'userLabelChange' : function() {
+					if(this.hasClass("bd_none")) {
+						if(this.hasClass('showLabel')) {
+							if(this.children('textarea').val().length) {
+								this.removeClass('showLabel');
+							}
+						} else {
+							if(!this.children('textarea').val().length) {
+								this.addClass('showLabel');
+							}
+						}
+					}
+				}, 
+				'userCancel' : function() {
+					var settings = this.data('settings');
+					if(settings.type == 'default') {
+						return;
+					}
+					var $select = settings.selector.search.find("ul > li.selected");
+					var $input = settings.selector.input.find('textarea');
+					if($select.length) {
+						$select.removeClass('selected');
+					}
+					$input.val('');
+					if((settings.agent && !settings.selector.input.hasClass('bd_none')) || !settings.agent) {
+						$input.css("height", '17px');
+					} else {
+						$input.css("height", '53px');
+					}
+					
+					settings.handle.searchboxHide.apply(settings.selector.search);
+				}
+			},
+			'searchbox' : {
+				'searchboxHide' : function() {
+					this.addClass('off');
+				},
+				'searchboMove' : function(isUp) {
+					if(this.hasClass("off")) {
+						return;
+					} else {
+						var $prev = this.find("ul > li.selected");
+						$prev.removeClass('selected');
+						var $newLi;
+						var change = false;
+						if(isUp) {
+							$newLi = $prev.prev();
+							if($newLi.length) {
+								$newLi.addClass('selected');
+							} else {
+								$newLi = this.find("ul > li:last").addClass("selected");
+								change = true;
+							}
+						} else {
+							$newLi = $prev.next();
+							if($newLi.length) {
+								$newLi.addClass('selected');
+							} else {
+								$newLi = this.find("ul > li:first").addClass("selected");
+								change = true;
+							}
+						}
+						var $ul = this.children('ul');
+						var ulScrollHeight = $ul.prop('scrollHeight');
+						var height = $ul.height();
+						if (ulScrollHeight > height) {
+							var curTop = $newLi.prop('offsetTop');
+							var scrollTop = $ul.scrollTop() - 2;
+							if(change) {
+								$ul.scrollTop(curTop);
+							} else {
+								if (isUp) {
+									if(curTop <= scrollTop) {
+										$ul.scrollTop(curTop - height);
+									}
+								} else {
+									if(curTop >= scrollTop + height) {
+										$ul.scrollTop(curTop);
+									}
+								}
+							}
+						}
+					}
+				},
+				'searchboxShow' : function() {
+					var arg = arguments;
+					var list = arg[0];
+					var text = $.trim(arg[1]).toLowerCase();
+					var $ul = $('<ul />');
+					var count = 0;
+					this.children().remove();
+					if(!text.length) {
+						this.addClass('off');
+						return;
+					}
+					var settings = this.parents('.ad').data('settings');
+					var type = 'pc';
+					var event = null;
+					if(settings.click) {
+						type = 'mobile';
+						event = events.searchbox.over;
+					}
+					for(var i=0; i< list.length; i++) {
+						if(typeof list[i].n == 'undefined') {
+							list[i].n = list[i].e;
+						}
+						var name = list[i].n.toLowerCase();
+						var email = list[i].e.toLowerCase();
+						var noSpaceName = name.replace(/ /g,"");
+						var image ='', isAppend = false;
+						var $li, $spanImg, $spanName, $spanPoimg, nameText, emailText;
+						
+						nameText = list[i].n;
+						emailText = list[i].e;	
+						
+						if(email.indexOf(text) != -1) {
+							emailText = email.split(text).join('<strong>' + text + '</strong>');
+							isAppend = true;
+						}
+						
+						if(name.length) {
+							if(name.indexOf(text) != -1) {
+								var subArray = name.split(text);
+								var length = text.length;
+								nameText="", index = 0;
+								for(var j = 0; j < subArray.length; j++) {
+									nameText += list[i].n.substr(index, subArray[j].length);
+									nameText += '<strong>' + list[i].n.substr(index + subArray[j].length, length) + '</strong>';
+									index += subArray[j].length + length;
+								}
+								isAppend = true;
+							} else if(noSpaceName.indexOf(text) != -1) {
+								isAppend = true;
+							} else if(text.length == 1 && common.reghang.test(text)) {	
+								if (common.checkHang(name[0], text)) {
+									isAppend = true;
+								}
+							}
+						}
+						if(isAppend) {
+							count++;
+							var userInfo = {
+									'id' : list[i].id,
+									'n' : list[i].n,
+									'e' : list[i].e,
+									'uid' : list[i].uid,
+									'lst' : list[i].lst
+							};
+
+							$li = $('<li />', {
+								/*'click': events.user.userAdd,*/
+								'class' : type,
+								'mouseover' : event
+							});
+							$li.tclick(settings.click, events.user.userAdd);
+							
+							$li.data("UserInfo", userInfo);
+							
+							var myimgSrc, plink;
+							if(list[i].uid) {
+								myimgSrc = '/api/1/account/download/portrait/' + list[i].uid + '?' + getTime();
+								plink = '';
+							} else {
+								myimgSrc = CF_PATH + '/maxage1/common/img/socket/no_thum.png';
+								plink = 'off';
+							}
+						
+							$spanimg = layout.element.span('img', '', '<img src="'+ myimgSrc + '" />');
+							var $bg = layout.element.span('bg', '', ''); 
+							$spanPoimg = layout.element.span('polaris ' + plink, '', '<img src="' + CF_PATH + '/resources/image/Polaris/new/msg/link_check.png" />');
+							$spanName = layout.element.span('name', list[i].n , nameText);
+							$spanEmail = layout.element.span('email', list[i].e , emailText);
+							
+							$ul.append($li.append($spanimg).append($bg).append($spanPoimg).append($spanName).append($spanEmail));
+						}
+					}
+					if(count) {
+						this.append($ul);
+						this.removeClass('off');
+						$ul.children(':first').addClass('selected');
+					} else {
+						this.addClass('off');
+					}
+				}
+			}
+	};
+	var btouchstart = false;
+	var btouchmove = false;
+	
+	var events = {
+			'searchbox' : {
+				'over' : function() {
+					var $this = $(this);
+					if(!$this.hasClass("selected")) {
+						var $prev = $this.parent().find("li.selected");
+						$prev.removeClass("selected");
+						$this.addClass("selected");
+					}
+				}	
+			},
+			'close' : function(e) {
+				if(e.preventDefault) e.preventDefault();
+				var $this = $(this);
+				var $root = $this.parents('.ad');
+				$root.sendEmail('close');
+			},
+			'pclose' : function(e) {
+				if(e.preventDefault) e.preventDefault();
+				var $this = $(this);
+				var $root = $this.parents('.ad');
+				$root.sendEmail('close');
+				backPanel();
+				$root.hide();
+			}, 
+			'list' : {
+				'hide' : function(e) {
+					if(e.preventDefault) e.preventDefault();
+					if(e.stopPropagation) e.stopPropagation();
+					var $this = $(this).parents('li');
+					var data = $this.data('UserInfo');
+					var $root = $this.parents('.ad');
+					var settings = $root.data('settings');
+					jsonResponse.hideAddress($root, settings.revision, data);
+				},
+				'show' : function(e) { 
+					if(e.preventDefault) e.preventDefault();
+					if(e.stopPropagation) e.stopPropagation();
+					var $this = $(this).parents('li');
+					var data = $this.data('UserInfo');
+					var $root = $this.parents('.ad');
+					var settings = $root.data('settings');
+					jsonResponse.showAddress($root, settings.revision, data);
+				},
+				'remove' : function(e) {
+					if(e.preventDefault) e.preventDefault();
+					if(e.stopPropagation) e.stopPropagation();
+					var $this = $(this).parents('li');
+					var data = $this.data('UserInfo');
+					var $root = $this.parents('.ad');
+					var settings = $root.data('settings');
+					jsonResponse.removeRecentAddress($root, settings.revision, data);
+				}
+			},
+			'publicShare' : function() {
+				var $this = $(this);
+				var $root = $this.parents('.ad');
+				var settings = $root.data('settings');
+				if(settings.isPublic) {
+					return;
+				}
+				if(settings.type == 'task' && settings.owner) {
+					jsonResponse.setFile($this, settings.fileId[0], true);
+				} else {
+					settings.isPublic = true;
+					$this.parent().nextAll('p').text(LanguagePack.Shared_Public);
+				}
+			},
+			'privateShare' : function() {
+				var $this = $(this);
+				var $root = $this.parents('.ad');
+				var settings = $root.data('settings');
+				if(!settings.isPublic) {
+					return;
+				}
+				if(settings.type == 'task' && settings.owner) {
+					jsonResponse.setFile($this, settings.fileId[0], false);
+				} else {
+					settings.isPublic = false;
+					$this.parent().nextAll('p').text(LanguagePack.Shared_Private);
+				}
+			},
+			'send' : function(e) {
+				if(e.preventDefault) e.preventDefault();
+				var $this = $(this);
+				var $root = $this.parents('.ad');
+				var settings = $root.data('settings');
+				
+				if(settings.type == 'default') {
+					$root.sendEmail('close');
+				} else {
+					if(settings.type == 'weblink') {
+						if(settings.selector.input.children('span.wrong').length) {
+							toastMessage(LanguagePack.TEAM_MSG_WARRING_SAVE3);
+							return;
+						} 
+					}
+					
+					var $textarea = settings.selector.input.children('textarea');
+					if($textarea.val()) {
+						settings.handle.userAdd.apply($root, [true, $textarea.val()]);
+					}
+					var $list = settings.selector.input.children('span.right');
+					var data = [];
+					if(!$list.length && settings.type == 'weblink') {
+						$root.sendEmail('close');
+						return;
+					}
+					if(!$list.length) {
+						var popupMessage = new Array();
+						popupMessage[0] = LanguagePack.POPUP_ENTEREMAILADDR;
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {popupMessage:popupMessage}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+						popup.create();
+						popup.show();
+						return; 
+					}
+					for(var i=0; i< $list.length; i++) {
+						data.push($list.eq(i).data('UserInfo'));
+					}
+					if(settings.type  == 'share') {
+						$root.sendEmail('share', data);
+					} else if(settings.type == 'task') {
+						$root.sendEmail('task', data);
+					} else if(settings.type == 'invite') {
+						$root.sendEmail('invite', data);
+					} else if(settings.type == 'weblink') {
+						$root.sendEmail('weblink', data);
+					}
+				}
+			},
+			'tabShow' : function(e) {
+				if(e.preventDefault) e.preventDefault();
+				var $this = $(this);
+				var $root = $this.parents('.ad');
+				var settings = $root.data('settings');
+				var first = true; 
+				
+				if($this.hasClass('on')) {
+					return; 
+				} else {
+					var className;
+					var $prev = $this.parent().children('.on').removeClass('on');
+					var $seletor;
+					$this.addClass('on');
+					
+					if($prev.hasClass('default')) {
+						className = '.default';
+					} else if($prev.hasClass('recent')) {
+						className = '.recent';
+					} else if($prev.hasClass('hideA')) {
+						className = '.hideA';
+					} else if($prev.hasClass('gmail')) {
+						className = '.gmail';
+					}	
+					settings.selector.bx.children(className).addClass('off');
+					
+					if($this.hasClass('default')) {
+						className = '.default';
+					} else if($this.hasClass('recent')) {
+						className = '.recent';
+					} else if($this.hasClass('hideA')) {
+						className = '.hideA';
+					} else if($this.hasClass('gmail')) {
+						className = '.gmail';
+					}	
+					
+					$seletor = settings.selector.bx.children(className);
+					if($seletor.hasClass('init')) {
+						settings.handle.bxAdd.apply($seletor, [settings.json]);
+						if(className != '.gmail') {
+							$seletor.removeClass('init');
+						}
+					}
+					$seletor.removeClass('off');
+				}
+			},
+			'user' : {
+				'userAdd' : function(e) {
+					if(e.preventDefault) e.preventDefault();
+					var $this = $(this);
+					var $root = $this.parents('.ad');
+					var settings = $root.data('settings');
+					settings.handle.userAdd.apply($root, [false, $this, true]);
+				},
+				'userRemove' : function(e) {
+					if(e.preventDefault) e.preventDefault();
+					var $this = $(this);
+					var $root = $this.parents('.ad');
+					var settings = $root.data('settings');
+					settings.handle.userRemove.apply($root, [$this.parent()]);
+				},
+				'blur' : function() {
+					var $this = $(this);
+					setTimeout(function() {
+						var $root = $this.parents('.ad');
+						var settings = $root.data('settings');
+						settings.handle.searchboxHide.apply(settings.selector.search);
+						settings.selector.input.removeClass('focus');
+					},200);
+				},
+				'focus' : function() {
+					var $this = $(this);
+					var $root = $this.parents('.ad');
+					var settings = $root.data('settings');
+					if($this.val().length) {
+						var getList = [];
+						getList = common.getAddressInfo(settings.json);
+						if(settings.type != 'weblink') {
+							var getList2 = common.getAddressInfo(settings.gmailjson);
+							for(var i=0; i < getList2.length; i++) {
+								getList.push(getList2[i]);
+							}
+						}
+						if(getList.length) {
+							if(settings.searchtext !=  $this.val()) {
+								settings.searchtext = $this.val();
+								settings.handle.searchboxShow.apply(settings.selector.search, [getList, settings.searchtext]);
+							} else {
+								settings.selector.search.removeClass('off'); 
+								settings.selector.search.children('ul').children('.selected').removeClass('selected');
+								settings.selector.search.children('ul').children(':first').addClass('selected');
+								return;
+							}
+						}	
+					}
+					settings.selector.input.addClass('focus');
+				},
+				'keyup' : function(e) {
+					if(e.stopPropagation) e.stopPropagation();
+
+					var $this = $(this);
+					var $root = $this.parents('.ad');
+					var settings = $root.data('settings');
+					var getList = [];
+
+					switch(e.keyCode) {
+					case 8:
+						if((settings.agent && !settings.selector.input.hasClass('bd_none')) || !settings.agent) {
+							var width = $this.css("width");
+							var height = common.textAreaLineCheck($this.val(), $this.attr("rows"), width.substring(0, width.length-2));
+							if(height) {
+								$this.css("height", height);
+							}
+						}
+						getList = common.getAddressInfo(settings.json);
+						if(settings.type != 'weblink') {
+							var getList2 = common.getAddressInfo(settings.gmailjson);
+							for(var i=0; i < getList2.length; i++) {
+								getList.push(getList2[i]);
+							}
+						}
+						break;
+					case 27:
+						if($this.val().length) {
+							settings.handle.userCancel.apply($root);
+						}
+						break;
+					case 186:
+					case 13:
+						if(e.preventDefault) e.preventDefault();
+						var text = $this.val();
+						$this.val(text.substr(0,text.length-1));
+						text = text.replace(';', '');
+						text = $.trim(text); 	
+						if(!common.checkEmailType(text)) {
+							toastMessage(LanguagePack.BUBBLE_ENTEREMAILFORMAT);
+							return;
+							/*imagepath = '_wrong';
+							checkReuslt = 'wrong';*/
+						} else {
+							settings.handle.userAdd.apply($root, [true, $this.val()]);
+						}
+						
+						
+						break;
+					case 38:
+						settings.handle.searchboMove.apply(settings.selector.search, [true]);
+						break;
+					case 40:
+						settings.handle.searchboMove.apply(settings.selector.search, [false]);
+						break;
+					default:
+						if($this.val().length) {
+							if((settings.agent && !settings.selector.input.hasClass('bd_none')) || !settings.agent) {
+								var width = $this.css("width");
+								var height = common.textAreaLineCheck($this.val(), $this.attr("rows"), width.substring(0, width.length-2));
+								if(height) {
+									$this.css("height", height);
+								}
+							}
+							getList = common.getAddressInfo(settings.json);
+							if(settings.type != 'weblink') {
+								var getList2 = common.getAddressInfo(settings.gmailjson);
+								for(var i=0; i < getList2.length; i++) {
+									getList.push(getList2[i]);
+								}
+							}			
+						}
+					}
+					settings.handle.userLabelChange.apply(settings.selector.input);
+					
+					if(getList.length) {
+						if(settings.searchtext !=  $this.val()) {
+							settings.searchtext = $this.val();
+							settings.handle.searchboxShow.apply(settings.selector.search, [getList, settings.searchtext]);
+						} else {
+							settings.selector.search.removeClass('off'); 
+							settings.selector.search.children('ul').children('.selected').removeClass('selected');
+							settings.selector.search.children('ul').children(':first').addClass('selected');
+							return;
+						}
+					}
+				}
+			},
+			'weblink': {
+				'keyup' : function(e) {
+					if(e.stopPropagation) e.stopPropagation();
+
+					var $this = $(this);
+					if($this.val().length > 1000) {
+						toastMessage(LanguagePack.TOAST_LIMITEDSIZE);
+						$this.blur(); 
+						$this.val($this.val().substring(0,1000)); 
+						$this.focus(); 
+					}
+					var $root = $this.parents('.ad');
+					var settings = $root.data('settings');
+					if($this.val().length) {
+						$this.prev().addClass("off");
+					} else {
+						$this.prev().removeClass("off");
+					}
+					settings.handle.messageboxCount.apply(settings.selector.message.find('p > span'), [$this.val().length]);
+				}
+			},
+			'touchstart' : function() {
+				btouchstart = true;		
+			},
+			'touchmove' : function() {
+				btouchmove = true;
+			}
+	};
+	
+	var jsonResponse = {
+			'getAddressRevision' : function() {
+				var arg = arguments;
+				popcorn.getAddressRevision(function(res) { jsonReceive.getAddressRevision.onSuccessCB(res, arg[0]); } , function(res){});
+			},
+			'hideAddress' : function() {
+				var arg = arguments;
+				var webdata  = { 
+						'r' : arg[1],
+						'l' : [arg[2].id]
+				};
+				popcorn.hideAddress(webdata, function(res) { jsonReceive.hideAddress.onSuccessCB(res, arg[0], arg[2]); } , function(res){});
+			},
+			'showAddress' : function() {
+				var arg = arguments;
+				var webdata  = { 
+						'r' : arg[1],
+						'l' : [arg[2].id]
+				};
+				popcorn.showAddress(webdata, function(res) { jsonReceive.showAddress.onSuccessCB(res, arg[0], arg[2]); } , function(res){});
+			},
+			'removeRecentAddress' : function() {
+				var arg = arguments;
+				var webdata  = { 
+						'r' : arg[1],
+						'l' : [arg[2].id]
+				};
+				popcorn.removeRecentAddress(webdata, function(res) { jsonReceive.removeRecentAddress.onSuccessCB(res, arg[0], arg[2]); } , function(res){});
+			},
+			'getAddress' : function() {
+				var arg = arguments;
+				var webdata  = { 
+						'r' : arg[1],
+						'p' : arg[2],
+						'c' : arg[3]
+				};
+				popcorn.getAddressList(webdata, function(res) { jsonReceive.getAddress.onSuccessCB(res, arg[0], arg[2]); } , function(res){});
+			},
+			'getChangeAddress' : function() {
+				var arg = arguments;
+				var webdata  = { 
+						'r' : arg[1]
+				};
+				popcorn.getAddressChangeList(webdata, function(res) { jsonReceive.getChangeAddress.onSuccessCB(res, arg[0]); } , function(res){});
+			},
+			'shareFile' : function() {
+				var arg = arguments;
+				var webdata = { 
+						"name" : arg[1],
+						"attendanceList" : arg[2],
+						"fileList" : arg[3],
+						"isPublic" : arg[4]
+				};
+				popcorn.pCreateShareTask(webdata, function(res) { jsonReceive.shareFile.onSuccessCB(res, arg[0], arg[2]); } , function(res){});
+			},
+			'taskFile' : function() {
+				var arg = arguments;
+				var webdata = { 
+						"attendanceList" : arg[1],
+						"id" : arg[2]
+				};
+				popcorn.AddAttendance(webdata, function(res) { jsonReceive.taskFile.onSuccessCB(res, arg[0]); } , function(res){});
+			},
+			'invite' : function() {
+				var arg = arguments;
+				var webdata = { 
+						"emailList" : arg[1]
+				};
+				popcorn.sendInvitation(webdata, function(res) { jsonReceive.invite.onSuccessCB(res, arg[0], arg[2]); } , function(res){});
+			},
+			'weblink' : function() {
+				var arg = arguments;
+				var webdata = { 
+						"weblinkIdList" : [arg[1]],
+						"attendanceList" : arg[2],
+						"body" : arg[3],
+						'locationList' : arg[5]
+				};
+				popcorn.sendMailToWeblink(webdata, function(res) { jsonReceive.weblink.onSuccessCB(res, arg[0], arg[4]); } , function(res){});
+			},
+			'setFile' : function() {
+				var arg = arguments;
+				var webdata = { 
+						"id" : arg[1],
+						"isPublic" : arg[2]
+				};
+				TaskAPI.setTaskUpdate(webdata, function(res) { jsonReceive.setFile.onSuccessCB(res, arg[0], arg[2]); } , function(res){});
+			}
+	};
+	
+	var jsonReceive = {
+			'getAddressRevision' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					if(CheckResult(null, arg[0])) {
+						arg[1].sendEmail('reset');
+						var settings = arg[1].data('settings');
+						settings.revision = arg[0].r;
+						if(!arg[0].c) {
+							return;
+						} else {
+							settings.page = Math.ceil(arg[0].c/settings.limit);
+							jsonResponse.getAddress(arg[1],settings.revision, 1, settings.limit);
+						}
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			},
+			'hideAddress' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					if(arg[0].resultCode) {
+						if(!CheckResult(null, arg[0])) {
+							return;
+						}
+					} else {
+						var settings = arg[1].data('settings');
+						settings.revision = arg[0].r;
+						arg[2].sh = false;
+						arg[1].sendEmail('updateJson', [arg[2]]);
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			},
+			'showAddress' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					if(arg[0].resultCode) {
+						if(!CheckResult(null, arg[0])) {
+							return;
+						}
+					} else {
+						var settings = arg[1].data('settings');
+						settings.revision = arg[0].r;
+						arg[2].sh = true;
+						arg[1].sendEmail('updateJson', [arg[2]]);
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			},
+			'removeRecentAddress' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var settings = arg[1].data('settings');
+					if(arg[0].resultCode) {
+						if(!CheckResult(null, arg[0], settings.agent)) {
+							return;
+						}
+					} else {
+						settings.revision = arg[0].r;
+						arg[2].lst = 0;
+						arg[1].sendEmail('updateJson', [arg[2]]);
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			},
+			'getAddress' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					if(arg[0].resultCode) {
+						if(!CheckResult(null, arg[0])) {
+							return;
+						}
+						jsonResponse.getAddressRevision(arg[1]);
+					} else {
+						var settings = arg[1].data('settings');
+						for(var i=0; i< arg[0].l.length; i++) {
+							settings.json.push(arg[0].l[i]);
+						}
+						var $seletor = settings.selector.bx.children('.default');
+						if(!$seletor.hasClass('init')) {
+							$seletor = settings.selector.bx.children('.bx_scroll');
+							var length;
+							if(settings.agent) {
+								length = $seletor.length;
+							} else {
+								length = $seletor.length-1;
+							}
+							for(var i= 0; i < length; i++) {
+								var $this = $seletor.eq(i);
+								if(!$this.hasClass('init')) {
+									settings.handle.bxAdd.apply($this, [arg[0].l]);
+								}
+							}
+						} else {
+							settings.handle.bxAdd.apply($seletor, [arg[0].l]);
+							$seletor.removeClass('init');
+							arg[1].removeClass('init');
+						}
+						if(arg[2] != settings.page) {
+							jsonResponse.getAddress(arg[1], settings.revision, arg[2] + 1, settings.limit);
+						}
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			},
+			'getChangeAddress' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					if(CheckResult(null, arg[0])) {
+						var settings = arg[1].data('settings');
+						if(arg[0].r) {
+							settings.revision = arg[0].r;
+							arg[1].sendEmail('updateJson', arg[0].l);
+						}
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			},
+			'shareFile' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var settings = arg[1].data('settings');
+					if(CheckResult(null, arg[0], settings.agent)) { 
+						var text;
+						if (arg[2].length == 1) {
+							if(arg[2][0].name && arg[2][0].name != arg[2][0].email) {
+								text = LanguagePack.TOAST_SENDDOC(arg[2][0].name, arg[2][0].email);
+							} else {
+								text = LanguagePack.TOAST_SENDDOC_NONAME(arg[2][0].email);
+							}	
+						} else {
+							if(arg[2][0].name && arg[2][0].name != arg[2][0].email) {
+								text = LanguagePack.TOAST_SENDDOC_NPERSONS(arg[2][0].name, arg[2][0].email, arg[2].length -1);
+							} else {
+								text = LanguagePack.TOAST_SENDDOC_NPERSONS_NONAME(arg[2][0].email, arg[2].length -1);
+							}
+						}
+						if(!settings.agent) {
+							toastMessage(text);
+						}
+						
+						if(settings.layout == 'panel') {
+							if (settings.onSuccsssCB) settings.onSuccsssCB.call(this, arg[0].id);
+						} else {
+							if (settings.onSuccsssCB) settings.onSuccsssCB.call(this, text);
+						}
+						if(!settings.agent) {
+							arg[1].sendEmail('close');
+						}
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			},
+			'taskFile' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var settings = arg[1].data('settings');
+					if(CheckResult(null, arg[0], settings.agent)) {
+						var text;
+						if(!arg[0].attendanceList.length) {
+							text = LanguagePack.DUPLICATE_INVITE;
+						} else if (arg[0].attendanceList.length == 1) {
+							if(arg[0].attendanceList[0].name && arg[0].attendanceList[0].name != arg[0].attendanceList[0].email) {
+								text = LanguagePack.TOAST_INVATEFRIENDMASSAGE(arg[0].attendanceList[0].name, arg[0].attendanceList[0].email);
+							} else {
+								text = LanguagePack.TOAST_INVATEFRIENDMASSAGENONAME(arg[0].attendanceList[0].email);
+							}	
+						} else {
+							if(arg[0].attendanceList[0].name && arg[0].attendanceList[0].name != arg[0].attendanceList[0].email) {
+								text = LanguagePack.TOAST_INVATEFRIENDSMASSAGE(arg[0].attendanceList[0].name, arg[0].attendanceList[0].email, arg[0].attendanceList.length -1);
+							} else {
+								text = LanguagePack.TOAST_INVATEFRIENDSMASSAGENONAME(arg[0].attendanceList[0].email, arg[0].attendanceList.length -1);
+							}
+						}
+						if(!settings.agent) {
+							toastMessage(text);  
+						}
+						if (settings.onSuccsssCB) settings.onSuccsssCB.call(this, {'text' : text , 'count' : arg[0].attendanceList.length});
+						if(!settings.agent) {
+							arg[1].sendEmail('close');
+						}
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			},
+			'invite' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var text;
+					if(CheckResult(null, arg[0])) {
+						if(arg[0].duplicatedList) {
+							var count = arg[2].length - arg[0].duplicatedList.length;
+							if(count == 0) {
+								text = LanguagePack.POPUPEXISTEMAILUSERINVITE;
+							} else {
+								text = LanguagePack.POPUPMAILUSERINVITE(count);
+							}
+						} else if(arg[2].length == 1) {
+							if(arg[2][0].n && arg[2][0].n != arg[2][0].e) {
+								text = LanguagePack.TOAST_INVATEFRIENDMASSAGE(arg[2][0].n, arg[2][0].e, arg[2].length -1);
+							} else {
+								text = LanguagePack.TOAST_INVATEFRIENDMASSAGENONAME(arg[2][0].e, arg[2].length -1);
+							}
+						} else {
+							if(arg[2][0].n && arg[2][0].n != arg[2][0].e) {
+								text = LanguagePack.TOAST_INVATEFRIENDSMASSAGE(arg[2][0].n, arg[2][0].e, arg[2].length -1);
+							} else {
+								text = LanguagePack.TOAST_INVATEFRIENDSMASSAGENONAME(arg[2][0].e, arg[2].length -1);
+							}
+						}
+						toastMessage(text);
+						arg[1].sendEmail('close');
+					} else {
+						text = LanguagePack.KEYWORD_FAILINVITE;
+						toastMessage(text);
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			},
+			'weblink' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					if(CheckResult(null, arg[0])) {
+						var text;
+						if(arg[2].length == 1) {
+							if(arg[2][0].n && arg[2][0].n != arg[2][0].e) {
+								text = LanguagePack.TOAST_SENDWEBLINK(arg[2][0].n, arg[2][0].e);
+							} else {
+								text = LanguagePack.TOAST_SENDWEBLINK_NONAME(arg[2][0].n);
+							}
+						} else {
+							if(arg[2][0].n && arg[2][0].n != arg[2][0].e) {
+								text = LanguagePack.TOAST_SENDWEBLINK_NPERSONS(arg[2][0].n, arg[2][0].e, arg[2].length-1);
+							} else {
+								text = LanguagePack.TOAST_SENDWEBLINK_NPERSONS_NONAME(arg[2][0].e, arg[2].length-1);
+							}
+						}
+						toastMessage(text);
+						arg[1].sendEmail('close');
+					} else {
+						if(arg[0].resultCode == 161) {
+							toastMessage(LanguagePack.TEAM_MSG_WARRING_SAVE3);
+							if(arg[0].deniedList.length) {
+								var $root = arg[1];
+								var settings = $root.data('settings');
+								var $user = settings.selector.input.children('span.right');
+								for(var i=0; i < arg[0].deniedList.length; i++) {
+									for(var j=0; j < $user.length; j++) {
+										var $span = $user.eq(j);
+										var data = $span.data('UserInfo');
+										if(data.e.toLowerCase() == arg[0].deniedList[i].email.toLowerCase()) {
+											$span.removeClass('right').addClass('wrong');
+											$span.children('a').children('img').attr('src', CF_PATH + '/resources/image/Polaris/btn_search_id_wrong.png');
+											break;
+										}
+									}
+								}
+							} else {
+								if(arg[0].notAllowedEmail.length) {
+									var $root = arg[1];
+									var settings = $root.data('settings');
+									var $user = settings.selector.input.children('span.right');
+									for(var i=0; i < arg[0].notAllowedEmail.length; i++) {
+										for(var j=0; j < $user.length; j++) {
+											var $span = $user.eq(j);
+											var data = $span.data('UserInfo');
+											if(data.e.toLowerCase() == arg[0].notAllowedEmail[i].toLowerCase()) {
+												$span.removeClass('right').addClass('wrong');
+												$span.children('a').children('img').attr('src', CF_PATH + '/resources/image/Polaris/btn_search_id_wrong.png');
+												break;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				'onFailCB' : function() {
+				}
+			},
+			'setFile' : {
+				'onSuccessCB' : function() {
+					var arg = arguments;
+					var settings = arg[1].parents('.ad').data('settings')
+					if(CheckResult(null, arg[0], settings.agent)) {
+						settings.isPublic = arg[2];
+						var str = LanguagePack.Shared_Private;
+						var message = LanguagePack.UPDATEPERMISSION_CLOSED;
+						if(arg[2]) {
+							str = LanguagePack.Shared_Public;
+							message = LanguagePack.UPDATEPERMISSION_OPEN;
+						} 
+						if(settings.onSetFileCB) settings.onSetFileCB.call(this, arg[2]);
+						arg[1].parent().nextAll('p').text(str);
+						toastMessage(message);
+					}
+				},
+				'onFailCB' : function() {
+					
+				}
+			}
+	};
+	
+	var common = {
+			'checkEmailType' : function(text) {
+				var regtest = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/; 
+				if(text.length < 6 ||text.search(regtest) == -1) {
+					return false;         
+				}
+				return true;
+			},
+			'getJsonIndex' : function(array, id) {
+				for(var i=0; i < array.length; i++) {
+					if(array[i].id == id) {
+						return i;
+					}
+				}
+				return -1;
+			},
+			'getAddressInfo': function(list) {
+				var count = 0;
+				/*var prevOneMonthTime = common.getPrevMonthUnixTime(1);*/
+				var newList = [];
+				for (var i=0; i < list.length; i++) {
+					var friendinfo = list[i];
+					var ispolarisEmail;
+					var append = false; 
+					
+					if(typeof friendinfo.sh == 'undefined' || friendinfo.sh) {
+						append = true;
+					} else if(friendinfo.lst) {
+						append = true;
+					}
+					
+					if(append) {
+						newList.push({"id": friendinfo.id, "n":friendinfo.n, "e": friendinfo.e, "uid" : friendinfo.uid, 'lst' : friendinfo.lst});
+					}
+				}
+				return newList;
+			},
+			'getShowList' : function(list) {
+				var newList = [];
+				for(var i=0; i< list.length; i++) {
+					var info = list[i];
+					if(typeof info.sh == 'undefined' || info.sh) {
+						newList.push(info);
+					} 
+				}
+				return newList;
+			},
+			'getHideList' : function(list) {
+				var newList = [];
+				for(var i=0; i< list.length; i++) {
+					var info = list[i];
+					if(typeof info.sh != 'undefined' && !info.sh) {
+						newList.push(info);
+					}
+				}
+				return newList;
+			},
+			'getRecentlyList' : function(list) {
+				var newList = [];
+				for(var i=0; i< list.length; i++) {
+					var data = {
+							'e' : '',
+							'n' : '',
+							'lst' : 0,
+							'id' : '',
+							'uid' : null
+					};
+					var info = list[i];
+					if(info.lst) {
+						data.e = info.e;
+						data.n = info.n;
+						data.lst = info.lst;
+						data.id = info.id;
+						data.uid = info.uid;
+						newList.push(data);
+					}
+				}
+				return newList;
+			},
+			'getGmailList' : function(selector) {
+				if(ischina=='false') {
+					return gmail.handleClientLoad(selector);
+				}
+				return [];
+			},
+			'changeGmail' : function(list) {
+				var newList = [];
+				for(var i=0; i< list.length; i++) {
+					if(list[i].gd$email) {
+						var innerList = list[i].gd$email;
+						for(var y=0; y<innerList.length; y++) {
+							var data = {
+									'e' : '',
+									'n' : '',
+									'lst' : 0,
+									'id' : null,
+									'uid' : null
+							};
+							data.e = innerList[y].address;
+							if(list[i].title && list[i].title.$t.length) {
+								data.n = list[i].title.$t;
+							} else {
+								data.n = data.e;
+							}
+							newList.push(data);
+						}
+
+/*
+						var data = {
+								'e' : '',
+								'n' : '',
+								'lst' : 0,
+								'id' : null,
+								'uid' : null
+						};
+						data.e = list[i].gd$email[0].address;
+						if(list[i].title && list[i].title.$t.length) {
+							data.n = list[i].title.$t;
+						} else {
+							data.n = data.e;
+						}
+						newList.push(data);
+*/					}
+				}
+				return newList;
+			},
+			/*'getPrevMonthUnixTime' : function(prevMonth) {
+				var date = new Date();
+				date.setMonth(date.getMonth() - prevMonth); 
+				return Math.floor(date.getTime() / 1000);
+			}, */
+			'textAreaLineCheck' : function(text, rows, textSize) {
+				var value = $("#hidespan").text(text).width();
+				var threshold = textSize;
+				var maxRows = 4;
+				if( value == 0 ) {
+					return 17;
+				} else {
+					var result = Math.ceil(value / threshold);
+					if( rows != result ) {
+						if( result < maxRows ) {
+							return result * 17;
+						} else {
+							return maxRows * 17;
+						}
+					}
+				}
+				return 0;
+			},
+			'checkHang' : function(first, text) {
+				var CompleteCode = first.charCodeAt(0);
+				var UniValue = CompleteCode - 0xAC00;
+				var Jong = UniValue % 28;
+				var Jung = ( ( UniValue - Jong ) / 28 ) % 21;
+				var Cho = parseInt (( ( UniValue - Jong ) / 28 ) / 21);
+
+				for(var i=0; i < this.array.ko.length; i++) {
+					if(text == this.array.ko[i]) {
+						if(Cho == i) {
+							return true;
+						} else {
+							return false;
+						}
+					}
+				}
+				var CompleteCode2 = text.charCodeAt(0);
+				var UniValue2 = CompleteCode2 - 0xAC00;
+				var Jong2 = UniValue2 % 28;
+				var Jung2 = ( ( UniValue2 - Jong2 ) / 28 ) % 21;
+				var Cho2 = parseInt (( ( UniValue2- Jong2 ) / 28 ) / 21);
+
+				if(Cho == Cho2 && Jung == Jung2 && Jong == Jong2) {
+					return true;
+				}
+				return false;
+			},
+			'getEmailIndex' : function(text, locale) {
+				text = $.trim(text);
+				var engcheck = /^[a-zA-Z]+$/;
+				var numcheck = /^[0-9]+$/;
+				if(locale == "ja_JP") {
+					if(!text.length) {
+						return 52;
+					} 
+					var firstName = text[0].toUpperCase();
+					for(var i=0; i< this.array.ja.length; i++) {
+						if(firstName == this.array.ja[i]) {
+							if(i < 5) {
+								return 0;
+							} else if(i < 10) {
+								return 1;
+							} else if(i < 15) {
+								return 2;
+							} else if(i < 20) {
+								return 3;
+							} else if(i < 25) {
+								return 4;
+							} else if(i < 30) {
+								return 5;
+							} else if(i < 35) {
+								return 6;
+							} else if(i == 35) {
+								return 7;
+							} else if(i < 41) {
+								return 8;
+							} else if(i < 46) {
+								return 9;
+							} else if(i < 51) {
+								return 10;
+							} else if(i < 56) {
+								return 11;
+							} else if(i < 61) {
+								return 12;
+							} else if(i < 64) {
+								return 13;
+							} else if(i < 69) {
+								return 14;
+							} else if(i < 72) {
+								return 15;
+							} 
+						}
+					} 
+					if(engcheck.test(firstName)) {
+						for(var i = 0; i < this.array.en.length; i++) {
+							if(this.array.en[i] == firstName) {
+								return i + 15 + 1;
+							}
+						}
+					} else if(numcheck.test(firstName)){
+						for(var i = 0; i < this.array.num.length; i++) {
+							if(this.array.num[i] == firstName) {
+								return i + 15 + 26 + 1;
+							}
+						}
+					} else {
+						return 52;
+					}
+				} else if(locale == "ko_KR") {
+					if(!text.length) {
+						return 55;
+					} 
+					var firstName = text[0].toUpperCase();
+					
+					if(this.reghang.test(firstName)) {
+						for(var i=0; i< this.array.ko.length; i++) {
+							if(firstName == this.array.ko[i]) {
+								return i;
+							}
+						}
+						var CompleteCode = firstName.charCodeAt(0);
+						var UniValue = CompleteCode - 0xAC00;
+						var Jong = UniValue % 28;
+						var Jung = ( ( UniValue - Jong ) / 28 ) % 21;
+						var Cho = parseInt (( ( UniValue - Jong ) / 28 ) / 21);
+						return Cho;
+					} else if(engcheck.test(firstName)) {
+						for(var i = 0; i < this.array.en.length; i++) {
+							if(this.array.en[i] == firstName) {
+								return i + 18 + 1;
+							}
+						}
+					} else if(numcheck.test(firstName)){
+						for(var i = 0; i < this.array.num.length; i++) {
+							if(this.array.num[i] == firstName) {
+								return i + 18 + 26 + 1;
+							}
+						}
+					} else {
+						return 55;
+					}
+				} else /*if(locale == "en_US")*/ {
+					if(!text.length) {
+						return 36;
+					} 
+					var firstName = text[0].toUpperCase();
+					if(engcheck.test(firstName)) {
+							for(var i = 0; i < this.array.en.length; i++) {
+								if(this.array.en[i] == firstName) {
+									return i;
+								}
+							}
+						} else if(numcheck.test(firstName)){
+							for(var i = 0; i < this.array.num.length; i++) {
+								if(this.array.num[i] == firstName) {
+									return i + 26;
+								}
+							}
+						} else {
+							return 36;
+						}
+				} 
+			},
+			'array' : {
+				'ko' : [ 'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'],
+				'en' : [ 'A', 'B', 'C', 'D','E', 'F','G','H','I','J','K','L','M','N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+				'ja' : [ 'あ', 'か', 'が', 'さ', 'ざ', 'た', 'だ', 'な', 'は', 'ば', 'っ', 'ぱ', 'わ', 'ま', 'や', 'ら'],
+				'num' : ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+			},
+			'reghang' : /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/
+	};
+	
+	var gmail = {
+			'clientId' : '176297166819',
+			'apiKey' : 'AIzaSyDsfY9VDHShNqWxOKLBpxJmNm0A_rauJro',
+			'scopes' : 'https://www.google.com/m8/feeds/contacts/default/full',
+			'apiCallCount' : { countNum: 0 },
+			'isCancelled' : false,
+			'updateCb' : '', 
+			'gmailData' : null,
+			'handleClientLoad' : function(selector) {
+				gmail.isCancelled = false;
+				if(!gmail.selector) {
+					gmail.selector = selector;
+				}
+				if(gmail.gmailData != undefined) {
+					if(gmail.gmailData.feed == undefined) {
+						gmail.checkAuth();
+					} else if(gmail.gmailData.feed.entry.length) {
+						return gmail.gmailData.feed.entry;
+					} else {
+						gapi.client.setApiKey(gmail.apiKey);
+						window.setTimeout(gmail.checkAuth, 1);
+					}
+				} else {
+					gapi.client.setApiKey(gmail.apiKey);
+					window.setTimeout(gmail.checkAuth, 1);
+				}
+				return [];
+			},
+			'checkAuth' : function() {
+				var gmailLocale = LanguagePack.CURRENT_LAN;
+				if(gmailLocale=="jp") gmailLocale="ja";
+
+				gapi.auth.authorize({hl: gmailLocale, client_id: gmail.clientId, scope: gmail.scopes, immediate: true}, gmail.handleAuthResult);
+			},
+			'handleAuthResult' : function(authResult) {
+				if(authResult && !authResult.error) {
+					gmail.makeApiCall(0);
+				} else {
+					gmail.handleAuthClick();
+					gmail.isCancelled = true;
+				}
+			},
+			'handleAuthClick' : function() {
+				if(gmail.isCancelled == false) {
+					gapi.auth.authorize({client_id: gmail.clientId, scope: gmail.scopes, immediate: false}, gmail.handleAuthResult);
+				}
+				return false;
+			},
+			'makeApiCall' : function(apiType, tdIdx, contactId) {
+				var authParams = gapi.auth.getToken(); 
+				authParams.alt = 'json';
+				gmail.isCancelled = false;
+
+				if(apiType == 0 || apiType == null) {
+					try {
+						$.ajax({
+							url: 'https://www.google.com/m8/feeds/contacts/default/full',
+							dataType: 'jsonp',
+							data: authParams,
+							success: function(data) { 
+								gmail.gmailData = data;
+								gmail.selector.sendEmail('showGmail');
+							}
+						});
+					} catch(err) {
+						console.log("DEBUG *************** HTTP HTTPS error", err);
+						gmail.apiCallCount.countNum++;
+						if(gmail.apiCallCount.countNum < 3) {
+							gmail.checkAuth();
+						}
+						else {
+							gmail.apiCallCount.countNum = 0;
+							alert("Sorry. Failed to retrieve gmail contacts info."); 
+						}
+					}
+				}
+			}
+	};
+		
+	$.fn.sendEmail = function(method) {
+		if (sendEmail[method]) {
+			return sendEmail[method].apply(this, Array.prototype.slice.call(arguments, 1));
+		} else if (typeof method === 'object' || !method) {
+			return sendEmail.init.apply(this, arguments);
+		} else {
+			$.error('The method ' + method + ' does not exist in $.uploadify');
+		}
+	};
+	
+	$.fn.tclick = function (mobile, onclick) {
+		if(mobile) {
+			this.bind("touchstart", function (e) { btouchstart = true; });
+			this.bind("touchmove", function (e) { btouchmove = true; });
+			this.bind("touchend", function (e) { if(btouchstart && !btouchmove) onclick.call(this, e); btouchstart = false; btouchmove = false; });   
+			this.bind("click", function (e) { e.stopPropagation(); e.preventDefault(); });   
+		} else {
+			this.bind("click", function (e) { onclick.call(this, e); });   
+		}
+		return this;
+    };
+})($);
+

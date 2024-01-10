@@ -1,0 +1,38 @@
+function ShortLocation({$target, initialState }) {
+    this.$element = document.createElement('ul');
+    this.$element.classList.add("short_loc");
+    $target.appendChild(this.$element)
+  
+    this.state = initialState;
+
+    //insertAdjacentHTML('beforeend',
+    this.render = function() {
+      this.$element.innerHTML = this.state.map(item => {
+            if(item.fileId === -1) return `<li><a href='#' id='root-path'>My Polaris Drive</a></li>`
+            return`<li><a class='paths' data-referenceId='${item.referenceId}' data-id='${item.fileId}'>${item.fileName}</a></li>`
+        }).join('');
+
+        $(".paths").on("click", function(e) {
+            e.preventDefault();
+            if($(this).attr('data-referenceId') !== 'null'){
+                myDrive.getShareFolderList($(this).attr('data-id'))
+            } else {
+                myDrive.getInnerDirList($(this).attr('data-id'));
+            }
+
+        });
+        
+        $("#root-path").on('click', function(e){
+            e.preventDefault();
+            myDrive.getMyDriveList();
+        })
+    }
+  
+    this.setState = function(nextState) {
+      this.state = nextState;
+      this.render()
+    }
+  
+    this.render();
+  }
+  

@@ -1,0 +1,3798 @@
+var xhr = null;
+//var loading;
+var sendAjaxCount = 20;
+var closeAll = false;
+
+var swf = false;
+var flashEnable = true;
+
+var isViewer = false;
+var _gUserInfo = {
+	"email": "",
+	"name": ""
+};
+var folderPathLengthLimit = 255;
+var gSetdocument = true;
+var IsActivity = false;
+var activityID = null;
+var owerid;
+var gisPromotion = false;
+var hasPCOfficeLogin = "false";
+
+if (!String.prototype.includes) {
+	String.prototype.includes = function () {
+		'use strict';
+		return String.prototype.indexOf.apply(this, arguments) !== -1;
+	};
+}
+
+var PCHOMEINFO = function () {
+	this.deviceInfo = {
+		'mobile': {
+			'on': false,
+			'count': 0
+		},
+		'sync': {
+			'on': false,
+			'count': 0
+		},
+		'pc': {
+			'on': false,
+			'count': 0
+		}
+	};
+};
+
+PCHOMEINFO.prototype = {
+	'setDeviceInfo': function (key, value) {
+		if (key == "init") {
+			this.deviceInfo = {
+				'mobile': {
+					'on': false,
+					'count': 0
+				},
+				'sync': {
+					'on': false,
+					'count': 0
+				},
+				'pc': {
+					'on': false,
+					'count': 0
+				}
+			};
+			return;
+		}
+		this.deviceInfo[key].on = value;
+		if (value) {
+			this.deviceInfo[key].count++;
+		}
+
+	},
+	'getDeviceInfo': function (key) {
+		return this.deviceInfo[key];
+	},
+	'getDriveList': function (_CB) {
+		var webdata = {
+			'isGrouping': false
+		};
+		popcorn.getDriveList(webdata, function (res) {
+			if (CheckResult(null, res) != null) {
+				$PCHOMEINFO.setDeviceInfo('init');
+				var len = res.deviceList.length;
+				for (var i = 0; i < len; i++) {
+					var data = res.deviceList[i];
+
+					if (data.type == 'ANDROID_PHONE' || data.type == 'ANDROID_TABLET' || data.type == 'APPLE_IPHONE' || data.type == 'APPLE_IPAD' ||
+						data.type == 'FIRE_PHONE' || data.type == 'FIRE_TABLET') {
+						if (data.on)
+							$PCHOMEINFO.setDeviceInfo('mobile', true);
+					}
+
+					if (data.type == 'PC_AGENT' || data.type == 'MAC' || data.type == 'PC_OFFICE') {
+						if (data.on) {
+							if (data.deviceId.indexOf("#7") >= 0)
+								$PCHOMEINFO.setDeviceInfo('pc', true);
+							else
+								$PCHOMEINFO.setDeviceInfo('sync', true);
+						}
+
+					}
+
+
+				}
+			}
+			if (_CB)
+				_CB(res);
+		}, function (res) {});
+	},
+	'changePopup': function (e, hideTarget, showTarget) {
+		commonPreventEvent(e);
+		commonStopPropagation(e);
+		hideTarget.hide();
+		showTarget.show();
+	}
+};
+
+
+var $PCHOMEINFO = new PCHOMEINFO();
+
+function setPasswordDialog() {
+	var _ischina = false;
+	if (typeof ischina != 'undefined' && ischina == 'true') {
+		_ischina = true;
+	}
+
+	if (_ischina) {
+		openSetInfo(null, 8);
+		return;
+	}
+
+	var popup = new PopupMessage(PopupType.ACCOUNT_DELETION, null, null, {}, function (res) {
+		//if (res.preventDefault) res.preventDefault();
+		setPasswordSocial($('#popup_account_deletion_password').val(), res);
+	}, defaultAlertCB, defaultAlertCB);
+	PopupContentUI.setPasswordStr(LanguagePack.ENTERSERVICEPASSWORD, _ischina);
+	popup.create();
+	popup.show();
+}
+
+function onCloseEventPopup() {
+	$('.popup.million').hide();
+
+	//set cookies
+	var todayDate = new Date();
+	todayDate.setDate(todayDate.getDate() + 1);
+	document.cookie = "100event" + "=" + gUserId + ";expires=" + todayDate.toGMTString() + ";path=/";
+}
+
+function isCookiesValue(_key) {
+	if (getCookie(_key) == gUserId) {
+		return true;
+	}
+	return false;
+}
+
+function setEmail(_email, event, action) {
+	if (event) {
+		commonPreventEvent(event);
+		commonStopPropagation(event);
+	}
+	var errormsg = '';
+
+	if (!_email.length) {
+		errormsg = LanguagePack.BUBBLE_ENTERYOUREMAIL;
+		toastMessage(errormsg);
+		return;
+	} else if (!(/^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/.test(_email))) {
+		errormsg = LanguagePack.BUBBLE_ENTEREMAILFORMAT;
+	}
+	if (_email.lastIndexOf('@') > 63) {
+		errormsg = LanguagePack.BUBBLE_ENTEREMAILFORMAT;
+	}
+	if (errormsg.length) {
+		toastMessage(LanguagePack.BUBBLE_ENTEREMAILFORMAT);
+		return;
+	}
+	var webdata = {
+		type: "EMAIL",
+		email: _email
+	};
+
+	if (!action) var action = function (webdata) {
+		popcorn.Modifyuserinfo(webdata, function (res) {
+			if (CheckResult(null, res) != null) {
+				toastMessage(LanguagePack.CHINAVER_SET_EMAIL);
+				$USERINFO.setData('init');
+				$USERINFO.setData('SETEMAIL', true);
+				setNoti('userinfo', res);
+				defaultAlertCB(event);
+				if (res.applyCoupon) {
+					location.href = location.protocol + '//' + location.host + "/view/complete";
+				}
+			} else if (res.resultCode == Enum.account.EMAILEXIST) {
+				toastMessage(LanguagePack.BUBBLE_USEDEMAIL);
+			} else {
+				toastMessage(LanguagePack.CHINAVER_SET_EMAIL_FAILED);
+			}
+			return;
+
+		}, null);
+	};
+	action(webdata);
+}
+
+function setPasswordSocial(password, event, action) {
+	if (event) {
+		commonPreventEvent(event);
+		commonStopPropagation(event);
+	}
+
+	var errormsg = '';
+	// if(!password.length) {
+	// 	errormsg = LanguagePack.BUBBLE_ENTERPASSWORD;
+	// } else if(password.length < 8 || password.length > 20) {
+	// 	errormsg = LanguagePack.BUBBLE_USEPROPERFORMATFORPASSWORD("8","20");
+	// } else if(password.indexOf(" ") != -1) {
+	// 	errormsg = LanguagePack.POPUP_PASSWORDNOTALLOWED;
+	// } else {
+	// 	var num_pw = password.search(/[0-9]/g);
+	// 	var eng_pw = password.search(/[a-z]/ig);
+	// 	var spe_pw = password.search(/[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi);
+	// 	if(num_pw < 0 || eng_pw < 0 || spe_pw < 0 ){
+	// 		errormsg = LanguagePack.BUBBLE_USEPROPERFORMATFORPASSWORD("8","20");
+	// 	}
+	// }
+
+	errormsg = passwordCheck(password);
+
+	if (errormsg.length > 0) {
+		toastMessage(errormsg);
+		return false;
+	}
+
+
+	var digestpassword = sha256_digest(password);
+	if (!event)
+		return digestpassword;
+	var webdata = {
+		"type": "SETPASSWORD",
+		"newPassword": digestpassword
+	};
+	if (!action) var action = function (webdata) {
+		popcorn.Modifyuserinfo(webdata, function (res) {
+			if (CheckResult(null, res) != null) {
+				toastMessage(LanguagePack.SETPASSWORD);
+				$USERINFO.setData('init');
+				setNoti('userinfo', res);
+				defaultAlertCB(event);
+				if (res.applyCoupon) {
+					location.href = location.protocol + '//' + location.host + "/view/complete";
+				}
+				var url = getRedirectURL();
+				if (url && url.indexOf("/teamcomplete") >= 0) {
+					var inviteEmail = getCookie('inviteEmail');
+					var inviteLinkID = getCookie('inviteLinkID');
+					var inviteTeamMemberId = getCookie('inviteTeamMemberId');
+					var inviteTeam = getCookie('inviteTeam');
+					var inviteUserLevel = getCookie('inviteUserLevel');
+					$.loginTeamPlan(inviteEmail, null, 0, inviteLinkID, inviteTeamMemberId, inviteTeam, inviteUserLevel);
+				}
+			} else {
+				toastMessage(LanguagePack.POPUP_FAILEDCHANGEPASSWORD);
+			}
+			return;
+
+		}, function (res) {
+
+		});
+	};
+	action(webdata);
+	return true;
+}
+
+function encryptRSA(_key, _data) {
+	var encrypt = new JSEncrypt(1024);
+	encrypt.setPublicKey(_key);
+	var encrypted = encrypt.encrypt(_data);
+	return encrypted;
+}
+
+function sendPCADownMail(_type) {
+	popcorn.sendPCADownLoad(null, _type, function (res) {
+		if (res.resultCode == 0) {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.SENDPCADOWNEMAIL;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+			return false;
+		} else {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.DOWNLOAD_DESKTOP_MSG;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+			return false;
+		}
+
+	}, function (res) {
+
+	});
+
+}
+
+function showPopup(_msg) {
+	var popupMessage = new Array();
+	popupMessage[0] = _msg;
+	var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+		popupMessage: popupMessage
+	}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+	popup.create();
+	popup.show();
+	return false;
+}
+
+function payMonthly() {
+	if (!userEmail) {
+		$('#logincontainer').login();
+	} else {
+		if (location.hash.length > 0) {
+			location.href = location.protocol + '//' + location.host + "/view/payservice" + location.hash + "?paymethod=month";
+		} else location.href = location.protocol + '//' + location.host + "/view/payservice?paymethod=month";
+	}
+
+}
+
+function payYearly() {
+	if (!userEmail) {
+		$('#logincontainer').login();
+	} else {
+		//checkAgreeStatus();
+		showPayservice();
+	}
+
+}
+
+function showPayservice(type, paymethod, isFreeTrial) {
+	var pathName = '/account/upgrade/payment';//'/view/payservice';
+	var params = '';
+	// declaration pc office multi lang
+	if (location.pathname.search(/\/view\/([a-z]{2})\/external_price/) != -1) {
+		var tLang = location.pathname.match(/\/view\/([a-z]{2})\/external_price/);
+		pathName = '/view/' + tLang[1] + '/payservice';
+	}
+
+	if (paymethod) {
+		params = "?paymethod=" + paymethod + "&type=" + type;
+	} else {
+		params = "?paymethod=year&type=" + type;
+	}
+
+	if (typeof payType != 'undefined' && payType == 'web') {
+		params += '&paytype=web';
+	}
+
+	if(typeof isFreeTrial != 'undefined' && isFreeTrial){
+		params += '&ft=1';
+	}
+
+	if(typeof pcRevision != 'undefined' && pcRevision){
+		params += '&revision=' + pcRevision;
+	}
+	
+	location.href = location.protocol + '//' + location.host + pathName + params;
+}
+
+function closeNotiPopup() {
+	if ($('#closenotice').attr("class") == "coupon") {
+		setCookies('COUPONPERIOD', 1);
+		$USERINFO.setData('COUPON', 0);
+		showMaxStorageNoti($USERINFO.data);
+	}
+
+	if (typeof $USERINFO.premiumInfo.functionId == 'undefined' && $USERINFO.getData('pre_teamLevel')) {
+		$USERINFO.premiumInfo.hide = true;
+		showMaxStorageNoti($USERINFO.data);
+		return;
+	}
+	var webdata = {};
+	webdata.functionId = $USERINFO.premiumInfo.functionId;
+	webdata.type = $USERINFO.premiumInfo.type;
+	popcorn.hidePremiumExpiredInfo(webdata, function (res) {
+		if (CheckResult(null, res) != null) {
+			$USERINFO.premiumInfo.hide = true;
+			showMaxStorageNoti($USERINFO.data);
+		}
+	}, function (res) {
+
+	});
+
+}
+
+function unverifyMsg(e) {
+	if (e) {
+		commonPreventEvent(e);
+	}
+	if (typeof ischina != 'undefined' && ischina == 'true') {
+		openSetInfo(null, 3);
+		return;
+	}
+
+	var popupMessage = new Array();
+	popupMessage[0] = LanguagePack.VERIFYEMAIL_NOTIFICATION;
+
+	var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM_VERIFY, null, {
+		popupMessage: popupMessage
+	}, defaultAlertCB, function (res) {
+		var emailValue = typeof userEmail != 'undefined' ? userEmail : gUserEmail;
+		var e = emailValue;
+		var ua = typeof gUA != 'undefined' ? gUA.toLowerCase() : navigator.userAgent.toLowerCase();
+		if (emailValue) {
+			e = '';
+		}
+		RequestVerifyEmail(e, function (response) {
+			if (CheckResult(null, response) != null) {
+				showUnverifyPopMsg(emailValue);
+			} else if (response.resultCode == Enum.common.INVALIDPARAM && emailValue) {
+				AccountUserInfo(function (res) {
+					CheckResult(null, res);
+				}, function (res) {
+
+				});
+			}
+		}, function (response) {
+			toastMessage(LanguagePack.POPUP_FAILTOSENDEMAIL);
+		});
+
+		if (ua.search("polarisofficelink") != -1 || ua.search("polarispcoffice") != -1 || ua.indexOf('podialog') != -1) {
+			if (res.preventDefault) res.preventDefault();
+			if (res.stopPropagation) res.stopPropagation();
+			var prevPopup = PopupManagement.getCurrentPopup();
+			if (prevPopup != null) {
+				prevPopup.destroy();
+			}
+		} else {
+			defaultAlertCB(res);
+		}
+	}, defaultAlertCB);
+	popup.create();
+	popup.show();
+}
+
+function showUnverifyPopMsg(_email) {
+	var popupMessage = new Array();
+	popupMessage[0] = LanguagePack.POPUP_SENDACCOUNTAUTHGUIDE(_email);
+	var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+		popupMessage: popupMessage
+	}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+	popup.create();
+	popup.show();
+}
+
+function checkalaram(event) {
+	if ($('#launchpage').attr("href") == "/view/external_confirm") {
+		if (event) {
+			commonPreventEvent(event);
+		}
+		if (typeof ischina != 'undefined' && ischina == 'true') {
+			AccountUserInfo(function (res) {
+				if (res.resultCode == 0) {
+					userinfoCB(res);
+					if ($USERINFO.getData('social_not_pw') && ($USERINFO.getData('STATUS') == 'TEMPORARY')) {
+						unverifyMsg();
+						return;
+					}
+				}
+			});
+		}
+		resendVerifyEmail();
+	} else if ($('#launchpage').attr("href") == "open") {
+		if (event) {
+			commonPreventEvent(event);
+		}
+		setPasswordDialog();
+	} else if ($('#launchpage').attr("href") == 'showpop') {
+		cancelRevocation(event);
+	} else if ($('#launchpage').attr("href") == "/team#payment") {
+		if (location.href.indexOf('/team') >= 0) {
+			$('#tab7').trigger('click');
+			adminTabMove(event);
+			var $teamPayment = $('#payment');
+			$teamPayment.teamPayment('changecard');
+			pushStateId('changecard');
+		}
+
+	}
+
+}
+
+function resendVerifyEmail() {
+	var emailValue = userEmail;
+	var e = emailValue;
+	if (emailValue) {
+		e = '';
+	}
+	RequestVerifyEmail(e, function (response) {
+		if (CheckResult(null, response) != null) {
+			showUnverifyPopMsg(userEmail);
+		} else if (response.resultCode == Enum.common.INVALIDPARAM && emailValue) {
+			AccountUserInfo(function (res) {
+				CheckResult(null, res);
+			}, function (res) {
+
+			});
+		}
+	}, function (response) {
+		var popupMessage = new Array();
+		popupMessage[0] = LanguagePack.POPUP_FAILTOSENDEMAIL;
+		var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+			popupMessage: popupMessage
+		}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+		popup.create();
+		popup.show();
+	});
+}
+
+function showMaxStorageNoti(res) {
+	$USERINFO.data = res;
+	if (typeof gUserLevel == 'undefined')
+		return;
+	var remainCapacity = 0;
+
+	if ($('header .top_notice').length == 0) {
+		appendPopNotice();
+	}
+
+	if (location.href.indexOf('/team') > -1) {
+		return;
+	}
+
+	$('#launchpage').siblings('span:last').show();
+	$('#launchpage').text(LanguagePack.MAXSTORAGENOTI_MORE);
+	$('#unverifyMsg').hide();
+	$('#unverifyMsg').next().hide();
+	$('#closenotice').hide();
+	if (!getCookie('COUPONPERIOD') && $USERINFO.getData('COUPON') && gUserLevel != "BUSINESS") {
+		var data = LanguagePack.COUPON_EXPIRED_BANNER($USERINFO.getData('COUPON'));
+		$('#closenotice').addClass("coupon").show();
+		$('#closenotice').data("payduedata", $USERINFO.getData('PAYDATE'));
+		$('p.top_notice .top_notice_text').text(data);
+		$('#launchpage').attr("href", "/pricing#b.CouponBanner");
+		$('#launchpage').text(LanguagePack.ACCOUNTUPGRAGE);
+		showPopNotice();
+		return;
+	}
+
+	remainCapacity = (res.userCapacity - res.trashcanUsage - res.driveUsage - res.scannerUsage - res.teamUsage);
+
+	//if($('header .top_notice').length > 0) {
+	if ($USERINFO.getData('PAYDATE') || $USERINFO.getData('pre_teamLevel')) {
+		var unixtime = parseInt(new Date().getTime().toString().substring(0, 10));
+		if (gUserLevel == "FREE" && $USERINFO.getData('PAYDATE') <= unixtime) { //free
+			if (res.userCapacity <= res.trashcanUsage + res.driveUsage) {
+				popcorn.chekcCoeditStorage(null, function (res) {
+					if (CheckResult(null, res)) {
+						if (res.type == 4) {
+							$('p.top_notice .top_notice_text').text(LanguagePack.COOPERATION_EXCESS_CAPACITY);
+						} else if (res.type == 2) {
+							$('p.top_notice .top_notice_text').text(LanguagePack.TEAM_EXPIREDPOPNOTI);
+						} else {
+							$('p.top_notice .top_notice_text').text(LanguagePack.EXPIREDPOPNOTI);
+						}
+
+						//	$('#closenotice').data("payduedata",$USERINFO.getData('PAYDATE'));
+						$('#launchpage').attr("href", "/pricing#b.OverCapacity");
+						$('#launchpage').text(LanguagePack.ACCOUNTUPGRAGE);
+
+						showPopNotice();
+					}
+				}, function (res) {
+					console.log(res);
+				});
+				return;
+			} else {
+				if (!$USERINFO.premiumInfo.hide) {
+					var data = LanguagePack.EXPIREDPOPNOTI_ACCESS;
+					if ($USERINFO.getData('pre_teamLevel')) {
+						data = LanguagePack.TEAM_EXPIREDPOPNOTI_ACCESS;
+					}
+
+					$('#closenotice').show();
+					$('#closenotice').data("payduedata", $USERINFO.getData('PAYDATE'));
+					$('p.top_notice .top_notice_text').text(data);
+					$('#launchpage').attr("href", "/pricing#ChangeAccount");
+					$('#launchpage').text(LanguagePack.ACCOUNTUPGRAGE);
+					showPopNotice();
+					return;
+				}
+			}
+		}
+	}
+
+	if (res.userCapacity <= res.trashcanUsage + res.driveUsage) {
+		var pay = $('#closenotice').data("payduedata");
+		if (pay > 0) {
+			return;
+		}
+
+		popcorn.chekcCoeditStorage(null, function (res) {
+			if (CheckResult(null, res)) {
+				if (res.type == 1) {
+					return;
+				} else if (res.type == 4) {
+					$('p.top_notice .top_notice_text').text(LanguagePack.COOPERATION_EXCESS_CAPACITY);
+					if (gUserLevel == "FREE") {
+						$('#launchpage').text(LanguagePack.ACCOUNTUPGRAGE);
+						$('#launchpage').attr("href", "/pricing#b.EditOverCapacity");
+					}
+
+				} else {
+					$('p.top_notice .top_notice_text').text(LanguagePack.MAXSTORAGENOTI);
+				}
+				if (res.userCapacity / 1024 / 1024 > 2000) { //pro user
+					$('#launchpage').text("");
+					$('#launchpage').siblings('span:last').hide();
+				}
+				showPopNotice();
+			}
+		}, function (res) {
+
+		});
+		//			if(res.userCapacity/1024/1024 > 2000) { //pro user
+		//				$('#launchpage').text("");
+		//				$('#launchpage').siblings('span:last').hide();
+		//			}
+		//			$('p.top_notice .top_notice_text').text(LanguagePack.MAXSTORAGENOTI);
+		//			showPopNotice();
+		return;
+	}
+
+	if (res.userCapacity / 1024 / 1024 > 2000) { //pro user
+		if (remainCapacity < (res.userCapacity * 0.02)) {
+			//alert noti
+			var data = LanguagePack.REMAINSTORAGENOTI(getSize(2, remainCapacity));
+			$('p.top_notice .top_notice_text').text(data);
+			$('#launchpage').attr("href", "/pricing#b.LackCapacity");
+			$('#launchpage').text("");
+			$('#launchpage').siblings('span:last').hide();
+			showPopNotice();
+		} else if ($USERINFO.getData('social_not_pw') && ($USERINFO.getData('STATUS') != 'TEMPORARY')) {
+			$('p.top_notice .top_notice_text').text(LanguagePack.SOCIAL_NOTPASSWORD_NOTI);
+			$('#launchpage').text(LanguagePack.KEYWORD_SET_PASSWORD);
+			$('#launchpage').attr("href", "open");
+			showPopNotice();
+			return;
+		} else if ($USERINFO.getData('UNVERIFIED')) {
+			var data = LanguagePack.POPUP_PUSHCONFIRMBUTTONTOFINISHAUTHENTICATION;
+			if (res.invitedUser) {
+				data = LanguagePack.INVITEUSER_INLINEPOPUP;
+			} else {
+				$('#unverifyMsg').show();
+				$('#unverifyMsg').next().show();
+			}
+			$('p.top_notice .top_notice_text').text(data);
+			$('#launchpage').attr("href", "/view/external_confirm");
+			$('#launchpage').text(LanguagePack.EMAILAUTHENTICATION);
+			showPopNotice();
+			return;
+		} else {
+			if ($('#launchpage').attr("href") == "/view/external_confirm") {
+				$('#launchpage').attr("href", "/view/external_confirm");
+				$('#launchpage').text(LanguagePack.EMAILAUTHENTICATION);
+				return;
+			}
+			hidePopNotice();
+		}
+	} else { //normal user
+		if (remainCapacity < (res.userCapacity * 0.1)) {
+			//alert noti
+			var data = LanguagePack.REMAINSTORAGENOTI(getSize(2, remainCapacity));
+			$('p.top_notice .top_notice_text').text(data);
+			$('#launchpage').attr("href", "/pricing#b.LackCapacity");
+			//$('#launchpage').text(LanguagePack.MAXSTORAGENOTI_MORE);
+			showPopNotice();
+		} else if ($USERINFO.getData('social_not_pw') && ($USERINFO.getData('STATUS') != 'TEMPORARY')) {
+			$('p.top_notice .top_notice_text').text(LanguagePack.SOCIAL_NOTPASSWORD_NOTI);
+			$('#launchpage').text(LanguagePack.KEYWORD_SET_PASSWORD);
+			$('#launchpage').attr("href", "open");
+			showPopNotice();
+			return;
+		} else if ($USERINFO.getData('social_not_pw') && ($USERINFO.getData('STATUS') == 'TEMPORARY')) {
+			$('p.top_notice .top_notice_text').html(LanguagePack.CHINAVER_SET_EMAIL_PWD_BANNER);
+			$('#launchpage').hide().next().hide();
+			showPopNotice();
+			return;
+		} else if ($USERINFO.getData('UNVERIFIED')) {
+			var data = LanguagePack.POPUP_PUSHCONFIRMBUTTONTOFINISHAUTHENTICATION;
+			if (res.invitedUser) {
+				data = LanguagePack.INVITEUSER_INLINEPOPUP;
+			} else {
+				$('#unverifyMsg').show();
+				$('#unverifyMsg').next().show();
+			}
+			$('p.top_notice .top_notice_text').text(data);
+			$('#launchpage').attr("href", "/view/external_confirm");
+			$('#launchpage').text(LanguagePack.EMAILAUTHENTICATION);
+			showPopNotice();
+			return;
+		} else {
+			if ($('#launchpage').attr("href") == "/view/external_confirm") {
+				$('#launchpage').attr("href", "/view/external_confirm");
+				$('#launchpage').text(LanguagePack.EMAILAUTHENTICATION);
+				return;
+			}
+			hidePopNotice();
+		}
+	}
+
+}
+
+function appendPopNotice() {
+	if ($('header .top_notice').length > 0) {
+		return;
+	}
+	var data = '<p class="top_notice" style="display:none;"><span class="top_notice_text">' + LanguagePack.MAXSTORAGENOTI + '</span>' +
+		'<a id="unverifyMsg" onclick="unverifyMsg(event);" href="#" style="display:none;">' + LanguagePack.DETAIL + '</a>' +
+		'<span>|</span>' +
+		'<a id="launchpage" onclick="checkalaram(event);" href="/pricing#b.LackCapacity">' + LanguagePack.MAXSTORAGENOTI_MORE + '</a>' +
+		'<span>▶</span><a id="closenotice" onclick="closeNotiPopup();" style="cursor:pointer;"><img src="' + CF_PATH + '/resources/image/Polaris/new/button/notice_close.png" ></a></p>';
+
+	$('header').prepend(data);
+}
+
+function showPopNotice() {
+	$('header .top_notice').show();
+	if (!$('#wrapper header').hasClass('notice')) {
+		//		if(location.href.indexOf('/team') > -1){
+		//			$('#wrapper header').addClass('notice fail');
+		//			$('#container').addClass('notice fail');
+		//		}else{
+		$('#wrapper header').addClass('notice');
+		$('#container').addClass('notice');
+		//		}
+
+	}
+}
+
+function hidePopNotice() {
+	$('header .top_notice').hide();
+	if ($('#wrapper header').hasClass('notice')) {
+		//		if(location.href.indexOf('/team') > -1){
+		//			$('#wrapper header').removeClass('notice fail');
+		//			$('#container').removeClass('notice fail');
+		//		} else {
+		$('#wrapper header').removeClass('notice');
+		$('#container').removeClass('notice');
+		//		}
+
+	}
+}
+
+if (!isFileUploadImpossible()) {
+	swf = true;
+}
+
+if (!CheckFlashPlayer()) {
+	flashEnable = false;
+}
+
+function setPublic(_isSet) {
+	gSetdocument = _isSet;
+	if (gSetdocument)
+		$('.open_closed p').html(LanguagePack.Shared_Public);
+	else
+		$('.open_closed p').html(LanguagePack.Shared_Private);
+
+	if (IsActivity) {
+		updateTask();
+	}
+
+
+}
+
+function updateTask() {
+	var webdata = {
+		id: activityID,
+		isPublic: gSetdocument
+	};
+
+	TaskAPI.setTaskUpdate(webdata, function (res) {
+		if (CheckResult(null, res) != null) {
+			if (gSetdocument)
+				toastMessage(LanguagePack.UPDATEPERMISSION_OPEN);
+			else
+				toastMessage(LanguagePack.UPDATEPERMISSION_CLOSED);
+		}
+	}, function (res) {});
+}
+
+$('document').ready(function () {
+	if($('.goHelp').length){
+		$('.goHelp').on('click', function(){
+			goHelpDesk(null, false, LanguagePack.HELPDESK_REQUESTNEW);
+		});
+	}
+	if($('.goHelpMain').length){
+		$('.goHelpMain').on('click', function(){
+			goHelpDesk(null, false, LanguagePack.HELPDESK_MAIN);
+		});
+	}
+	// Native key event
+	if ((typeof isPchome != 'undefined' && isPchome) || isMacOffice() == true || (navigator.userAgent.search("Polaris/") != -1)) {
+		checkKey();
+	}
+
+	if (typeof g_sessionTimeout !== 'undefined')
+		setInterval(function () {
+			addHiddenIframe();
+		}, g_sessionTimeout);
+	var login = null;
+	try {
+		var email = localStorage.getItem("registAccount");
+		login = localStorage.getItem(email);
+	} catch (err) {
+		if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+			console.log("failed Storage"); //return false;
+		}
+	}
+	if (gUserId) {
+		var img = '/api/1/account/download/portrait/' + gUserId + '?' + getTime();
+		$('ul.util_cloud.fr li.user img').attr('src', img);
+		$('div.util_menu li.user img').attr('src', img);
+		SimpleAccountUserInfo(function (res) {
+			if (res.resultCode == 0) {
+				if (typeof res.productType == 'undefined' || (typeof res.gateType != 'undefined' && res.gateType == 'COUPON') || res.productType.indexOf('AI_PLUS_1YEAR') == -1) {
+					$('div.header ul li.link, #account_info_upgrade').show();
+				}
+			}
+		}, null);
+		checkNoticeNew();
+	}
+
+	if (typeof gUserLevel != 'undefined' && gUserLevel == 'BUSINESS') {
+		$('a.pcdown').addClass('business').text(LanguagePack.DOWNLOAD_NOW);
+	}
+
+	$('header div.util_menu div.conPop div.box').bind('click', function (e) {
+		var element = $('header div.util_menu div.conPop.connect').find(getSeletor(e));
+
+		if (element) {
+			commonPreventEvent(e);
+			commonStopPropagation(e);
+		}
+	});
+
+	$('#mobile_connect').bind('click', function (e) {
+		$PCHOMEINFO.changePopup(e, $('div.conPop.connect'), $('div.conPop.connect02.mobile'));
+
+		//logTracking
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.event;
+		webData['obj'].dp = "SubMenu";
+		webData['obj'].dt = "AppMenu";
+		webData['obj'].ec = "ux";
+		webData['obj'].ea = "cl";
+		webData['obj'].el = "ConnectMobile";
+		$LOGMODEL.sendData(webData);
+	});
+	$('#pc_connect').bind('click', function (e) {
+		commonPreventEvent(e);
+
+		var osType = checkAgent();
+		if (osType == "macos") {
+			window.open(LanguagePack.MACOFFICE_PROD_URL, '_blank');
+		} else {
+			if (local.includes('ko'))
+				location.href = '/ko/download';
+			else if (local.includes('ja'))
+				location.href = '/ja/download';
+			else
+				location.href = '/en/download';
+		}
+		//		$PCHOMEINFO.changePopup(e, $('div.conPop.connect'), $('div.conPop.connect02.pc'));
+
+		//logTracking
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.event;
+		webData['obj'].dp = "SubMenu";
+		webData['obj'].dt = "AppMenu";
+		webData['obj'].ec = "ux";
+		webData['obj'].ea = "cl";
+		webData['obj'].el = "ConnectPC";
+		$LOGMODEL.sendData(webData);
+	});
+
+	$('#sync_connect').bind('click', function (e) {
+		commonPreventEvent(e);
+
+		var osType = checkAgent();
+		if (osType == "macos") {
+			window.open(LanguagePack.MACPOS_PROD_URL, '_blank');
+		} else {
+			if (local.includes('ko'))
+				location.href = '/ko/download';
+			else if (local.includes('ja'))
+				location.href = '/ja/download';
+			else
+				location.href = '/en/download';
+		}
+
+		//		$PCHOMEINFO.changePopup(e, $('div.conPop.connect'), $('div.conPop.connect02.sync'));
+
+		//logTracking
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.event;
+		webData['obj'].dp = "SubMenu";
+		webData['obj'].dt = "AppMenu";
+		webData['obj'].ec = "ux";
+		webData['obj'].ea = "cl";
+		webData['obj'].el = "ConnectPCFolder";
+		$LOGMODEL.sendData(webData);
+	});
+
+	$('div.conPop.connect02 h3 a.prev').bind('click', function (e) {
+		$PCHOMEINFO.changePopup(e, $('div.conPop.connect02').hide(), $('div.conPop.connect').show());
+	});
+
+	$('div.conPop.mobile a.ios').bind('click', function (e) {
+		commonPreventEvent(e);
+		window.open(LanguagePack.APPLE_APP_DOWNLOAD_URL, "_blank");
+	});
+
+	$('div.connect02.mobile a.android').bind('click', function (e) {
+		commonPreventEvent(e);
+		var poappUrl = "https://play.google.com/store/apps/details?id=com.infraware.office.link";
+		if (ischina == "true") {
+			poappUrl = "http://openbox.mobilem.360.cn/index/d/sid/2498692";
+		}
+		window.open(poappUrl, "_blank");
+	});
+	$('div.connect02.mobile a.amazon').bind('click', function (e) {
+		commonPreventEvent(e);
+		var poappUrl = "http://www.amazon.com/Infraware-Inc-Polaris-Office/dp/B00O901O9S";
+		window.open(poappUrl, "_blank");
+	});
+
+	$('div.conPop div.box a.download').bind('click', function (e) {
+		commonPreventEvent(e);
+		var osType = checkAgent();
+		if (osType == "macos") {
+			downLoadPC('mac');
+		} else {
+			location.href = script_prefix + '/download';
+		}
+	});
+	$('div.conPop div.box a.pcdown').bind('click', function (e) {
+		commonPreventEvent(e);
+		var osType = checkAgent();
+		if (osType == "macos") {
+			window.open(LanguagePack.MACOFFICE_PROD_URL, '_blank');
+		} else {
+			if (LanguagePack.CURRENT_LAN == 'ko') {
+				if (gUserLevel == 'BUSINESS') {
+					location.href = '/install';
+				} else {
+					downloadTest(LanguagePack.PCOFFICE_PROD_URL);
+				}
+			} else {
+				location.href = script_prefix + "/office?var1=" + makeAccessLog('appmenu_obt');
+			}
+		}
+	});
+	if (login == "login") {
+		$('#popup_message_view').css("display", "block");
+		$('#popup_message_view label').bind('click', function () {
+			var checkbox = $(this).children();
+			if (!checkbox.is(':checked')) {
+				checkbox.attr("checked", false);
+				try {
+					var email = localStorage.getItem("registAccount");
+					localStorage.setItem(email, "login");
+				} catch (err) {
+					if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+						console.log("failed Storage"); //return false;
+					}
+				}
+			} else {
+				checkbox.attr('checked', true);
+				try {
+					var email = localStorage.getItem("registAccount");
+					localStorage.setItem(email, "NotAsk");
+					$('#popup_message_view').css("display", "none");
+				} catch (err) {
+					if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+						console.log("failed Storage"); //return false;
+					}
+				}
+			}
+		});
+
+
+
+	}
+	// 사용자 정보 보기
+	$('#titleimg').bind("click", function () {
+		location.href = location.protocol + '//' + location.host + "/view/home";
+	});
+
+
+	var login = false;
+
+	if ($('.account dl dt a').length) {
+		login = true;
+	}
+	// changeTitle(login);
+
+	if (ischina == "false") {
+		$.getScript('https://apis.google.com/js/client.js', function () {
+
+		});
+	}
+
+	checkBannerState();
+
+	if (typeof gUserLevel == 'undefined' || (gUserLevel != 'ORANGEFREE' && gUserLevel != 'ORANGEPREMIUM' && gUserLevel != "UCCPREMIUM")) {
+
+		if (typeof hasPCOfficeLogin != "undefined" && hasPCOfficeLogin == "true") {
+			if (('#PCOfficeBanner').length > 0)
+				$('#PCOfficeBanner').remove();
+		}
+
+		if ($('div#container aside p.banner').length > 0) {
+			var osType = checkAgent();
+			var currentTime = new Date().getTime().toString().substring(0, 10);
+
+			if (osType != "device") {
+				//$("div#container aside p.banner #MacBanner").remove();
+				if (typeof gUserLevel != "undefined" && gUserLevel == "FREE") {
+					$('div#container aside p.banner').children('img:first').show();
+				} else {
+					$('div#container aside p.banner').children('img:first').show();
+					if (gUserLevel != "PAID2") {
+						$('div#container aside p.banner').children('img:last').remove();
+					}
+				}
+
+				$('div#container aside p.banner').bind('mouseover', function () {
+					$(this).addClass('on');
+				});
+				$('div#container aside p.banner').bind('mouseout', function () {
+					$(this).removeClass('on');
+				});
+
+			} else {
+				/*if(isPCAgentWindows == "macos"){
+
+				}
+				else
+					$("div#container aside p.banner #MacBanner").remove();*/
+				$('div#container aside p.banner #PCADonwBanner').remove();
+				if (typeof gUserLevel != "undefined" && gUserLevel == "FREE") {
+					$('div#container aside p.banner').children('img:first').show();
+				} else {
+					if (gUserLevel != "PAID2") {
+						$('div#container aside p.banner #PremiumBanner').remove();
+					}
+					$('div#container aside p.banner').children('img:first').show();
+				}
+
+			}
+
+			if ($('div#container aside p.banner').children().length > 1) {
+				setInterval(function () {
+
+					var target = $('div#container aside p.banner').find('img:visible');
+					if (target.next().length) {
+						target.hide();
+						target.next().show();
+					} else {
+						target.hide();
+						$('div#container aside p.banner').children('img:first').show();
+					}
+
+				}, 5000);
+			}
+
+			$('#PCADonwBanner').click(function () {
+				var osType = checkAgent();
+				if (osType == "macos") {
+					downLoadPC('mac');
+				} else
+					downLoadPC('win');
+			});
+
+			$('#PCOfficeBanner').click(function () {
+				location.href = script_prefix + '/office?var1=web_rollbannder';
+			});
+
+			$('#startpagePCA').click(function () {
+				location.href = script_prefix + '/office?var1=web_guide';
+				// downLoadPC();
+
+			});
+			$('#PremiumBanner').click(function () {
+				//				location.href = "/pricing";
+				location.href = location.protocol + '//' + location.host + "/pricing#m.Banner"; // 웹탐색창의 배너 클릭시 결제 진입경로 Banner로 표시
+			});
+			$('#MACBanner.ko').click(function () {
+				location.href = "http://goo.gl/gUu2uj"; // 웹탐색창의 배너 클릭시 결제 진입경로 Banner로 표시
+			});
+			$('#MACBanner.jp').click(function () {
+				location.href = "http://goo.gl/u8i6uL"; // 웹탐색창의 배너 클릭시 결제 진입경로 Banner로 표시
+			});
+			$('#MACBanner.cn').click(function () {
+				location.href = "http://goo.gl/VteoyG"; // 웹탐색창의 배너 클릭시 결제 진입경로 Banner로 표시
+			});
+			$('#MACBanner.en').click(function () {
+				location.href = "http://goo.gl/Y66rHV"; // 웹탐색창의 배너 클릭시 결제 진입경로 Banner로 표시
+			});
+
+		}
+	}
+	if (getCookie('ORANGEDMFI') && gUserLevel == 'ORANGEPRO') {
+		deleteCookie('ORANGEDMFI');
+	}
+});
+
+function addHiddenIframe() {
+	popcorn.sessioninfo(function () {}, function () {});
+	/*$('#dummy_page').remove();
+	var dummyUrl = location.protocol+"//"+location.host+'/view/dummy_page';
+	var hidden = '<iframe id="dummy_page" src="'+dummyUrl+'" style="width: 0; height: 0; visibility: hidden;"></iframe>';
+	$('body').append(hidden);*/
+}
+
+function logoutSuccessCB(response) {
+	if (CheckResult(null, response) != null) {
+		//setTimeout(function() {
+		deleteCookie('officeBanner');
+		deleteCookie('mobileBanner');
+		if(typeof gMode != 'undefined' && gMode == 'edit' && gfileID){
+			location.href = location.protocol + '//' + location.host + '/d/' + $.encodeBase62(gfileID.toString());
+			return;
+		}
+		if (typeof publicViewer !== 'undefined' && publicViewer || typeof _viewtype !== 'undefined' && _viewtype == 'shared_view') {
+			location.reload(true);
+			return;
+		} else {
+			window.open("/", "_self");
+			try {
+				localStorage.setItem("AccountID", '');
+			} catch (err) {
+				if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+					console.log("failed Storage"); //return false;
+				}
+			}
+		}
+		//}, 300);
+	}
+}
+
+function logout(e) {
+
+	if (e) {
+		commonPreventEvent(e);
+	}
+
+	try {
+		sessionStorage.clear();
+	} catch (err) {
+		if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+			console.log("failed_storage");
+		}
+	}
+	//logTracking
+	var webData = $LOGMODEL.getData();
+	webData['ti'].t = LogType.tracking.event;
+	webData['obj'].dp = "Setting";
+	webData['obj'].ec = "ux";
+	webData['obj'].ea = "cl";
+	webData['obj'].el = "Logout";
+	$LOGMODEL.sendData(webData);
+
+	if (ischina == "true") {
+		AccountLogOut(logoutSuccessCB, function (res) {
+			console.log(res.resultMsg);
+		});
+	} else {
+		AccountUserInfo(function (res) {
+			if (res.resultCode == 0) {
+
+				if (res.onlySocialUser && !(typeof res.socialProviderList != 'undefined' && res.socialProviderList.indexOf('azure') == 0) && !res.hasPassword) {
+					var popup = new PopupMessage(PopupType.ACCOUNT_DELETION, null, null, {}, function (res) {
+						if (res.preventDefault) res.preventDefault();
+						setPasswordSocial($('#popup_account_deletion_password').val(), res);
+					}, defaultAlertCB, defaultAlertCB);
+
+					PopupContentUI.setPasswordStr(LanguagePack.SOCIAL_NOTPASSWORD_PASSWORD);
+					popup.create();
+					popup.show();
+					return;
+				}
+
+			}
+			AccountLogOut(logoutSuccessCB, function (res) {
+				console.log(res.resultMsg);
+			});
+		});
+	}
+
+
+
+}
+
+function goVerifyEmail() {
+	try {
+		sessionStorage.clear();
+	} catch (err) {
+		if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+			console.log("failed_storage");
+		}
+	}
+	AccountLogOut(goVerifyEmailSuccessCB, function (res) {
+		console.log(res.resultMsg);
+	});
+}
+
+function goVerifyEmailSuccessCB(response) {
+	if (CheckResult(null, response) != null) {
+		window.open("/view/error/unverified", "_self");
+	}
+}
+
+function installApp(_OS) {
+	var b = new Date();
+	setTimeout(function () {
+		if (new Date() - b < 2000) {
+			Appdownload();
+		}
+	}, 1500);
+}
+
+function polaunch(fileId, rev, fileName, accesstoken, publicViewer) {
+	fileName = encodeURIComponent(fileName);
+	var appSchemeUri = (ischina == "true") ? "porlarisofficechina://" : "PorlarisOffice://";
+
+	var data = null;
+	var agnt = navigator.userAgent.toLowerCase();
+	if (publicViewer) {
+		data = appSchemeUri + "?weblinkID=" + fileId + "&revision=" + rev + "&fileName=" + fileName;
+	} else {
+		data = appSchemeUri + "?fileID=" + fileId + "&revision=" + rev + "&fileName=" + fileName + "&" + accesstoken;
+	}
+
+	if (agnt.indexOf('iphone') >= 0 || agnt.indexOf('ipad') >= 0) {
+		location.href = data;
+		installApp("IOS");
+	} else if (agnt.indexOf('android') >= 0 && agnt.indexOf('chrome') >= 0) {
+		data = data.substring(appSchemeUri.length + 1);
+		var androidUrl = "intent://" + data + "#Intent;scheme=porlarisoffice;package=com.infraware.office.link;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end";
+		if (ischina == "true") {
+			androidUrl = "intent://" + data + "#Intent;scheme=porlarisofficechina;package=com.infraware.office.link.china;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end";
+		}
+		location.href = androidUrl;
+	} else {
+		$('body').append('<iframe id="applinkDiv" src="' + data + '" width="0" height="0" frameborder="0"></iframe>');
+		setTimeout(function () {
+			$('#applinkDiv').remove();
+		}, 3000);
+		installApp("ANDROID");
+	}
+}
+
+function newSharedlaunchApp(_SharedID, _FileID, _OwnerId) {
+	var appSchemeUri = (ischina == "true") ? "porlarisofficechina://" : "PorlarisOffice://";
+	var data = null;
+	var agnt = navigator.userAgent.toLowerCase();
+
+	if (_SharedID) {
+		data = appSchemeUri + "share?fileId=" + _FileID + "&shareId=" + _SharedID + "&ownerId=" + _OwnerId;
+	} else {
+		data = appSchemeUri + "share?fileId=" + _FileID + "&ownerId=" + _OwnerId;
+	}
+
+	if (agnt.indexOf('iphone') >= 0 || agnt.indexOf('ipad') >= 0) {
+		installApp("IOS");
+		location.href = data;
+	} else if (agnt.indexOf('android') >= 0 && agnt.indexOf('chrome') >= 0) {
+		data = data.substring(appSchemeUri.length);
+		var androidUrl = "intent://" + data + "#Intent;scheme=porlarisoffice;package=com.infraware.office.link;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end";
+		if (ischina == "true") {
+			androidUrl = "intent://" + data + "#Intent;scheme=porlarisofficechina;package=com.infraware.office.link.china;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end";
+		}
+		location.href = androidUrl;
+	} else {
+		$('body').append('<iframe id="applinkDiv" src="' + data + '" width="0" height="0" frameborder="0"></iframe>');
+		setTimeout(function () {
+			$('#applinkDiv').remove();
+		}, 3000);
+		installApp("ANDROID");
+	}
+}
+
+function sharedlaunchApp(_SharedID, _FileID) {
+	var appSchemeUri = (ischina == "true") ? "porlarisofficechina://" : "PorlarisOffice://";
+	var data = null;
+	var agnt = navigator.userAgent.toLowerCase();
+	data = appSchemeUri + "?fileID=" + _FileID + "&sharedID=" + _SharedID;
+	if (agnt.indexOf('iphone') >= 0 || agnt.indexOf('ipad') >= 0) {
+		installApp("IOS");
+		location.href = data;
+	} else if (agnt.indexOf('android') >= 0 && agnt.indexOf('chrome') >= 0) {
+		data = data.substring(appSchemeUri.length + 1);
+		var androidUrl = "intent://" + data + "#Intent;scheme=porlarisoffice;package=com.infraware.office.link;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end";
+		if (ischina == "true") {
+			androidUrl = "intent://" + data + "#Intent;scheme=porlarisofficechina;package=com.infraware.office.link.china;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end";
+		}
+		location.href = androidUrl;
+	} else {
+		$('body').append('<iframe id="applinkDiv" src="' + data + '" width="0" height="0" frameborder="0"></iframe>');
+		setTimeout(function () {
+			$('#applinkDiv').remove();
+		}, 3000);
+		installApp("ANDROID");
+	}
+}
+
+function goApple(e) {
+	if (e) {
+		commonPreventEvent(e);
+	}
+	document.location = LanguagePack.APPLE_APP_DOWNLOAD_URL;
+}
+
+function OnDownloadPage() {
+	try {
+		var email = localStorage.getItem("registAccount");
+		if (localStorage.getItem(email) != "NotAsk") {
+			localStorage.setItem(email, "loginOff");
+		}
+	} catch (err) {
+		if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+			console.log("failed Storage"); //return false;
+		}
+	}
+	$('#popup_message_view').css("display", "none");
+	document.location = "/download";
+
+}
+
+function onCloseDialog() {
+	try {
+		var email = localStorage.getItem("registAccount");
+		if (localStorage.getItem(email) != "NotAsk") {
+			localStorage.setItem(email, "loginOff");
+		}
+	} catch (err) {
+		if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+			console.log("failed Storage"); //return false;
+		}
+	}
+	$('#popup_message_view').css("display", "none");
+}
+
+function onCloseBanner(bannerClassId) {
+	//	commonPreventEvent(window.event);
+	if (LanguagePack.PCHOME_LANG == 'ko') {
+		$('.pop_notice').parents('.contents').addClass('no_pop');
+		$('.pop_notice').remove();
+		setCookies('CBTHOMEBANNER', 30);
+		return;
+	}
+
+	try {
+		$("." + bannerClassId).parents('.contents').addClass('no_pop');
+		$("." + bannerClassId).remove();
+		var email = localStorage.getItem("registAccount");
+		localStorage.setItem(email + bannerClassId, "NotAsk" + bannerClassId);
+	} catch (err) {
+		if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+			console.log("failed Storage"); //return false;
+		}
+	}
+}
+
+function checkBannerState() {
+	if (typeof gUserLevel == 'undefined')
+		return;
+
+	var bannerClassArray = ['pop_01', 'pop_02', 'pop_03', 'pop_04', 'pop_05', 'pop_06', 'pop_07'];
+	var email;
+	if (/\/view\/(ar|fr|en|ko)\/setting/.test(location.pathname) || $('.contents_wrap').hasClass('pcoStyle') ||
+		gUserLevel == "ORANGEFREE" || gUserLevel == "ORANGEPREMIUM" || gUserLevel == "UCCPREMIUM") {
+		$('.pop_notice').parents('.contents').addClass('no_pop');
+		$('.pop_notice').remove();
+		return;
+	}
+
+	if (LanguagePack.PCHOME_LANG == 'ko') {
+		if ((getCookie('CBTHOMEBANNER') || (typeof hasPCOfficeLogin != "undefined" && hasPCOfficeLogin == "true")) && location.href.indexOf('/view/home') >= 0) {
+			$('.pop_notice').parents('.contents').addClass('no_pop');
+			$('.pop_notice').remove();
+		}
+		return;
+	}
+
+	try {
+		email = localStorage.getItem("registAccount");
+		for (var i = 0; i < bannerClassArray.length; i++) {
+			if ($("." + bannerClassArray[i]).length > 0) {
+				try {
+					if (localStorage.getItem(email + bannerClassArray[i]) != "NotAsk" + bannerClassArray[i]) {
+						//						$("."+bannerClassArray[i]).parent().css("display","block");
+					} else {
+
+						$("." + bannerClassArray[i]).parents('.contents').addClass('no_pop');
+						$("." + bannerClassArray[i]).remove();
+
+					}
+				} catch (err) {
+					if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+						console.log("failed Storage"); //return false;
+					}
+				}
+			}
+		}
+
+	} catch (err) {
+		if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+			console.log("failed Storage"); //return false;
+		}
+	}
+}
+
+function confirmpopup() {
+	if ($('#editpopup').css("display") == "block") {
+		$('#editpopup').css("display", "none");
+		return;
+	}
+
+	$('#editpopup').css("display", "block");
+	$('#editpopup').mouseleave(function () {
+		$('#editpopup').css("display", "none");
+	});
+
+	$('#editpopupcheck label').bind('click', function () {
+		var checkbox = $(this).prev();
+		if (!checkbox.is(':checked')) {
+			checkbox.attr("checked", true);
+			try {
+				localStorage.setItem('launcherpo', "true");
+			} catch (err) {
+				if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+					console.log("failed Storage"); //return false;
+				}
+			}
+
+
+		} else {
+			checkbox.attr('checked', false);
+			try {
+				localStorage.setItem('launcherpo', "false");
+			} catch (err) {
+				if ((err.name).toUpperCase() == 'QUOTA_EXCEEDED_ERR') {
+					console.log("failed Storage"); //return false;
+				}
+			}
+
+		}
+	});
+}
+
+function userinfoCB(response) {
+
+	if (typeof response.onlySocialUser != 'undefined' && response.onlySocialUser && !response.hasPassword)
+		$USERINFO.setData('social_not_pw', true);
+	if (typeof response.status != "undefined" && response.status == "UNVERIFIED")
+		$USERINFO.setData('UNVERIFIED', true);
+	else
+		$USERINFO.setData('UNVERIFIED', false);
+	if (typeof response.payDueDate != "undefined")
+		$USERINFO.setData('PAYDATE', response.payDueDate);
+	/*else{
+		$USERINFO.setData('init');
+	}*/
+	if (typeof response.status != "undefined")
+		$USERINFO.setData('STATUS', response.status);
+
+	if (typeof response.gateType != 'undefined') {
+		$USERINFO.setData('GATETYPE', response.gateType);
+	}
+
+	setNoti('userinfo', response);
+	if (CheckResult(null, response) != null) {
+		owerid = response.userId;
+		userEmail = response.email;
+		changeTitle(true);
+	}
+}
+
+function showErrorMsg(code) {
+	if (code == 0) {
+		//console.log(code);
+	} else if (code == 117 || code == 100 || code == 120 || code == 119) {
+		var popupMessage = new Array();
+		popupMessage[0] = LanguagePack.POPUP_LOGOUTBYOTHERSESSIONS;
+		try {
+			if (code == 120 && _chromeCast) {
+				popupMessage[0] = LanguagePack.POPUP_LOGOUTBYPASSWORDCHANGED_CHROMECAST;
+			}
+		} catch (err) {
+			console.log(err);
+		}
+		var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {
+			popupMessage: popupMessage
+		}, goLoginCB, goLoginCB, goLoginCB);
+		popup.create();
+		popup.show();
+	} else {
+		var popupMessage = new Array();
+		popupMessage[0] = LanguagePack.POPUP_TEMPORARYERROR;
+		var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {
+			popupMessage: popupMessage
+		}, goLoginCB, goLoginCB, goLoginCB);
+		popup.create();
+		popup.show();
+	}
+}
+
+
+function isFileUploadImpossible() {
+	if (window.FormData !== undefined)
+		return true;
+	return false;
+}
+
+function CheckFlashPlayer() {
+	try {
+		if (navigator.plugins["Shockwave Flash"] || new ActiveXObject("ShockwaveFlash.ShockwaveFlash.7")) {
+			return true;
+		} else {
+			return false;
+		}
+	} catch (e) {
+		return false;
+	}
+}
+
+function goLoginCB(e) {
+	if (e.preventDefault) e.preventDefault();
+	location.href = location.protocol + '//' + location.host + "/";
+}
+
+function gopremiumservice(e) {
+	defaultAlertCB(e);
+	if (e.preventDefault) e.preventDefault();
+	location.href = location.protocol + '//' + location.host + "/view/external_service";
+}
+
+/** ********************* debug *************** */
+function showAjaxRequestMessage(text) {
+	var message = " request: ";
+	message += text;
+	if (debug) {
+		consoleDebugMessage(message);
+	}
+}
+
+function showAjaxResponseMessage(text) {
+	var message = " response: ";
+	message += text;
+	if (debug) {
+		consoleDebugMessage(message);
+	}
+}
+
+function showAjaxFailCB(requestName, res) {
+	var message = requestName + " fail(";
+	message += " error Code: " + res.resultCode;
+	message += " error message: " + res.resultMsg + ")";
+	if (debug) {
+		consoleDebugMessage(message);
+	}
+}
+
+function consoleDebugMessage(message) {
+	//console.debug(message);
+}
+
+function consoleLogMessage(message) {
+	console.log(message);
+}
+
+function syncEventVerifyCheck(event, filetype, text, inputdata, errorType) {
+	var isPathCheck = false,
+		isNameCheck = false;
+	if (event == "DIRADD") {
+		isPathCheck = true;
+		isNameCheck = true;
+	} else if (event == "RENAME") {
+		name = LanguagePack.KEYWORD_RENAME;
+		isPathCheck = true;
+		isNameCheck = true;
+	} else if (event == "COPY" || event == "MOVE") {
+		name = LanguagePack.KEYWORD_ALERT;
+		isPathCheck = true;
+	}
+	if (isPathCheck && !verfiyStringLength(filetype, text)) {
+		errorType[0] = true;
+		return false;
+	}
+	if (filetype == "FILE" && isNameCheck) {
+		if (!verifyCheckText(inputdata)) {
+			errorType[1] = true;
+			return false;
+		} else if (!verifydotText(inputdata)) {
+			errorType[2] = true;
+			return false;
+		}
+	} else if (filetype == "DIR" && isNameCheck) {
+		if (!verifyCheckText(inputdata)) {
+			errorType[3] = true;
+			return false;
+		} else if (!verifydotText(inputdata)) {
+			errorType[4] = true;
+			return false;
+		} else if (inputdata.length > folderPathLengthLimit) {
+			errorType[5] = true;
+			return false;
+		}
+	}
+	return true;
+}
+
+function syncEventCreatePopup(event, errorType, data) {
+	if (event == "DIRADD" || event == "RENAME") {
+		var popupMessage = new Array();
+		if (errorType[0]) {
+			popupMessage[0] = LanguagePack.POPUP_EXCESSPATHLENGTH(folderPathLengthLimit);
+		} else if (errorType[1]) {
+			popupMessage[0] = LanguagePack.POPUP_ERRORBYINVALIDCHARS(LanguagePack.KEYWORD_FILE);
+		} else if (errorType[2]) {
+			popupMessage[0] = LanguagePack.POPUP_ERRORBYINVALIDFULLSTOPFILE;
+		} else if (errorType[3]) {
+			popupMessage[0] = LanguagePack.POPUP_ERRORBYINVALIDCHARS(LanguagePack.KEYWORD_FOLDER);
+		} else if (errorType[4]) {
+			popupMessage[0] = LanguagePack.POPUP_ERRORBYINVALIDFULLSTOPDIR;
+		}
+		if (popupMessage.length) {
+			var name, callBack, userData = "";
+			if (event == "DIRADD") {
+				name = LanguagePack.KEYWORD_NEWFOLDER;
+				previnpudata = LanguagePack.KEYWORD_NEWFOLDER;
+				callBack = typeof newAddfolderCB == 'function' ? newAddfolderCB : defaultAlertCB;
+			} else {
+				name = LanguagePack.KEYWORD_RENAME;
+				callBack = typeof newAddfolderCB == 'function' ? renamefolderCB : defaultAlertCB;
+			}
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, name, {
+				popupMessage: popupMessage
+			}, callBack, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+		}
+	} else if (event == "COPY" || event == "MOVE") {
+		if (errorType[0]) {
+			var iNoticeStyle;
+			if (data.EventList.length) {
+				iNoticeStyle = (event == "COPY") ? PopupDataValue.NOTICE_STYLE_SUBTITLE_SOME_ITEMS_NOT_ABLE_TO_COPY : PopupDataValue.NOTICE_STYLE_SUBTITLE_SOME_ITEMS_NOT_ABLE_TO_MOVE;
+			} else {
+				iNoticeStyle = (event == "COPY") ? PopupDataValue.NOTICE_STYLE_SUBTITLE_ITEM_NOT_ABLE_TO_COPY : PopupDataValue.NOTICE_STYLE_SUBTITLE_ITEM_NOT_ABLE_TO_MOVE;
+			}
+			iNoticeStyle |= PopupDataValue.NOTICE_STYLE_CONTENT_EXCESSIVE_FILE_NAME_LENGTH;
+			var popup = new PopupMessage(PopupType.NOTICE, null, null, {
+				"noticeStyle": iNoticeStyle,
+				"noticeData": folderPathLengthLimit,
+				"userData": data
+			}, syncEventContinueOKCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+		}
+
+	}
+}
+
+//정렬 알고리즘
+function vsort(typeA, typeB, keyA, keyB, accent_sort) {
+	keyA = keyA.toLowerCase();
+	keyB = keyB.toLowerCase();
+	if (!accent_sort) {
+		if (typeA == "DIR" && typeB == "DIR") {
+			if (keyA < keyB) {
+				return 1;
+			} else {
+				return -1;
+			}
+		} else if (typeA == "DIR") {
+			return -1;
+		} else if (typeB == "DIR") {
+			return 1;
+		} else {
+			if (keyA < keyB) {
+				return 1;
+			} else {
+				return -1;
+			}
+		}
+	} else {
+		if (typeA == "DIR" && typeB == "DIR") {
+			if (keyA < keyB) {
+				return -1;
+			} else {
+				return 1;
+			}
+		} else if (typeA == "DIR") {
+			return -1;
+		} else if (typeB == "DIR") {
+			return 1;
+		} else {
+			if (keyA < keyB) {
+				return -1;
+			} else {
+				return 1;
+			}
+		}
+	}
+}
+
+function getFileName(name) {
+	if (name instanceof Array) {
+		return "[" + name[0] + "]";
+	}
+	return name;
+}
+
+function gogoFlashUrl(e) {
+	defaultAlertCB(e);
+	window.open('http://get.adobe.com/' + LanguagePack.FLASH_URL + '/flashplayer/');
+}
+
+function checkAgent() {
+	var agnt = navigator.userAgent.toLowerCase();
+	// PC 경우
+	if (!(agnt.search("ipad") >= 0 || agnt.search("iphone") >= 0 || agnt.search("android") >= 0 || agnt.search("ipod") >= 0 || agnt.search("phone") >= 0)) {
+		if (agnt.search("windows") >= 0) {
+			return "window";
+
+		} else if (agnt.search("macintosh") >= 0) {
+			return "macos";
+		}
+
+	}
+	return "device";
+}
+
+(function ($) {
+	var weblink = {
+		'init': function (options) {
+			layout.dim.create();
+			var settings;
+			var $this = this;
+			if ($this.children().length) {
+				settings = $this.data('settings');
+				settings = $.extend(settings, options);
+				var classname;
+				if (settings.type == 'ppt' || settings.type == 'pptx') {
+					classname = 'photo';
+				} else {
+					classname = 'photo_portrait';
+				}
+
+				var name = settings.name;
+				if (settings.type == 'slide' || settings.type == 'sheet' || settings.type == 'word') {
+					var index = name.lastIndexOf(".");
+					name = name.substr(0, index);
+				}
+				settings.selector.img.removeAttr('Class').addClass(classname);
+				settings.selector.name.html('<img src="' + CF_PATH + '/maxage1/common/img/v4/s_' + settings.type + '.svg" /> ' + CreateDotDot("fileName", name, false, 180));
+				$this.children('.ConfirmtPopup_external').css('z-index', layout.dim.getZindex() + 1).children().addClass('other');
+				$this.show();
+			} else {
+				settings = $.extend({
+					'selector': {
+						'name': '',
+						'img': '',
+						'input': ''
+					},
+					'log': {},
+					'id': '',
+					'name': '',
+					'type': '',
+					'url': '',
+					'fullurl': '',
+					'agent': false,
+					'successCb': '',
+					'count': '',
+					'isShare': true,
+					'timer': 0
+				}, options);
+
+				var handle = {
+					'create': layout.weblink.create,
+					'set': layout.weblink.set
+				};
+				settings.handle = $.extend(settings.handle, handle);
+				$this.data('settings', settings);
+				settings.handle.create.apply($this);
+			}
+			if (newShareDoucments == 'true') {
+				jsonResponse.getShareFileInfo($this, settings.id);
+			} else {
+				if (!settings.url) {
+					jsonResponse.getlink($this, [{
+						'fileId': settings.id
+					}]);
+				} else {
+					$this.weblink('set', settings.url);
+				}
+			}
+		},
+		'set': function (url, error) {
+			var $this = this;
+			var settings = this.data('settings');
+			settings.url = url;
+
+			var img = new Image();
+			if (newShareDoucments == 'true') {
+				img.src = location.protocol + '//' + location.host + GET_WEBLINK_THUMBNAIL + settings.id + '?' + getTime();
+
+				img.onload = function () {
+					settings.selector.img.children().attr('src', img.src);
+					settings.timer = 0;
+				};
+
+				img.onerror = function () {
+					settings.count++;
+					if (settings.count < 4) {
+						settings.timer = setTimeout(function () {
+							$this.weblink('set', settings.url, true);
+						}, 3000);
+					}
+				};
+			} else {
+				img.src = GET_WEBLINK_THUMBNAIL + settings.url.substring(settings.url.lastIndexOf('/') + 1, settings.url.length) + '?' + getTime();
+
+				img.onload = function () {
+					settings.selector.img.children().attr('src', img.src);
+					settings.timer = 0;
+				};
+
+				img.onerror = function () {
+					settings.count++;
+					if (settings.count < 4) {
+						settings.timer = setTimeout(function () {
+							$this.weblink('set', settings.url, true);
+						}, 3000);
+					}
+				};
+			}
+
+			if (!error) {
+				if (settings.successCb) settings.successCb.call(this);
+				if (newShareDoucments == 'true') {
+					var url = location.protocol + '//' + location.host + '/d/' + $.encodeBase62(settings.id); //$.base64('encode', settings.id);
+					settings.selector.input.val(url);
+				} else {
+					settings.fullurl = 'http://' + location.host + settings.url;
+					settings.selector.input.val(settings.fullurl);
+
+					if (!settings.agent) {
+						if (!settings.isShare) {
+							//console.log(settings.isShare);
+						} else {
+							var name;
+							if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
+								var ver = new Number(RegExp.$1);
+								if (ver <= 8) {
+									name = LanguagePack.POLink_DOC_SHARE + '\r\n' + settings.name + '\r\n';
+								} else
+									name = LanguagePack.POLink_DOC_SHARE + '\r' + settings.name + '\r';
+							} else {
+								name = LanguagePack.POLink_DOC_SHARE + '\r' + settings.name + '\r';
+							}
+							twitterWinOpen("twitter_start", settings.fullurl, name);
+						}
+					}
+				}
+
+				settings.selector.input.trigger('click');
+			}
+		}
+	};
+
+	var layout = {
+		'dim': {
+			'create': function () {
+				var $dim = $('#dim');
+				if (!$dim.length) {
+					$('body').append('<div id="dim" class="dim"></div>');
+					return;
+				} else {
+					$dim.css('z-index', parseInt($dim.css('z-index')) + 1);
+				}
+			},
+			'remove': function () {
+				var $dim = $('#dim');
+				var zindex = $dim.css('z-index');
+				if (zindex == '9') {
+					$dim.remove();
+				} else {
+					$dim.css('z-index', parseInt($dim.css('z-index')) - 1);
+				}
+			},
+			'getZindex': function () {
+				var $dim = $('#dim');
+				return parseInt($dim.css('z-index'));
+			}
+		},
+		'element': {
+			'pWrapper': function (top) {
+				return $('<div />', {
+					'class': 'ConfirmtPopup_external',
+					'css': {
+						'width': 'width:100%',
+						'margin-top': top + 'px',
+						'z-index': layout.dim.getZindex() + 1
+					}
+				});
+			},
+			'popup': function (width) {
+				return $('<div />', {
+					'class': 'popup other',
+					'css': {
+						'width': width + 'px',
+						'margin': 'auto'
+					}
+				});
+			},
+			'div': function (className) {
+				return $('<div />', {
+					'class': className
+				});
+			},
+			'a': function (className, text, title /*, event*/ ) {
+				return $('<a />', {
+					'href': '#',
+					'class': className,
+					'title': title,
+					'html': text
+					/*'click' : event*/
+				});
+			},
+			'input': function (id, type, name /*, event*/ ) {
+				return $('<input />', {
+					'id': id,
+					'type': type,
+					'name': name
+					/*'click' : event*/
+				});
+			}
+		},
+		'weblink': {
+			'create': function () {
+				var $this = this;
+				var settings = $this.data('settings');
+				var $wrapper = layout.element.pWrapper(-90);
+				$wrapper.bind('selectstart', function (event) {
+					if ((event.target || event.srcElement).nodeName !== 'INPUT') return false;
+				});
+				var $contentsAll = layout.element.popup(420).html('<h1>' + LanguagePack.POPUP_URL_COPY + '</h1>');
+				var $contents = layout.element.div('popup_content');
+
+				var $bx_url = layout.element.div('bx_url');
+				var classname;
+				if (settings.type == 'ppt' || settings.type == 'pptx') {
+					classname = 'photo';
+				} else {
+					classname = 'photo_portrait';
+				}
+				var name = settings.name;
+				if (settings.type == 'slide' || settings.type == 'sheet' || settings.type == 'word') {
+					var index = name.lastIndexOf(".");
+					name = name.substr(0, index);
+				}
+				var $thum = layout.element.div(classname).append('<img src="' + CF_PATH + '/resources/image/Polaris/loading_thumb.gif" />');
+
+				var $fileName = layout.element.div('url').append('<img src="' + CF_PATH + '/maxage1/common/img/v4/s_' + settings.type + '.svg" /> ' + CreateDotDot("fileName", name, false, 180));
+				$fileName.attr('title', settings.name);
+				var $dl = $('<dl class="input"></dl>');
+				var $dt = $('<dt class="input_dt"></dt>');
+				var $input = $('<input type="text" value="" />');
+				$input.bind('click', events.selectinput);
+				if (isMobile) {
+					$input.bind('keydown', events.nokeyevent);
+				} else {
+					$input.attr('readonly', true);
+				}
+
+				$dl.append($dt.append($input));
+
+				if (settings.agent) {
+					$bx_url.append($thum).append($fileName);
+				} else if (settings.ischina == 'true') {
+					var $dd = $('<dd></dd>');
+					var $email;
+					$email = layout.element.a('social_01', '', LanguagePack.KEYWORD_SHAREBYEMAIL);
+					$email.bind('click', events.sendemail);
+					var $qq;
+					$qq = layout.element.a('social_04', '', LanguagePack.CHINAVER_SHARE_LINK);
+					$qq.bind('click', events.sendqq);
+
+					$dl.append($dd.append($email).append($qq));
+				} else {
+					var $dd = $('<dd></dd>');
+					var $email;
+					$email = layout.element.a('social_01', '<span>email</span>', LanguagePack.KEYWORD_SHAREBYEMAIL);
+					$email.bind('click', events.sendemail);
+					var $facebook;
+					$facebook = layout.element.a('social_02', '<span>email</span>', LanguagePack.KEYWORD_SHAREONFACEBOOK);
+					$facebook.bind('click', events.sendfacebook);
+					var $twitter;
+					$twitter = layout.element.a('social_03', '<span>email</span>', LanguagePack.KEYWORD_SHAREONTWITTER);
+					$twitter.attr('id', 'twitter_start').css('href', 'https://twitter.com/intent/tweet');
+					$twitter.bind('click', events.sendtwitter);
+					$dl.append($dd.append($email).append($facebook).append($twitter));
+				}
+				$bx_url.append($thum).append($fileName).append($dl);
+				$contents.append($bx_url);
+
+				var $subcontents4 = layout.element.div('bx_btn');
+				var $close = $('<a />', {
+					'id': 'popup_confirm_btn',
+					'class': 'btn',
+					'href': '#',
+					'html': LanguagePack.KEYWORD_CLOSE
+					/*'click' : event*/
+				});
+				/*var $close = layout.element.a('btn', LanguagePack.KEYWORD_CLOSE, events.send);*/
+				$close.bind('click', events.close);
+				$subcontents4.append($close);
+
+				var $close2 = $('<span class="btn_close"></span>');
+				var $closebutton = layout.element.a('', '<img src="' + CF_PATH + '/resources/image/Polaris/popup_button_close.png">' /*, events.close*/ );
+				$close2.bind('click', events.close);
+				$close2.append($closebutton);
+
+				$wrapper.append(($contentsAll)
+					.append($contents)
+					.append($subcontents4)
+					.append($close2));
+
+				this.append($wrapper);
+
+				settings.selector.name = $fileName;
+				settings.selector.img = $thum;
+				settings.selector.input = $input;
+
+				if (settings.agent) {
+					$wrapper.css({
+						'margin-top': '0px',
+						'top': '0px',
+						'width': '420px'
+					});
+					$contentsAll.children('h1').css('display', 'none');
+					$contents.css('border', 'none');
+					$close2.css('display', 'none');
+					$subcontents4.css({
+						'border': 'none',
+						'border-top': '1px solid #e6e6e6',
+						'box-shadow': 'none'
+					});
+					/*$close.attr('id', 'popup_confirm_btn');*/
+				}
+				$contentsAll.show();
+			}
+		}
+	};
+
+	var events = {
+		'close': function (e) {
+			if (e.preventDefault) e.preventDefault();
+			var $this = $(this);
+			var $root = $this.parents('#weblink');
+			var settings = $root.data('settings');
+			if (!settings.agent) {
+				if (settings.timer) {
+					clearTimeout(settings.timer);
+					settings.timer = 0;
+				}
+				$root.children().children().removeClass('other');
+				settings.selector.img.children().attr('src', CF_PATH + '/resources/image/Polaris/loading_thumb.gif');
+				settings.url = '';
+				$root.hide();
+				layout.dim.remove();
+			}
+		},
+		'sendemail': function (e) {
+			if (e.preventDefault) e.preventDefault();
+			var $this = $(this);
+			var $root = $this.parents('#weblink');
+			var settings = $root.data('settings');
+
+			if ((typeof userEmail != 'undefined' && !userEmail) || (typeof gUserEmail != 'undefined' && !gUserEmail)) {
+				$('#logincontainer').login();
+			} else {
+				var settings2 = {
+					'fileId': settings.url.split('/')[2],
+					'type': 'weblink',
+					'locale': local,
+					'fileType': settings.type,
+					'fileName': settings.name,
+					'usercnt': 0
+				};
+				$("#address").sendEmail(settings2);
+			}
+		},
+		'selectinput': function (e) {
+			var $this = $(this);
+			if (isMobile) {
+				this.setSelectionRange(0, $this.val().length);
+			} else {
+				$this.select();
+			}
+		},
+		'nokeyevent': function (e) {
+			if (!((e.metaKey || e.ctrlKey) && e.keyCode == 67)) {
+				if (e.preventDefault) e.preventDefault();
+			} else {
+				console.log(e.keyCode);
+			}
+		},
+		'sendfacebook': function (e) {
+			if (e.preventDefault) e.preventDefault();
+
+			var $this = $(this);
+			var $root = $this.parents('#weblink');
+			var settings = $root.data('settings');
+
+			if (!settings.url) {
+				return;
+			}
+			if (!settings.isShare) {
+				toastMessage(LanguagePack.TEAM_MSG_WARRING_SAVE2);
+				return
+			}
+			var name = "\'" + settings.name + "\':   " + settings.fullurl;
+			var img = location.protocol + '//' + location.host + GET_WEBLINK_THUMBNAIL + settings.url.substring(settings.url.lastIndexOf('/') + 1, settings.url.length) + '?' + getTime();
+
+			fbookDialogOpen(settings.fullurl, name, img, LanguagePack.POLink_DOC_SHARE);
+			//QQDialogOpen(settings.fullurl,LanguagePack.POLink_DOC_SHARE,settings.name,img);
+		},
+		'sendqq': function (e) {
+			if (e.preventDefault) e.preventDefault();
+			var $this = $(this);
+			var $root = $this.parents('#weblink');
+			var settings = $root.data('settings');
+
+			if (!settings.url) {
+				return;
+			}
+			if (!settings.isShare) {
+				toastMessage(LanguagePack.TEAM_MSG_WARRING_SAVE2);
+				return
+			}
+			var name = "\'" + settings.name + "\':   " + settings.fullurl;
+			var img = location.protocol + '//' + location.host + GET_WEBLINK_THUMBNAIL + settings.url.substring(settings.url.lastIndexOf('/') + 1, settings.url.length) + '?' + getTime();
+			QQDialogOpen(settings.fullurl, LanguagePack.POLink_DOC_SHARE, settings.name, img);
+		},
+		'sendtwitter': function (e) {
+			var $this = $(this);
+			var $root = $this.parents('#weblink');
+			var settings = $root.data('settings');
+			if (!settings.isShare) {
+				toastMessage(LanguagePack.TEAM_MSG_WARRING_SAVE2);
+				return
+			}
+		}
+
+	};
+
+	var jsonResponse = {
+		'getlink': function () {
+			var arg = arguments;
+			var webdata = {
+				fileIdList: arg[1]
+			};
+			popcorn.getLink(webdata, function (res) {
+				jsonReceive.getlink.onSuccessCB(res, arg[0]);
+			}, function (res) {});
+		},
+		'getShareFileInfo': function () {
+			var arg = arguments;
+			var webdata = {
+				'fileId': '' + arg[1],
+				'workId': ''
+			};
+			popcorn.getShareFileInfo(webdata, function (res) {
+				jsonReceive.getShareFileInfo.onSuccessCB(res, arg[0]);
+			}, function (res) {});
+		},
+		'modifyAuthorityWeblink': function () {
+			var arg = arguments;
+			var webdata = {
+				'fileId': arg[1],
+				'publicAuthority': 1,
+				'isCustomMode': arg[2]
+			};
+			popcorn.modifyAuthorityWeblink(webdata, function (res) {
+				jsonReceive.modifyAuthorityWeblink.onSuccessCB(res, arg[0]);
+			}, function (res) {});
+		}
+	};
+
+	var jsonReceive = {
+		'getlink': {
+			'onSuccessCB': function () {
+				var arg = arguments;
+				if (CheckResult(null, arg[0])) {
+					var settings = arg[1].data('settings');
+					settings.count = 0;
+					arg[1].weblink('set', arg[0].list[0].url);
+				}
+			},
+			'onFailCB': function () {
+
+			}
+		},
+		'getShareFileInfo': {
+			'onSuccessCB': function () {
+				var arg = arguments;
+				if (CheckResult(null, arg[0])) {
+					if (arg[0].work.publicAuthority) {
+						var settings = arg[1].data('settings');
+						settings.count = 0;
+						arg[1].weblink('set', 1234);
+					} else {
+						jsonResponse.modifyAuthorityWeblink(arg[1], arg[0].work.fileInfo.id, (arg[0].work.customMode ? arg[0].work.customMode : 0));
+					}
+				}
+			},
+			'onFailCB': function () {
+
+			}
+		},
+		'modifyAuthorityWeblink': {
+			'onSuccessCB': function () {
+				var arg = arguments;
+				if (CheckResult(null, arg[0])) {
+					var settings = arg[1].data('settings');
+					settings.count = 0;
+					arg[1].weblink('set', 1234);
+				}
+			},
+			'onFailCB': function () {
+
+			}
+		}
+	};
+
+	$.fn.weblink = function (method) {
+		if (weblink[method]) {
+			return weblink[method].apply(this, Array.prototype.slice.call(arguments, 1));
+		} else if (typeof method === 'object' || !method) {
+			return weblink.init.apply(this, arguments);
+		} else {
+			$.error('The method ' + method + ' does not exist in $.weblink');
+		}
+	};
+})($);
+
+function toggleLabel(e, dispStyle) {
+	var inputObj = (e.target) ? $(e.target) : $(e.srcElement);
+	if (inputObj.val().length > 0) inputObj.prev().hide();
+	else {
+		if (dispStyle) inputObj.prev().css('display', dispStyle);
+		else inputObj.prev().show();
+	}
+}
+
+function getPaymentHistoryList() {
+	var arg = arguments;
+	if (teamId) {
+		var data = {
+			'idTeam': teamId
+		};
+		popcorn.getCardInfo(data, function (res) {
+			if (CheckResult(null, res) != null) {
+				$USERINFO.setData('inGracePeriod', res.isInGracePeriod);
+				$USERINFO.setData('teamPayStatus', res.paymentStatus);
+				showMaxStorageNoti(res);
+			}
+
+		}, function (res) {});
+
+	} else {
+		var data = {
+			'timePurchase': 0
+		};
+		popcorn.getPaymentList(data, function (res) {
+			if (CheckResult(null, res) != null) {
+				for (var i = 0; i < res.list.length; i++) {
+					if (res.list[i].receiptStatus == "USING" && res.list[i].gateType == "COUPON") {
+						if (res.list[i].remainDay < 7) {
+							$USERINFO.setData('COUPON', res.list[i].remainDay + 1);
+							setNoti('userinfo', res);
+						}
+						break;
+					}
+				}
+			}
+
+		}, function (res) {});
+	}
+
+
+}
+
+function getRedirectURL() {
+	var dataArray = document.cookie.split(";");
+	var data = null;
+	var index = 0;
+	for (var i = 0; i < dataArray.length; i++) {
+		index = dataArray[i].indexOf("Redirceturl=");
+		if (index != -1) {
+			data = dataArray[i];
+			break;
+		} else {
+			continue;
+		}
+	}
+	if (data) {
+		data = data.substring(index + 12);
+		return data;
+	} else
+		return null;
+}
+
+function onAppDownEvent(e) {
+	commonPreventEvent(e);
+	commonStopPropagation(e);
+
+	var isshow = true;
+	if ($('.conPop').css('display') != 'none') {
+		$('.conPop').hide();
+		isshow = false;
+	}
+
+	$('body').trigger('click');
+
+	if (!isshow) {
+		return;
+	}
+
+	var result = function () {
+		var mobile = $PCHOMEINFO.getDeviceInfo('mobile');
+		if (mobile.on) {
+			$('div.conPop ul li.mobile.off').hide();
+			$('div.conPop ul li.mobile.on').show();
+			$('div.conPop ul li.mobile.on').html(LanguagePack.APP_CONNECT_MOBILE(mobile.count));
+		} else {
+			$('div.conPop ul li.mobile.off').show();
+			$('div.conPop ul li.mobile.on').hide();
+		}
+
+		var sync = $PCHOMEINFO.getDeviceInfo('sync');
+		if (sync.on) {
+			$('div.conPop ul li.folder.off').hide();
+			$('div.conPop ul li.folder.on').show();
+			$('div.conPop ul li.folder.on').html(LanguagePack.APP_CONNECT_SYNC(sync.count));
+		} else {
+			$('div.conPop ul li.folder.off').show();
+			$('div.conPop ul li.folder.on').hide();
+		}
+
+		var pc = $PCHOMEINFO.getDeviceInfo('pc');
+		if (pc.on) {
+			$('div.conPop ul li.pc.off').hide();
+			$('div.conPop ul li.pc.on').show();
+			$('div.conPop ul li.pc.on').html(LanguagePack.APP_CONNECT_PC(pc.count));
+		} else {
+			$('div.conPop ul li.pc.off').show();
+			$('div.conPop ul li.pc.on').hide();
+		}
+	};
+	$PCHOMEINFO.getDriveList(result);
+	$('div.conPop.connect').show();
+
+
+	//logTracking
+	var webData = $LOGMODEL.getData();
+	webData['ti'].t = LogType.tracking.page;
+	webData['obj'].dp = "SubMenu";
+	webData['obj'].dt = "AppMenu";
+	$LOGMODEL.sendData(webData);
+
+	$("body").one('click', function () {
+		$('div.conPop').hide();
+		getSeletor(e).parent().find('.cloud_tooltip').removeAttr('style');
+	});
+}
+
+function cancelRevocation(e) {
+	commonPreventEvent(e);
+	var date = e.target.className;
+	var result = function (e) {
+		defaultAlertCB(e);
+		getBusinessProperties(null, ['paymentReceipt'], function(){
+			var arg = arguments;
+			var data = {
+				'gateType': arg[1].paymentReceipt.gateType
+			};
+			popcorn.restorePayment(data, function (res) {
+				if (CheckResult(null, res) != null) {
+					toastMessage(LanguagePack.TEAM_RESTOREPAYMENT);
+					hidePopNotice();
+	
+					if (location.href.indexOf('/team#payment') > -1) {
+						$('#payment').teamPayment();
+					}
+	
+				}
+			}, function (res) {});
+		})
+
+
+	};
+
+	var popupMessage = new Array();
+	popupMessage[0] = LanguagePack.TEAM_PAYCANCEL_POPUP(date);
+	var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.YES_NO, null, {
+		popupMessage: popupMessage
+	}, result, defaultAlertCB, defaultAlertCB);
+	popup.create();
+	popup.show();
+
+}
+
+function goSetting(e) {
+	commonPreventEvent(e);
+	if (location.href.indexOf('/setting') > -1) {
+		$('#tab1').trigger('click');
+	} else {
+		location.href = location.protocol + '//' + location.host + '/view/setting#info';
+	}
+
+}
+
+function checkAgreeStatus(type, paymethod, isFreeTrial) {
+	var url = location.href;
+	if (!getCookie('AGREEPOPUP') || url.indexOf('external_price') > -1 || location.pathname == "/pricing" || location.pathname == "/basic-pricing" || location.pathname == "/pcpricing") {
+		var data = {
+			'type': 1,
+			'device': 0
+		};
+		popcorn.getAgreeStatus(data, function (res) {
+			if (res.resultCode == 0) {
+				if (res.status == 1) {
+
+					showPayservice(type, paymethod, isFreeTrial);
+				} else {
+					if (url.indexOf('external_price') > -1 || location.pathname == "/pricing" || location.pathname == "/basic-pricing" || location.pathname == "/pcpricing")
+						showPayservice(type, paymethod, isFreeTrial);
+				}
+			}
+		}, function (res) {});
+	} else {
+		$("div.notice_popup").hide();
+	}
+
+}
+
+
+function openSetInfo(e, _conType, _info) {
+	if (e) {
+		commonPreventEvent(e);
+	}
+
+	var _ischina = (typeof ischina != 'undefined' && ischina == 'true') ? true : false;
+	var popupMessage, popup;
+
+	function defaultEvtCBWrapper(evt) {
+		if (_conType && _conType == 5) {
+			history.back();
+		}
+		defaultAlertCB(evt);
+	}
+
+	function verifyEmailPop(popupMessage, popup) {
+		popupMessage = new Array();
+		popupMessage[0] = LanguagePack.VERIFYEMAIL_NOTIFICATION;
+		popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM_VERIFY, null, {
+			popupMessage: popupMessage
+		}, defaultAlertCB, function (res) {
+			var emailValue = typeof userEmail != 'undefined' ? userEmail : gUserEmail;
+			var e = emailValue;
+			if (emailValue) {
+				e = '';
+			}
+			RequestVerifyEmail(e, function (response) {
+				if (CheckResult(null, response) != null) {
+					showUnverifyPopMsg(emailValue);
+				} else if (response.resultCode == Enum.common.INVALIDPARAM && emailValue) {
+					AccountUserInfo(function (res) {
+						CheckResult(null, res);
+					}, function (res) {
+
+					});
+				}
+			}, function (response) {
+				toastMessage(LanguagePack.POPUP_FAILTOSENDEMAIL);
+			});
+
+			if (navigator.userAgent.search("PolarisOfficeLink") != -1 || navigator.userAgent.search("PolarisPCOffice") != -1) {
+				if (res.preventDefault) res.preventDefault();
+				if (res.stopPropagation) res.stopPropagation();
+				var prevPopup = PopupManagement.getCurrentPopup();
+				if (prevPopup != null) {
+					prevPopup.destroy();
+				}
+			} else {
+				defaultAlertCB(res);
+			}
+		}, defaultAlertCB);
+		popup.create();
+		popup.show();
+	}
+
+	if (_info != null) { // setting page
+		if (_info.resultCode == 0) {
+			if (_info.status == "TEMPORARY" && !_info.hasPassword) { // only chinaservice
+				popup = new PopupMessage(PopupType.ACCOUNT_CHANGE, null, null, {}, function (evt) {
+					if (evt.preventDefault) evt.preventDefault();
+					var action = function (webdata) {
+						var accpwd;
+						if ($('#popup_account_change_password').is(':visible')) {
+							accpwd = setPasswordSocial($('#popup_account_change_password').val());
+						} else {
+							accpwd = setPasswordSocial($('#popup_account_change_password2').val());
+						}
+						if (!accpwd) return false;
+						webdata['type'] = 'EMAILANDPASSWORD';
+						webdata['newPassword'] = accpwd;
+						popcorn.Modifyuserinfo(webdata, function (res) {
+							if (CheckResult(null, res) != null) {
+								toastMessage(LanguagePack.CHINAVER_SET_EMAIL_PWD);
+								// $USERINFO.setData('init');
+								$USERINFO.setData('SETEMAIL', true);
+								$USERINFO.setData('social_not_pw', false);
+								$USERINFO.setData('STATUS', 'UNVERIFIED');
+								if (typeof userEmail != 'undefined') {
+									userEmail = webdata.email;
+								}
+								if (typeof gUserEmail != 'undefined') {
+									gUserEmail = webdata.email;
+								}
+								setNoti('userinfo', res);
+								defaultAlertCB(evt);
+								if (_conType && _conType == 5) { // getinfo in setting page. only chinaservice
+									$('#firstName, #pre_password').prop("disabled", false);
+									$('#email').val(webdata.email).prev('label').addClass('off');
+								}
+								if (res.applyCoupon) {
+									location.href = location.protocol + '//' + location.host + '/view/complete';
+								} else {
+									if (_conType && _conType == 4) { // removeaccount in setting page
+										window.location.href = location.protocol + '//' + location.host + '/view/delete';
+									}
+								}
+							} else if (res.resultCode == Enum.account.EMAILEXIST) {
+								toastMessage(LanguagePack.BUBBLE_USEDEMAIL);
+							} else {
+								toastMessage(LanguagePack.CHINAVER_SET_EMAIL_PWD_FAILED);
+							}
+							return;
+
+						}, null);
+					};
+					setEmail($('#popup_account_change_newaccount').val(), evt, action);
+				}, defaultEvtCBWrapper, defaultEvtCBWrapper);
+				PopupTitleText.ACCOUNT_CHANGE = LanguagePack.CHINAVER_SET_EMAIL_PWD_TITLE;
+				PopupContentUI.setEmailAndPwd(LanguagePack.BUBBLE_ENTERYOUREMAIL, LanguagePack.CHINAVER_SET_EMAIL_PWD_STR2);
+				popup.create();
+				popup.show();
+				bindPwdToggle();
+				return;
+			}
+			if (_info.onlySocialUser && !_info.hasPassword) { // only no password
+				popup = new PopupMessage(PopupType.ACCOUNT_DELETION, null, null, {}, function (evt) {
+					if (evt.preventDefault) evt.preventDefault();
+					var action = function (webdata) {
+						popcorn.Modifyuserinfo(webdata, function (res) {
+							if (CheckResult(null, res) != null) {
+								toastMessage(LanguagePack.SETPASSWORD);
+								// $USERINFO.setData('init');
+								$USERINFO.setData('social_not_pw', false);
+								$USERINFO.setData('STATUS', 'UNVERIFIED');
+								setNoti('userinfo', res);
+								defaultAlertCB(evt);
+								if (res.applyCoupon) {
+									location.href = location.protocol + '//' + location.host + '/view/complete';
+								} else {
+									if (_conType && _conType == 4) { // removeaccount in setting page
+										location.href = location.protocol + '//' + location.host + '/view/delete';
+									}
+								}
+							} else {
+								toastMessage(LanguagePack.POPUP_FAILEDCHANGEPASSWORD);
+							}
+							return;
+
+						}, function (res) {
+
+						});
+					};
+					var accpwd;
+					if ($('#popup_account_deletion_password').is(':visible')) {
+						accpwd = $('#popup_account_deletion_password').val(); // setPasswordSocial($('#popup_account_deletion_password').val());
+					} else {
+						accpwd = $('#popup_account_deletion_password2').val(); // setPasswordSocial($('#popup_account_deletion_password2').val());
+					}
+					setPasswordSocial(accpwd, evt, action);
+					if (_conType && _conType == 4) { // removeaccount in setting page
+						window.location.href = location.protocol + '//' + location.host + '/view/delete';
+					}
+				}, defaultEvtCBWrapper, defaultEvtCBWrapper);
+				PopupContentUI.setPasswordStr(LanguagePack.ENTERSERVICEPASSWORD2, _ischina);
+				popup.create();
+				popup.show();
+				bindPwdToggle(1);
+				return;
+			}
+		}
+		return;
+	}
+
+
+	if (_ischina) {
+		if (($USERINFO.getData('social_not_pw') && ($USERINFO.getData('STATUS') == 'TEMPORARY')) || _conType == 7) { // no password no email
+			popup = new PopupMessage(PopupType.ACCOUNT_CHANGE, null, null, {}, function (evt) {
+				if (evt.preventDefault) evt.preventDefault();
+				var action = function (webdata) {
+					var accpwd;
+					if ($('#popup_account_change_password').is(':visible')) {
+						accpwd = setPasswordSocial($('#popup_account_change_password').val());
+					} else {
+						accpwd = setPasswordSocial($('#popup_account_change_password2').val());
+					}
+					if (!accpwd) return false;
+					webdata['type'] = 'EMAILANDPASSWORD';
+					webdata['newPassword'] = accpwd;
+					popcorn.Modifyuserinfo(webdata, function (res) {
+						if (CheckResult(null, res) != null) {
+							toastMessage(LanguagePack.CHINAVER_SET_EMAIL_PWD);
+							// $USERINFO.setData('init');
+							$USERINFO.setData('SETEMAIL', true);
+							$USERINFO.setData('social_not_pw', false);
+							$USERINFO.setData('STATUS', 'UNVERIFIED');
+							if (typeof userEmail != 'undefined') {
+								userEmail = webdata.email;
+							}
+							if (typeof gUserEmail != 'undefined') {
+								gUserEmail = webdata.email;
+							}
+							$('#launchpage').show().next().show();
+							setNoti('userinfo', res);
+							defaultAlertCB(evt);
+							if (res.applyCoupon) {
+								location.href = location.protocol + '//' + location.host + '/view/complete';
+							} else {
+								//
+							}
+						} else if (res.resultCode == Enum.account.EMAILEXIST) {
+							toastMessage(LanguagePack.BUBBLE_USEDEMAIL);
+						} else {
+							toastMessage(LanguagePack.CHINAVER_SET_EMAIL_PWD_FAILED);
+						}
+						return;
+
+					}, null);
+				};
+				setEmail($('#popup_account_change_newaccount').val(), evt, action);
+			}, defaultAlertCB, defaultAlertCB);
+			PopupTitleText.ACCOUNT_CHANGE = LanguagePack.CHINAVER_SET_EMAIL_PWD_TITLE;
+			if (_conType != null && _conType >= 2) {
+				PopupContentUI.setEmailAndPwd(LanguagePack.BUBBLE_ENTERYOUREMAIL, LanguagePack.CHINAVER_SET_EMAIL_PWD_STR2);
+			} else {
+				PopupContentUI.setEmailAndPwd(LanguagePack.BUBBLE_ENTERYOUREMAIL, LanguagePack.CHINAVER_SET_EMAIL_PWD_STR);
+			}
+			popup.create();
+			popup.show();
+			bindPwdToggle();
+			return;
+		} else if (($USERINFO.getData('social_not_pw') && ($USERINFO.getData('STATUS') != 'TEMPORARY')) || _conType == 8) { // only no password
+			if (_conType != null && _conType == 3) {
+				if ($USERINFO.getData('STATUS') == 'UNVERIFIED') {
+					verifyEmailPop(popupMessage, popup);
+				}
+				return;
+			}
+			popup = new PopupMessage(PopupType.ACCOUNT_DELETION, null, null, {}, function (evt) {
+				if (evt.preventDefault) evt.preventDefault();
+				var action = function (webdata) {
+					popcorn.Modifyuserinfo(webdata, function (res) {
+						if (CheckResult(null, res) != null) {
+							toastMessage(LanguagePack.SETPASSWORD);
+							// $USERINFO.setData('init');
+							$USERINFO.setData('social_not_pw', false);
+							$USERINFO.setData('STATUS', 'UNVERIFIED');
+							setNoti('userinfo', res);
+							defaultAlertCB(evt);
+							if (res.applyCoupon) {
+								location.href = location.protocol + '//' + location.host + '/view/complete';
+							}
+						} else {
+							toastMessage(LanguagePack.POPUP_FAILEDCHANGEPASSWORD);
+						}
+						return;
+
+					}, function (res) {
+
+					});
+				};
+				var accpwd;
+				if ($('#popup_account_deletion_password').is(':visible')) {
+					accpwd = $('#popup_account_deletion_password').val(); // setPasswordSocial($('#popup_account_deletion_password').val());
+				} else {
+					accpwd = $('#popup_account_deletion_password2').val(); // setPasswordSocial($('#popup_account_deletion_password2').val());
+				}
+				setPasswordSocial(accpwd, evt, action);
+			}, defaultAlertCB, defaultAlertCB);
+			PopupContentUI.setPasswordStr(LanguagePack.ENTERSERVICEPASSWORD, true);
+			popup.create();
+			popup.show();
+			bindPwdToggle(1);
+			return;
+		}
+	}
+
+	if ($USERINFO.getData('STATUS') == "TEMPORARY") { // if global temporary
+		popup = new PopupMessage(PopupType.SET_EMAIL, null, null, {}, function (res) {
+			setEmail($('#popup_account_deletion_password').val(), res);
+		}, defaultAlertCB, defaultAlertCB);
+		popup.create();
+		popup.show();
+		return;
+		/*popupMessage = new Array();
+		popupMessage[0] = LanguagePack.CHINAVER_NOT_USE;
+		popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_ALERT, {popupMessage:popupMessage}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+		popup.create();
+		popup.show();
+		return;*/
+	}
+	// continueUnverifyMsg
+	verifyEmailPop(popupMessage, popup);
+}
+
+function bindPwdToggle(_popup) {
+	var $pwdinput = $('#popup_account_change_password');
+	if (_popup) {
+		if (_popup == 1) { // account_deletion
+			$pwdinput = $('#popup_account_deletion_password');
+		} else { // password_regist
+			$pwdinput = $('#popup_password_regist');
+		}
+	} else { // set email and password
+		//
+	}
+	$pwdinput.next().bind('click', function (e) {
+		commonPreventEvent(e);
+		// $pwdinput.attr('type', 'text');
+		$pwdinput.hide().prev().val($pwdinput.val()).show();
+		$(this).hide().next().css('display', 'inline');
+	});
+	$pwdinput.next().next().bind('click', function (e) {
+		commonPreventEvent(e);
+		// $pwdinput.attr('type', 'password');
+		$pwdinput.val($pwdinput.prev().val()).show().prev().hide().val(null);
+		$(this).hide().prev().css('display', 'inline');
+	});
+}
+
+var $INFO = {};
+
+function setNoti(type, res) {
+	if (type == 'userinfo') {
+		if (!$INFO.hide && res.level == 1 && res.lastPaymentExpiredTime) {
+			var isLastTeam = false;
+			if (res.lastTeamLeaveTime > res.lastPaymentExpiredTime) {
+				isLastTeam = true;
+			}
+
+			popcorn.getPremiumInfo(null, function (res2) {
+				if (CheckResult(null, res2) != null) {
+					if (res2.expired) {
+						$USERINFO.premiumInfo.functionId = res2.functionId;
+						$USERINFO.premiumInfo.type = res2.type;
+						$USERINFO.premiumInfo.hide = res2.hide;
+					}
+
+					$INFO.hide = res2.hide;
+					if (isLastTeam) {
+						$INFO.prevLevel = 4;
+					} else {
+						if (!res2.paymentInfo) {
+							$INFO.hide = true;
+							$INFO.prevLevel = 1;
+						} else {
+							if (res2.paymentInfo.gateType == 'COUPON') {
+								if (res2.paymentInfo.productType.lastIndexOf('PAID2') != -1) {
+									$INFO.prevLevel = 3;
+									$INFO.coupontimeExpire = 0;
+								} else {
+									$INFO.prevLevel = $INFO.level;
+								}
+							} else {
+								if (res2.paymentInfo.productType.lastIndexOf('PAID1') != -1) {
+									$INFO.prevLevel = 2;
+								} else if (res2.paymentInfo.productType.lastIndexOf('PAID2') != -1) {
+									$INFO.prevLevel = 3;
+								} else if (res2.paymentInfo.productType.lastIndexOf('BUSINESS') != -1) {
+									$INFO.prevLevel = 4;
+								} else if (res2.paymentInfo.productType.lastIndexOf('SMART') != -1) {
+									$INFO.prevLevel = 8;
+								} else if (res2.paymentInfo.productType.lastIndexOf('PRO') != -1) {
+									$INFO.prevLevel = 9;
+								} else if (res2.paymentInfo.productType.lastIndexOf('AI_BASIC') != -1) {
+									$INFO.prevLevel = 12;
+								} else if (res2.paymentInfo.productType.lastIndexOf('AI_PLUS') != -1) {
+									$INFO.prevLevel = 13;
+								} else {
+									$INFO.prevLevel = $INFO.level;
+								}
+
+							}
+						}
+					}
+
+					//showNoti();
+				}
+			}, function (res) {
+				console.log(res);
+			});
+		} else if (res.level == 4) {
+			$INFO.hide = true;
+			$INFO.prevLevel = res.level;
+			if (location.href.lastIndexOf('/team') != -1) {
+				if (teamId) {
+					var data = {
+						'idTeam': teamId
+					};
+					popcorn.getCardInfo(data, function (res2) {
+						if (CheckResult(null, res) != null) {
+							$USERINFO.setData('inGracePeriod', res2.isInGracePeriod);
+							$USERINFO.setData('teamPayStatus', res2.paymentStatus);
+
+							$INFO.paymentStatus = res2.paymentStatus;
+							$INFO.isInGracePeriod = res2.isInGracePeriod;
+							$INFO.teamLevel = res2.level;
+						}
+						//	showNoti();
+					}, function (res) {});
+				}
+			}
+		} else {
+			$INFO.hide = true;
+			$INFO.prevLevel = res.level;
+			if (res.gateType == 'COUPON') {
+				if (!getCookie('COUPONPERIOD')) {
+					$INFO.coupontimeExpire = res.payDueDate;
+					$INFO.productType = res.productType;
+
+					if (res.productType.lastIndexOf('SMART') != -1) {
+						$INFO.product = LanguagePack.KEYWORD_PRODUCT_SMART;
+					} else if (res.productType.lastIndexOf('PRO') != -1) {
+						$INFO.product = LanguagePack.KEYWORD_PRODUCT_PRO;
+					} else {
+						$INFO.coupontimeExpire = 0;
+					}
+				}
+			} else if (res.level == 7 || res.level == 11) {
+				$INFO.userCapacity = res.userCapacity;
+				$INFO.trashcanUsage = res.trashcanUsage;
+				$INFO.driveUsage = res.driveUsage;
+				$INFO.scannerUsage = res.scannerUsage;
+				$INFO.teamUsage = res.teamUsage;
+			}
+		}
+		$INFO.status = res.status;
+		$INFO.lastPaymentExpiredTime = res.lastPaymentExpiredTime;
+		$INFO.hasPassword = res.hasPassword;
+		$INFO.level = res.level;
+		$INFO.exceededStorageType = res.exceededStorageType;
+		$INFO.payDueDate = res.payDueDate;
+	} else if (type == 'sync' || type == 'list' || type == 'usage') {
+		if (!res.contentUsageInfo) {
+			$INFO.contentUsageInfo = {};
+			$INFO.contentUsageInfo.currentUsage = 0;
+			$INFO.contentUsageInfo.limitUsage = -1;
+			$INFO.contentUsageInfo.viewCount = -1;
+		} else {
+			$INFO.contentUsageInfo = res.contentUsageInfo;
+		}
+		if (getCookie('CONTENTUSAGEINFOPERIOD') || getCookie('exceededUsage')) {
+			$INFO.noCheck_contentUsageInfo = true;
+		} else {
+			$INFO.noCheck_contentUsageInfo = false;
+		}
+		$INFO.userCapacity = res.userCapacity;
+		$INFO.trashcanUsage = res.trashcanUsage;
+		$INFO.driveUsage = res.driveUsage;
+		$INFO.scannerUsage = res.scannerUsage;
+		$INFO.teamUsage = res.teamUsage;
+	}
+
+	//showNoti();
+}
+
+function runUserInfoEvent(e) {
+	commonPreventEvent(e);
+	commonStopPropagation(e);
+
+	//logTracking
+	if (location.href.indexOf('/d/') != -1) {
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.event;
+		if (isMobile) {
+			webData['obj'].dp = 'FileView.Tablet';
+		} else {
+			webData['obj'].dp = 'FileView';
+		}
+		if (typeof gdocext != 'undefined') {
+			webData['obj'].dt = gdocext;
+		}
+		webData['obj'].ec = 'ux';
+		webData['obj'].ea = 'cl';
+		webData['obj'].el = 'Account';
+		$LOGMODEL.sendData(webData);
+	}
+
+	var isshow = true;
+	if ($('.conPop.user').css('display') != 'none') {
+		$('.conPop.user').hide();
+		isshow = false;
+	}
+
+	$('body').trigger('click');
+
+	if (!isshow) {
+		return;
+	}
+	getAIUserInfo(function(res){
+		if(res.resultCode === 0) {
+			if(typeof aiUserInfo != 'undefined') {
+				aiUserInfo = res;
+			}
+			var totalCredit = res.userinfo.remainCredit == -1 ? LanguagePack.KEYWORD_PRICE_INFINITE : res.userinfo.remainCredit;
+			$('.userCredit').text(totalCredit);
+		}
+	});	
+
+	AccountUserInfo(function (res) {
+		if (res.resultCode == 0) {
+			//var info = $USERINFO.getData('myinfo');
+			var $user = $('div.conPop.user .box dl');
+			var img = '/api/1/account/download/portrait/' + res.userId + '?' + getTime();
+			$user.children('dt').children('img').attr('src', img);
+			$('div.util_menu li.user img').attr('src', img);
+			$user.children('dd').children('strong').text(res.fullName);
+			$user.children('dd').children('span.mail').text(res.email);
+
+			$('div.user_info dl dt img').attr('src', img);
+			$('div.user_info dl dd span.user_name').html(res.fullName);
+			$('div.user_info dl dd span.user_mail').html(res.email);
+
+			var type = '';
+			var text = '';
+			if (res.level == 2) {
+				type = 'pro';
+				text = LanguagePack.USED_PREMIUM();
+			} else if (res.level == 3) {
+				type = 'lg';
+				text = LanguagePack.USED_LG();
+			} else if (res.level == 4) {
+				type = 'business';
+				text = LanguagePack.USED_TEAM();
+			} else if (res.level == 5) {
+				type = 'pro'; /*vara*/
+				text = LanguagePack.USED_PREMIUMPLAN;
+			} else if (res.level == 6) {
+				type = 'free orangefree';
+				text = LanguagePack.USED_FREEPLAN;
+			} else if (res.level == 7) {
+				type = 'premium orange';
+				text = LanguagePack.USED_PREMIUMPLAN;
+			} else if (res.level == 8) {
+				type = 'smart';
+				text = LanguagePack.USED_SMART;
+			} else if (res.level == 9) {
+				type = 'pro';
+				text = LanguagePack.USED_PRO;
+			} else if (res.level == 10) {
+				type = 'premium orange';
+				text = LanguagePack.USED_ORANGEPRO;
+			} else if (res.level == 11) {
+				type = 'orangeucc';
+				text = "Le Cloud Ent";
+			} else if (res.level == 12) {
+				type = 'ai';
+				text = LanguagePack.USING_SERVICE('AI');
+			} else if (res.level == 13) {
+				type = 'ai';
+				text = LanguagePack.USING_SERVICE('AI-Plus');
+			} else {
+				type = 'basic';
+				text = LanguagePack.USED_BASIC;
+			}
+			$('div.conPop.user').removeClass('free premium lg vara business basic smart pro orange orangeucc orangefree ai').addClass(type);
+			$('div.conPop.user span.service').text(text);
+
+			if (res.level == 1 || res.level == 4 || res.level == 8 || res.level == 9 || res.level == 12 || res.level == 13) {
+				$('div.member_license').removeClass('business basic smart pro ai').addClass(type);
+				$('div.member_license div.user_info .service_name').html(text);
+			}
+			if(res.level != 4 && res.level != 5 && res.level != 6 && res.level != 7 && res.level != 10 && res.level != 11){
+				$('#registCoupon').show();
+
+				if (typeof res.productType == 'undefined' || (typeof res.gateType != 'undefined' && res.gateType == 'COUPON') || res.productType.indexOf('AI_PLUS_1YEAR') == -1) {					
+					$('#account_info_upgrade').show();
+				}
+			}
+
+			if (res.onlySocialUser && res.status == 'TEMPORARY') {
+				//$('div.conPop.user dd span.mail').text('');
+				$('div.user_info dl dd span.user_mail').html('');
+			} else {
+				//$('div.conPop.user dd span.mail').text(res.email);
+				$('div.user_info dl dd span.user_mail').html(res.email);
+			}
+		}
+	});
+	$('div.conPop.user').show();
+
+	$("body").one('click', function () {
+		$('div.conPop').hide();
+	});
+}
+
+function checkExceeded(type) {
+	if (typeof licenseInfo != 'undefined' && licenseInfo.isLicenseUser) {
+		return true;
+	}
+	if (typeof ($INFO.contentUsageInfo) == 'undefined')
+		return true;
+	if (gUserLevel != 'AMAZONVARA' && gUserLevel != 'ORANGEPREMIUM' && gUserLevel != "UCCPREMIUM") {
+		if ($INFO.contentUsageInfo.limitUsage != -1 && $INFO.contentUsageInfo.currentUsage / $INFO.contentUsageInfo.limitUsage * 100 >= 100) {
+			var result = null;
+			var closeCB = null;
+			var today = new Date();
+			today.setHours(0, 0, 0, 0);
+			var nextResetTime = new Date($INFO.contentUsageInfo.nextResetTime * 1000);
+			nextResetTime.setHours(0, 0, 0, 0);
+			var datadiff = Math.ceil((nextResetTime.getTime() - today.getTime()) / 1000 / 60 / 60 / 24);
+			if (datadiff == 0) {
+				datadiff = 1;
+			}
+			var popupMessage = new Array();
+			var btnText = LanguagePack.KEYWORD_PREMIUMSERVICE;
+			
+			if(typeof type != 'undefined' && type == 'Upload'){
+				popupMessage[0] = LanguagePack.NOTI_NOTI_SHORTAGEOFSTORAGE_UPLOAD(datadiff);
+			} else {
+				popupMessage[0] = LanguagePack.NOTI_SHORTAGEOFSTORAGE(datadiff) + LanguagePack.NOTI_NOTI_SHORTAGEOFSTORAGE_NEW;
+			}
+
+			var logDP = 'UsageOverPopup';
+			if (gUserLevel == 'SMART') {
+				logDP = 'SmartUsageOverPopup';
+			}
+			if (isPchome) {
+				result = function (e) {
+					defaultAlertCB(e);
+					sendMessageToNative('account_upgrade');
+
+					//logTracking
+					var webData = $LOGMODEL.getData();
+					webData['ti'].t = LogType.tracking.event;
+					webData['obj'].dp = logDP + (isMacHome ? '.machome' : '.pchome');
+					webData['obj'].dt = type;
+					webData['obj'].ec = 'ux';
+					webData['obj'].ea = 'cl';
+					webData['obj'].el = 'Payment';
+					$LOGMODEL.sendData(webData);
+				};
+			} else {
+				result = function (e) {
+					defaultAlertCB(e);
+
+					if (gUserLevel == 'SMART')
+						location.href = '/pricing#p_UsageOverSmart.' + type;
+					else if (gUserLevel == 'ORANGEFREE')
+						location.href = LanguagePack.ORANGEUPGRADEURL_PROD;
+					else
+						location.href = '/pricing#p_UsageOver.' + type;
+				};
+			}
+
+			closeCB = function (e) {
+				defaultAlertCB(e);
+				//logTracking
+				var webData = $LOGMODEL.getData();
+				webData['ti'].t = LogType.tracking.event;
+				if (isPchome) {
+					webData['obj'].dp = logDP + (isMacHome ? '.machome' : '.pchome');
+				} else {
+					webData['obj'].dp = logDP + '.web';
+				}
+				webData['obj'].dt = type;
+				webData['obj'].ec = 'ux';
+				webData['obj'].ea = 'cl';
+				webData['obj'].el = 'Close';
+				$LOGMODEL.sendData(webData);
+
+			};
+
+			if (!isPchome) {
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+					popupMessage: popupMessage
+				}, result, closeCB, closeCB);
+				popup.create();
+				popup.changebutton({
+					confirm: btnText
+				});
+				popup.show();
+
+				//logTracking
+				var webData = $LOGMODEL.getData();
+				webData['ti'].t = LogType.tracking.page;
+				webData['obj'].dp = logDP + '.web';
+				webData['obj'].dt = type;
+				$LOGMODEL.sendData(webData);
+				return false;
+			} else {
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM_CANCEL, null, {
+					popupMessage: popupMessage
+				}, result, closeCB, closeCB);
+				popup.create();
+				popup.changebutton({
+					confirm: btnText,
+					cancel: LanguagePack.KEYWORD_CONFIRM
+				});
+				popup.show();
+
+				//logTracking
+				var webData = $LOGMODEL.getData();
+				webData['ti'].t = LogType.tracking.page;
+				webData['obj'].dp = logDP + (isMacHome ? '.machome' : '.pchome');
+				webData['obj'].dt = type;
+				$LOGMODEL.sendData(webData);
+				return false;
+			}
+
+		}
+	}
+
+
+	//	if(($INFO.userCapacity - $INFO.trashcanUsage - $INFO.driveUsage - $INFO.scannerUsage - $INFO.teamUsage) <= 0){
+	//		var popupMessage = new Array();
+	//		popupMessage[0] = '저장 공간이 부족하여 문서를 업로드할 수 없습니다.';
+	//		var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {popupMessage:popupMessage}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+	//		popup.create();
+	//		popup.show();
+	//		return false;
+	//	}
+
+	return true;
+}
+
+function runNoticeDialog(event) {
+	var webData = $LOGMODEL.getData();
+	webData['ti'].t = LogType.tracking.page;
+	webData['obj'].dp = "Cowork.web";
+	webData['obj'].dt = "Notice";
+	$LOGMODEL.sendData(webData);
+
+	getSeletor(event).parent().find('.cloud_tooltip').hide();
+	onNoticeEvent(event);
+}
+
+function runUserInfoDialog(event) {
+	getSeletor(event).parent().find('.cloud_tooltip').hide();
+	onUserInfoEvent(event);
+}
+
+function onUserInfoEvent(e) {
+	commonPreventEvent(e);
+	commonStopPropagation(e);
+
+	var isshow = true;
+	if ($('.conPop.user').css('display') != 'none') {
+		$('.conPop.user').removeClass('on').hide();
+		isshow = false;
+	}
+
+	$('body').trigger('click');
+
+	if (!isshow) {
+		return;
+	}
+
+	AccountUserInfo(function (res) {
+		if (res.resultCode == 0) {
+			var $user = $('div.conPop.user .box dl');
+			$user.children('dt').children('img').attr('src', '/api/1/account/download/portrait/' + gUserId + '?' + res.timePortraitRegist);
+			var img = '/api/1/account/download/portrait/' + gUserId + '?' + res.timePortraitRegist;
+			$('ul.util_cloud.fr li.user img').attr('src', img);
+			$user.children('dd').find('strong').text(res.fullName);
+			$user.children('dd').find('span.mail').text(res.email);
+			var type = '';
+			var text = '';
+
+			if (res.level == 2) {
+				type = 'pro';
+				text = LanguagePack.USED_PREMIUM();
+			} else if (res.level == 3) {
+				type = 'lg';
+				text = LanguagePack.USED_LG();
+			} else if (res.level == 4) {
+				type = 'business';
+				text = LanguagePack.USED_TEAM();
+			} else if (res.level == 5) {
+				type = 'pro'; /*vara*/
+				text = LanguagePack.USED_PREMIUMPLAN;
+			} else if (res.level == 6) {
+				type = 'free orangefree';
+				text = LanguagePack.USED_FREEPLAN;
+			} else if (res.level == 7) {
+				type = 'premium orange';
+				text = LanguagePack.USED_PREMIUMPLAN;
+			} else if (res.level == 8) {
+				type = 'smart';
+				text = LanguagePack.USED_SMART;
+			} else if (res.level == 9) {
+				type = 'pro';
+				text = LanguagePack.USED_PRO;
+			} else if (res.level == 10) {
+				type = 'premium orange';
+				text = LanguagePack.USED_ORANGEPRO;
+			} else if (res.level == 11) {
+				type = 'orangeucc';
+				text = "Le Cloud Ent";
+			} else if (res.level == 12) {
+				type = 'ai';
+				text = LanguagePack.USING_SERVICE('AI');
+			} else if (res.level == 13) {
+				type = 'ai';
+				text = LanguagePack.USING_SERVICE('AI-Plus');
+			} else {
+				type = 'basic';
+				text = LanguagePack.USED_BASIC;
+			}
+			if (typeof res.productType == 'undefined' || res.productType.indexOf('AI_PLUS_1YEAR') == -1) {
+				$('#account_info_upgrade').show();
+			}
+			if(res.level != 4 && res.level != 5 && res.level != 6 && res.level != 7 && res.level != 10 && res.level != 11){
+				$('#registCoupon').show();
+			}
+			$('div.conPop.user').removeClass('free premium lg vara business basic smart pro orange orangeucc orangefree ai').addClass(type);
+			$('div.conPop.user span.service').text(text);
+			if (res.onlySocialUser && res.status == 'TEMPORARY') {
+				$('div.conPop.user dd span.mail').text('');
+			} else {
+				$('div.conPop.user dd span.mail').text(res.email);
+			}
+
+			$('.log_after').show();
+			$('.log_before').hide();
+			$('div.conPop.user').addClass('on').show();
+		}
+	});
+
+	$("body").one('click', function () {
+		$('div.conPop.user').removeClass('on');
+		$('div.conPop').hide();
+		getSeletor(e).parent().find('.cloud_tooltip').removeAttr('style');
+	});
+}
+
+function runAppDialog(event) {
+	//logTracking
+	var webData = $LOGMODEL.getData();
+	webData['ti'].t = LogType.tracking.page;
+	webData['obj'].dp = "AppList";
+	$LOGMODEL.sendData(webData);
+
+	getSeletor(event).parent().find('.cloud_tooltip').hide();
+	onAppDownEvent(event);
+}
+
+function checkFileName(name) {
+	var index = name.lastIndexOf(".");
+	var type = name.substring(index + 1).toLowerCase();
+	if (type == 'slide' || type == 'sheet' || type == 'word') {
+		name = name.substr(0, index);
+	}
+	return name;
+}
+
+function checkNoticeNew() {
+	var webdata = {
+		'language': local,
+		'device': isMacOffice() ? 'MAC' : 'WEB'
+	};
+	popcorn.lastNotice(webdata, function (res) {
+		if (res.resultCode == 0) {
+			var isUseNotify = res.enablenotify;
+			var lastNotifyTime = res.lastnotifytime;
+			if (!isUseNotify) {
+				$('.home_notify, ul.util_cloud li.notify').remove();
+			} else {
+				if (getCookie("NOTIFYTIME")) {
+					var showNotifyTime = getCookie("NOTIFYTIME");
+					if (lastNotifyTime > showNotifyTime) {
+						$('.home_notify a img, ul.util_cloud li.notify a img').show();
+						$('#view_more_noti_new').show();
+
+					}
+
+				} else {
+					$('.home_notify a img, ul.util_cloud li.notify a img').show();
+					$('#view_more_noti_new').show();
+				}
+			}
+		}
+
+	}, function (res) {
+		console.log('error');
+	});
+
+}
+
+function getExternalUrls(type, onSuccessCB) {
+	var languageCode = "ko";
+
+	if (local.includes('ko')) {
+		languageCode = 'ko';
+	} else if (local.includes('ja')) {
+		if (type == 'BUSINESS_ADMIN_GUIDE')
+			languageCode = 'en';
+		else
+			languageCode = 'ja';
+	} else {
+		languageCode = 'en';
+	}
+
+	var webData = {
+		"listTypes": [type],
+		"language": languageCode
+	};
+
+	popcorn.getExternalUrls(webData, function (res) {
+		if (CheckResult(null, res) != null && res.listExternalURL.length > 0) {
+			var externalUrl = res.listExternalURL[0].url;
+			onSuccessCB(externalUrl);
+
+		}
+	}, function (res) {});
+}
+
+function getBusinessProperties(target, type, cb) {
+	var webdata = {
+		'properties': type
+	};
+
+	popcorn.teamGetProperty(webdata, function (res) {
+		if (CheckResult(null, res)) {
+			if (cb) cb(target, res);
+		} else {
+			if (res.resultCode == Enum.account.UNAUTHORIZEDOPERATION) {
+				var popupMessage = new Array();
+				popupMessage[0] = LanguagePack.TEAM_ERROR_UNAUTHORIZEDOPERATION;
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+					popupMessage: popupMessage
+				}, goHomeCB, goHomeCB, goHomeCB);
+				popup.create();
+				popup.show();
+			}
+		}
+	})
+}
+
+function checkKey() {
+	// $(document).keydown(function(e){
+	// 	if(e.keyCode === 8){
+	//            return false;
+	// 	}
+	//    });
+
+	$(document).bind("contextmenu", function (e) {
+		return false;
+	});
+}
+
+function webOfficeUrl(fileId, fileName) {
+	if (fileId == '')
+		return "/ko/weboffice/hwp" + "?type=local";
+	else
+		return "/ko/weboffice/hwp" + "?id=" + $.encodeBase62(fileId.toString()) + "&type=drive";
+}
+
+function getProductStr(_type, _isPeriod, _gateType) { // TODO: premium인 경우 상품명 (data.gateType == 'COUPON'인 경우 포함)
+
+	if (_type.indexOf('LICENSE') > -1) { // TODO hyunk
+		if (_type.indexOf('BUSINESS') > -1) {
+			if (_type.indexOf('MAC') > -1) {
+				return (LanguagePack.STORE_MAC_BUSINESS);
+			} else {
+				if (_type.indexOf('YEAR') > -1) {
+					return (LanguagePack.STORE_LICENSE_BUSINESS_1YEAR);
+				} else {
+					return (LanguagePack.STORE_LICENSE_BUSINESS_PERMANENT);
+				}
+			}
+		} else if (_type.indexOf('EDUCATION') > -1) {
+			return (LanguagePack.STORE_LICENSE_EDUCATION_1YEAR);
+		} else if (_type.indexOf('PERSONAL') > -1) {
+			if (_type.indexOf('MAC') > -1) {
+				return (LanguagePack.STORE_MAC_PERSONAL);
+			} else {
+				return (LanguagePack.STORE_LICENSE_PERSONAL);
+			}
+		} else if (_type.indexOf('UNITY') > -1) {
+			return (LanguagePack.STORE_LICENSE_GLOBAL);
+		} else if (_type.indexOf('DEX') > -1) {
+			return (LanguagePack.STORE_DEX_PERSONAL);
+		}
+	} else if (_type.indexOf('BUSINESS') > -1) {
+		if (_type.indexOf('FREE') > -1)
+			return LanguagePack.BUSINESS_PAYMENT_TRIAL;
+		else {
+			var prodStr = _type.split('_')[1];
+			var prodUnit = (prodStr == 'FREE' ? 15 : parseInt(prodStr) == 'NaN' ? 0 : parseInt(prodStr));
+			if (_type.indexOf('MONTH') > -1) {
+				return 'BUSINESS ' + (prodStr == 'FREE' ? 'Free Trial ' + prodUnit + LanguagePack.DATE_DAY : LanguagePack.DATE_MONTH2(prodUnit));
+			} else {
+				return 'BUSINESS ' + (prodStr == 'FREE' ? 'Free Trial ' + prodUnit + LanguagePack.DATE_DAY : LanguagePack.DATE_YEAR2(prodUnit));
+			}
+		}
+	} else if(_type.indexOf('AI_CONSUMABLE') > -1) {
+		var credits = _type.match(/\d+/g)[0];
+		return LanguagePack.CREDIT_PRODUCT_NAME(credits);
+	} else {
+		switch(_type){
+			case 'FREETRIAL':
+				return LanguagePack.RECEIPT_FREE_TRIAL;
+			case 'PROFESSIONAL_ONLY_2YEARS':
+				return 'Pro 2년 이용권';
+			case 'AD_FREE':
+				return LanguagePack.AD_FREE;
+			case 'AD_FREE_30DAYS':
+				return LanguagePack.AD_FREE_30;
+			case 'PROFESSIONAL_1YEAR_FREE_TRIAL_7DAYS':
+				return _gateType === 'COUPON' ? `PRO 7${LanguagePack.DATE_DAY}` : `PRO ${LanguagePack.DATE_YEAR2(1)}`
+			case 'SMART_ONLY_15DAYS':
+			case 'SMART_ONLY_30DAYS':
+				return 'SMART ' + LanguagePack.DAYS(_type.match(/\d+/g)[0]);
+			case 'PROFESSIONAL_ONLY_15DAYS':
+			case 'PROFESSIONAL_ONLY_30DAYS':
+				return 'PRO ' + LanguagePack.DAYS(_type.match(/\d+/g)[0]);
+			case 'PROFESSIONAL_1MONTH_NEW_PROMOTION_3MONTHS':
+				return 'PRO' + LanguagePack.DATE_MONTH2(3);
+			default:
+				var index = _type.indexOf("_");
+				if (index < 0) return LanguagePack.RECEIPT_FREE_TRIAL;
+				var info = _type.match(/(\d+)(MONTH|YEAR)/g);
+				var num = null;
+				if(info && info.length){
+					num = parseInt(info[0].replace(/(MONTH|YEAR)/g, ''));
+				} else {
+					num = 1;
+				}
+		
+				var prefix = 'Premium';
+				if(_type.indexOf('AI_BASIC') > -1) {
+					prefix = LanguagePack.KEYWORD_PRODUCT_AI;
+				} else if(_type.indexOf('AI_PLUS') > -1) {
+					prefix = LanguagePack.KEYWORD_PRODUCT_AI_PLUS;
+				} else if (_type.indexOf('SMART') > -1) {
+					prefix = LanguagePack.KEYWORD_PRODUCT_SMART;
+				} else if (_type.indexOf('PRO') > -1) {
+					prefix = LanguagePack.KEYWORD_PRODUCT_PRO;
+				} else if (_type.indexOf('LGPLAN') > -1) {
+					prefix = LanguagePack.KEYWORD_PRODUCT_LG;
+				}
+				if (_isPeriod) {
+					if (_type.indexOf('MONTH') > -1) {
+						return prefix + ' ' + LanguagePack.DATE_MONTH2(num);
+					} else {
+						return prefix + ' ' + LanguagePack.DATE_YEAR2(num);
+					}
+				} else {
+					return prefix;
+				}
+
+		}
+	}
+}
+
+function setCookieOptions(name, value, _options) {
+	if (value == null) return;
+
+	var options = {
+		path: '/'
+	};
+	options = $.extend(options, _options);
+
+	// if (options.expires instanceof Date) {
+	//   options.expires = options.expires.toUTCString();
+	// }
+
+	var updatedCookie = name + "=" + value;//encodeURIComponent(name) + "=" + encodeURIComponent(value);
+
+	for (var optionKey in options) {
+		updatedCookie += "; " + optionKey;
+		var optionValue = options[optionKey];
+		if (optionValue !== true) {
+			updatedCookie += "=" + optionValue;
+		}
+	}
+
+	document.cookie = updatedCookie;
+}
+
+var setPromotionBanner = function () {
+	$('div.member_license div.upgrade_banner').removeClass('sale');
+	$('div.member_license div.upgrade_banner span').html(LanguagePack.PRO_BANNER);
+
+	var isPromotion = false;
+	var setBanner = function (isPromotion, bannerStr, bannerLanding) {
+		var $banner = $('#bannerLanding');
+		if (isPromotion) {
+			$('div.member_license div.upgrade_banner').addClass('sale');
+			gisPromotion = true;
+		}
+		$('div.member_license div.upgrade_banner span').html(bannerStr);
+		if (typeof bannerLanding != 'undefined' && bannerLanding) {
+			if (typeof isPchome != 'undefined' && isPchome) {
+				if (bannerLanding.indexOf('/personal/office?upgrade=1') > -1 || bannerLanding.indexOf('/pcpricing') > -1) {
+					if (isMacOffice()) {
+						$banner.on('click', pchome_benefits);
+					} else {
+						$banner.on('click', pchome_upgrade);
+					}
+				} else {
+					$banner.on('click', function (e) {
+						commonPreventEvent(e);
+						if (bannerLanding.indexOf('polarisoffice') > -1) {
+							var webdata = {
+								'isPcWebview': true
+							};
+							popcorn.pcofficeOtl(webdata, function (res) {
+								var target = '?target=' + bannerLanding;
+								var direction = res.linkUrl + target;
+								try {
+									window.open(direction, '_blank');
+								} catch (err) {
+									/*alert('테스트 예러:' + err.message);*/
+								}
+							}, function (err) {});
+						} else {
+							try {
+								window.open(bannerLanding, '_blank');
+							} catch (err) {
+								console.log(err);
+							}
+						}
+					});
+				}
+			} else {
+				$banner.attr('href', bannerLanding);
+			}
+		} else {
+			if (typeof isPchome != 'undefined' && isPchome) {
+				if (isMacOffice()) {
+					$banner.on('click', pchome_benefits);
+				} else {
+					$banner.on('click', pchome_upgrade);
+				}
+			}
+
+		}
+	}
+
+	var getPromotionBanner = function () {
+		var theDate = new Date();
+		var year = '' + theDate.getFullYear();
+
+		var month = theDate.getMonth() + 1;
+		var longMonth = (('' + month).length == 1) ? '0' + month : '' + month;
+
+		var date = theDate.getDate();
+		var longDate = (('' + date).length == 1) ? '0' + date : '' + date;
+
+		var hours = theDate.getHours();
+		var longTwelveHours = (('' + hours).length == 1) ? '0' + hours : '' + hours;
+
+		var minutes = theDate.getMinutes();
+		var longMinutes = (('' + minutes).length == 1) ? '0' + minutes : '' + minutes;
+
+		var webdata = {
+			'date': year + longMonth + longDate + 'T' + longTwelveHours + longMinutes,
+			'language': LanguagePack.CURRENT_LANCODE
+		};
+		popcorn.getPromotionBanner(webdata, function (res) {
+			if (res.resultCode == 0) {
+				//console.log(JSON.stringify(res.banner));
+				if (!res.banner || res.banner.length == 0) {
+					if (isPromotion) {
+						setBanner(true, LanguagePack.BANNER_STR1);
+					} else {
+						setBanner(false, LanguagePack.PRO_BANNER);
+					}
+				} else {
+					if (isPromotion) {
+						if (res.banner.type == 'SALE') {
+							setBanner(true, res.banner.bannerText, res.banner.landingUrl);
+						} else {
+							setBanner(true, LanguagePack.BANNER_STR1);
+						}
+					} else {
+						if (res.banner.type == 'NORMAL') {
+							setBanner(false, res.banner.bannerText, res.banner.landingUrl);
+						} else {
+							setBanner(false, LanguagePack.PRO_BANNER);
+						}
+					}
+				}
+			}
+		}, function () {});
+	};
+	////////////////////////////////////////////////////////////////
+	var reqData = {
+		'info': {
+			"gateType": (isMacOffice() ? "APPLE2" : "PAYGATE"),
+			"currency": (local.indexOf('ko') > -1 ? "KRW" : "USD"),
+			"promotion": true
+		},
+		"newPrice" : true
+	};
+
+	popcorn.getProductInfoList(reqData, function (res) {
+		if (res.resultCode == 0 && res.infoList) {
+			for (var i = res.infoList.length - 1; i >= 0; i--) {
+				var v = res.infoList[i];
+				if(v.productType == 'PROFESSIONAL_1MONTH_NEW_PROMOTION_3MONTHS') continue;
+				if (v && v.promotion && v.productType.indexOf('LICENSE') == -1 && v.productType.indexOf('FREE_TRIAL') == -1 && v.productType != 'PROFESSIONAL_ONLY_2YEARS') {
+					var currentTime = new Date().getTime() / 1000;
+					if (v.timeStart <= currentTime && v.timeEnd >= currentTime) {
+						isPromotion = true;
+						getPromotionBanner();
+						//setBanner(true, LanguagePack.PRO_SALE_BANNER);
+						return;
+					}
+				}
+				getPromotionBanner();
+			}
+			getPromotionBanner();
+		}
+	}, function () {
+
+	});
+}
+
+var sendMessageToNative = function (id, data) {
+	//ie webview
+	document.getElementById(id).click();
+
+	//new webview
+	if (!isMacOffice() && typeof window.chrome != 'undefined' && typeof window.chrome.webview != 'undefined') {
+		//chrome webview
+		if (typeof data != 'undefined' && data) {
+			window.chrome.webview.postMessage(id + ' ' + data);
+		} else {
+			window.chrome.webview.postMessage(id);
+		}
+	}
+}
+
+var checkIEVersion = function (target) {
+	var ie_ver = get_version_of_IE();
+	//ie_ver = 9;
+	if (ie_ver != -1 && ie_ver < 11) {
+		if ($('#caution_home').length == 0) {
+			var data = '<div id="caution_home" class="caution"><div>' +
+				'<dl><dt id="caution_text"></dt>' +
+				'<dd class="btn_close"><a id="closenotice" href="#">' + LanguagePack.KEYWORD_CLOSE + '</a></dd>' +
+				'</dl></div></div>';
+			target.prepend(data);
+			$('#closenotice').on('click', function (e) {
+				commonPreventEvent(e);
+				$('#caution_home').remove();
+			});
+		}
+		$('#caution_text').html(LanguagePack.IE_NOTI);
+	}
+}
+
+var goHelpDesk = function(info, isBlank, returnUrl){
+	var localeCode = {'ar' : 66,'zhCN' : 10,'zhTW' : 9,'en' : 1,'fr' : 16,'de' : 8,'id' : 77,'it' : 22,'ja' : 67,'ko' : 69,'pt' : 1011,'ptBR' : 19,'ru' : 27,'es' : 2,'pl' : 13,'tr' : 88};
+	var myInfo = info ? info : $USERINFO.getData('myinfo') ? $USERINFO.getData('myinfo') : null;
+	var base64url = function(source) {
+		encodedSource = CryptoJS.enc.Base64.stringify(source);
+		encodedSource = encodedSource.replace(/=+$/, '');
+		encodedSource = encodedSource.replace(/\+/g, '-');
+		encodedSource = encodedSource.replace(/\//g, '_');
+
+		return encodedSource;
+	};
+
+	var ssologin = function(info){
+		var min = Math.ceil(2);
+		var max = Math.floor(64);
+		var code = Math.floor(Math.random() * (max - min)) + new Date().getTime();
+		var ssoUrl = '';
+		
+		var header = {
+			"typ": "JWT"
+			, "alg": "HS256"
+		};
+	
+		var data = {
+			"email": info.email
+			, "name": info.name
+			, "iat": Math.floor(+new Date() / 1000)
+			, "jti": code
+			, "locale" : localeCode[LanguagePack.CURRENT_LANCODE]
+		};
+
+		var stringifiedHeader = CryptoJS.enc.Utf8.parse(JSON.stringify(header));
+		var encodedHeader = base64url(stringifiedHeader);
+		var stringifiedData = CryptoJS.enc.Utf8.parse(JSON.stringify(data));
+		var encodedData = base64url(stringifiedData);
+		var token = encodedHeader + "." + encodedData;
+		var signature = CryptoJS.HmacSHA256(token, atob(info.secret));
+		signature = base64url(signature);
+	
+		var signedToken = token + "." + signature;
+	
+		ssoUrl = "https://polarisofficehelp.zendesk.com/access/jwt?jwt=" + signedToken;
+		if(typeof returnUrl != 'undefined'){
+			ssoUrl += '&return_to=' + returnUrl; 
+		}
+		if(isBlank){
+			window.open(ssoUrl, '_blank');
+		} else {
+			location.href = ssoUrl;
+		}
+	};
+
+	var nonLogin = function(){
+		ssoUrl = typeof returnUrl == 'undefined' ? LanguagePack.HELPDESK_MAIN : returnUrl;
+		if(isBlank){
+			window.open(ssoUrl, '_blank');
+		} else {	
+			location.href = ssoUrl;
+		}
+	}
+
+	if(myInfo && typeof myInfo.email != 'undefined'){
+		$.ajax({
+			type: 'GET',
+			url: '/api/1/zendesk/getssokey',
+			dataType: "json",
+			contentType: "application/json",
+			beforeSend: function(request) {
+				request.setRequestHeader("Authorization", 'Bearer ' + 'cG9sYXJpc0NTOnplbmRlc2tDUw==');
+			},
+			success: function(res) {
+				if(res.resultCode == 200){
+					ssologin({'email' : myInfo.email, 'name' : myInfo.name, 'secret' : res.key});
+				} else {
+					nonLogin();
+				}
+			},
+			error: function() {
+				nonLogin();
+			},
+			timeout: 240000
+		});
+      } else {
+        nonLogin();
+      }
+}
+
+function getAIUserInfo(cb){
+	popcorn.getAIUserInfo(function(res){
+		if (CheckResult(null, res) != null) {
+			if(cb){
+				cb(res);
+			}
+		}
+	});
+}
+
+
+

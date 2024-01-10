@@ -1,0 +1,2667 @@
+var knowledgeList = [];
+var listData = {
+		'alist' : [],
+		'rootid' : null,
+		'chageDataList' : {'mydocuments' : [], 'copy_and_move' : [], 'uploader' : [], 'error' : [], 'pchome' : [], 'tree' : [], 'pchome1' : [] },
+		'revision' : null,
+		'teamDataInfo' : {},
+		'isSync' : false,
+		'SyncCB' : null,
+		'change' : false,
+		'limitUploadSize' : 0,
+		'changeTeamData' : function(obj, res) {
+			if(res.list[0].resultCode) {
+				return {};
+			}
+			if(!obj.teamDataInfo[res.list[0].referenceInfo.fileId]) {
+				obj.teamDataInfo[res.list[0].referenceInfo.fileId] = {
+						'fileId' : res.list[0].sharedfolderInfo.fileId,
+						'referenceId' : res.list[0].referenceInfo.fileId,
+						'path' : res.list[0].referenceInfo.path + res.list[0].referenceInfo.fileName + '/',
+						'myPath' : res.list[0].sharedfolderInfo.path + res.list[0].sharedfolderInfo.fileName + '/',
+						'revision' : res.list[0].revision
+				};
+			}
+			obj.teamDataInfo[res.list[0].referenceInfo.fileId].revision = res.list[0].revision;
+			var data = {};
+			data.directoryInfo = res.list[0].folderInfo;
+			if(res.list[0].folderInfo.fileId == res.list[0].sharedfolderInfo.referenceId) {
+				data.directoryInfo.fileId = res.list[0].sharedfolderInfo.fileId;
+				data.directoryInfo.fileName = res.list[0].sharedfolderInfo.fileName;
+				data.directoryInfo.referenceId = res.list[0].referenceInfo.fileId;
+				data.directoryInfo.myPath = res.list[0].sharedfolderInfo.path;
+			} else {
+				var index = res.list[0].folderInfo.path.indexOf('/', 12);
+				index = res.list[0].folderInfo.path.indexOf('/', index + 1);
+				data.directoryInfo.myPath = res.list[0].sharedfolderInfo.path + res.list[0].sharedfolderInfo.fileName + '/';
+				data.directoryInfo.myPath += res.list[0].folderInfo.path.substring(index + 1);
+			}
+			data.directoryInfo.isTeamFolder = true;
+			data.list = res.list[0].fileList;
+			return data;
+		},
+		'changeSyncData' : function(obj, res) {
+			var dataArr = [];
+			for(var i=0; i < res.length; i++) {
+				if(res[i].resultCode) {
+					continue;
+				}
+				var data = res[i];
+				if(data.eventType == 'REPLACE') {
+					data.eventType = 'RENAME';
+				}
+				if((data.eventType == 'FILEMOVEDFROM' || data.eventType == 'DIRMOVEDFROM')) {
+					if(data.fileStatus == 'UNKNOWN' && data.hide == "NONE") {
+						data.hide = 'RELEASE';
+					}
+				}
+				if((data.eventType == 'FILEMOVEDTO' || data.eventType == 'DIRMOVEDTO')) {
+					data.parentId = data.sourceId;
+				}
+				if(!data.hide && data.fileStatus != 'UNKNOWN') {
+					if(data.fileStatus == 'NORMAL') {
+						data.hide = "RELEASE";
+					} else if(data.fileStatus == 'HIDDEN') {
+						data.hide = 'SET';
+					} else {
+						data.hide = 'NONE';
+					}
+				}
+				if(data.eventType == 'STAR') {
+					data.starred = (data.hide == 'SET') ? true : false;
+				}
+				if(data.eventType == 'UPDATE') {
+					if(typeof data.star != "undefined") {
+						data.starred = (data.star) ? true : false;
+					}
+				}
+
+				if(obj.teamDataInfo[data.fileId]) {
+					data.fileId = obj.teamDataInfo[data.fileId].fileId;
+				} else if(obj.teamDataInfo[data.parentId]) {
+					data.parentId = obj.teamDataInfo[data.parentId].fileId;
+				}
+				if(data.eventType == 'FILEMOVE') {
+					if(typeof data.star != "undefined") {
+						data.starred = (data.star) ? true : false;
+					}
+
+				}
+				dataArr.push(data);
+			}
+			return dataArr;
+		},
+		'changeSyncTeamData' : function(obj, res, fileId) {
+			var dataArr = [];
+
+			obj.reloadSync = false;
+
+			for(var i=0; i < res.length; i++) {
+				var list = res[i];
+				if(list.resultCode) {
+					obj.reloadSync = true;
+					continue;
+				}
+				obj.teamDataInfo[list.referenceId].revision = list.revision;
+				for(var j=0; j < list.eventList.length; j++) {
+					var data = list.eventList[j];
+					if((data.eventType == 'FILEMOVEDFROM' || data.eventType == 'DIRMOVEDFROM')) {
+						if(data.fileStatus == 'UNKNOWN' && data.hide == "NONE") {
+							data.hide = 'RELEASE';
+						}
+					}
+					if((data.eventType == 'FILEMOVEDTO' || data.eventType == 'DIRMOVEDTO')) {
+						data.parentId = data.sourceId;
+					}
+
+					if(!data.hide && data.fileStatus != 'UNKNOWN') {
+						if(data.fileStatus == 'NORMAL') {
+							data.hide = "RELEASE";
+						} else if(data.fileStatus == 'HIDDEN') {
+							data.hide = 'SET';
+						} else {
+							data.hide = 'NONE';
+						}
+					}
+					if(data.eventType == 'STAR') {
+						data.starred = (data.hide == 'SET') ? true : false;
+					}
+					if(data.eventType == 'UPDATE') {
+						if(typeof data.star != "undefined") {
+							data.starred = (data.star) ? true : false;
+						}
+					}
+
+					if(obj.teamDataInfo[data.fileId]) {
+						data.fileId = obj.teamDataInfo[data.fileId].fileId;
+					} else if(obj.teamDataInfo[data.parentId]) {
+						data.parentId = obj.teamDataInfo[data.parentId].fileId;
+					}
+
+					/*if((data.eventType == 'FILEMOVEDTO' || data.eventType == 'DIRMOVEDTO')) {
+						if(data.fileId == list.referenceId) {
+							data.fileId = obj.teamDataInfo[list.referenceId].fileId;
+						} else {
+							for(fileId in obj.teamDataInfo) {
+								if(obj.teamDataInfo[fileId].referenceId == data.parentId) {
+									data.parentId = obj.teamDataInfo[fileId].fileId;
+									break;
+								}
+							}
+						}
+					} else {
+						if(data.fileId == list.referenceId) {
+							data.fileId = obj.teamDataInfo[list.referenceId].fileId;
+						} else if(data.parentId == list.referenceId) {
+							data.parentId = obj.teamDataInfo[list.referenceId].fileId;
+						}
+					}*/
+
+					if(data.eventType == 'FILEMOVE') {
+						if(typeof data.star != "undefined") {
+							data.starred = (data.star) ? true : false;
+						}
+					}
+					data.isTeamFolder = true;
+					dataArr.push(data);
+				}
+			}
+			return dataArr;
+		},
+		'setError' : function(data) {
+			var newData = {};
+			newData.resultCode = data.resultCode;
+			newData.eventType = data.eventType;
+			if(newData.copiedFileId) {
+				newData.fileId = newData.copiedFileId;
+			}
+			newData.fileName = data.targetName;
+			newData.parentId = data.parentId;
+			this.chageDataList['error'].push(newData);
+		},
+		'changeEvent' : function(type, data) {
+			var name = data.name ? data.name : (data.targetName ? data.targetName : '');
+			var revision = data.lastRevision ? data.lastRevision : (data.revision ? data.revision : -1);
+
+			var newData = {
+					'eventType' : data.eventType, 'parentId': data.parentId,
+					'info' : {
+						'fileId' : data.fileId,  'fileName' : name, 'fileType' : data.fileType,
+						'lastModified' : data.lastModified, 'lastRevision' : revision, 'size': data.size,
+						'referenceId' : data.referenceId ? data.referenceId : 0 ,
+						'isTeamFolder' : data.isTeamFolder ? data.isTeamFolder : false,
+						'fileRevision' : data.fileRevision,
+						'starred': data.starred
+					}
+			};
+
+			if(newData.eventType != 'UPDATE') { //RENAME, DIRMOVE, FILEMOVE, DELETE, DELETEHIDDEN, UPDATA, FILECOPY, SWEEP
+				if(data.webLink == 'SET' || data.webLink == 'RELEASE' || data.share == 'SET' || data.share == 'RELEASE' || data.hide == 'SET' || data.hide == 'RELEASE') {
+					if(data.hide == 'SET') {
+						if(newData.eventType == 'FILEADD' || newData.eventType == 'DIRADD' || newData.eventType == 'DELETE'){
+							newData.eventType = 'REMOVE';
+						}
+					}
+				}
+			}
+
+			if(newData) {
+				if(data.copiedFileId) {
+					newData.info.copiedFileId = data.copiedFileId;
+				}
+
+				if(newData.eventType == 'DIRADD' || newData.eventType == 'FILEADD' || newData.eventType == 'FILECOPY') {
+					newData.info.weblinkCreated = false;
+					newData.info.taskId = null;
+					if(newData.eventType == 'FILEADD') {
+						if(data.share == 'SET') {
+							newData.info.shared = true;
+							newData.info.taskId = data.taskId;
+						}
+						if(newShareDoucments == 'false') {
+							if(data.webLink == 'SET') {
+								newData.info.weblinkCreated = true;
+							}
+						}
+					}
+					if(data.copiedFileId) {
+						newData.info.fileId = data.copiedFileId;
+					}
+				} else if(newData.eventType == 'UPDATE') {
+					if(newShareDoucments == 'false') {
+						if(data.webLink == 'SET') {
+							newData.info.weblinkCreated = true;
+						} else if(data.webLink == 'RELEASE'){
+							newData.info.weblinkCreated = false;
+						}
+					}
+					if(data.share == 'SET') {
+						newData.info.taskId = data.taskId;
+						newData.info.shared = true;
+					} else if(data.share == 'RELEASE') {
+						newData.info.taskId = null;
+						newData.info.shared = false;
+					}
+					if(data.hide == 'SET') {
+						newData.eventType = 'REMOVE';
+					} else if(data.hide == 'RELEASE') {
+						newData.eventType = 'RESOTRE';
+						newData.info.weblinkCreated = false;
+						newData.info.taskId = null;
+					}
+					newData.starred = (data.star) ? true : false;
+					/*if(data.share == 'SET') {
+						newData.info.taskId = data.taskId;
+						newData.info.shared = true;
+						if(!(data.hide == 'SET' || data.hide == 'RELEASE')) {
+							data.hide == 'RELEASE';
+						}
+					} else if(data.share == 'RELEASE') {
+						newData.info.taskId = null;
+						newData.info.shared = false;
+						if(!(data.hide == 'SET' || data.hide == 'RELEASE')) {
+							data.hide == 'RELEASE';
+						}
+					}*/
+
+				} else if(newData.eventType == 'DELETEHIDDEN') {
+					newData.event = 'REMOVEHIDDEN';
+				} else if((newData.eventType == 'DIRMOVE' || newData.eventType == 'FILEMOVE') && data.hide == 'SET') {
+					newData.eventType = 'REMOVE';
+					var index = this.getPrevList(newData.info);
+					if(index != -1) {
+						newData.parentId = this.alist[index].fileId;
+						if(data.changesets) {
+							newData.changesets = data.changesets;
+							newData.changesets[0].parentId = data.parentId;
+							newData.starred = data.starred;
+							newData.info.starred = data.starred;
+						}
+					}
+				} else if(newData.eventType == 'DIRMOVEDTO' || newData.eventType == 'FILEMOVEDTO') {
+					newData.eventType = 'REMOVE';
+				} else if(newData.eventType == 'DIRMOVEDFROM' || newData.eventType == 'FILEMOVEDFROM') {
+					if(data.share == 'RELEASE') {
+						newData.info.taskId = null;
+						newData.info.shared = false;
+					}
+					if(newData.eventType == 'FILEMOVEDFROM') {
+						newData.eventType = 'FILEMOVE';
+					} else {
+						newData.eventType = 'DIRMOVE';
+					}
+				} else if(newData.eventType == 'FILECOPIED' || newData.eventType == 'SETMD5') {
+					newData = null;
+				} else if(newData.eventType == 'STAR') {
+					newData.starred = (newData.hide == 'SET') ? true : false;
+				}
+				if(newData) {
+					var index = this.getList(data.parentId);
+					if(index != -1) {
+						if(this.alist[index].path) {
+							this.change = true;
+						}
+					}
+				}
+				return newData;
+			}
+			return null;
+		},
+		'cList' : function(data) {
+			var list = {
+					'fileType' : 'DIR',
+					'fileId' : data.directoryInfo.fileId, 'fileName' : data.directoryInfo.fileName, 'referenceId' : data.directoryInfo.referenceId,
+					'path' : data.directoryInfo.path, 'myPath' : data.directoryInfo.myPath, 'child' : this.citem(data.directoryInfo, data.list),
+					'starred': data.directoryInfo.starred, 'starredTime': data.directoryInfo.starredTime
+			};
+			return list;
+		},
+		'citem' : function(info, list) {
+			var nlist = [];
+			for(var i=0; i < list.length; i++) {
+				var data = list[i];
+				var data2 = {
+						'fileId' : data.fileId, 'fileName' : data.fileName, 'fileType' : data.fileType,
+						'lastModified' : data.lastModified, 'lastRevision' : data.lastRevision,
+						'size' : data.size, 'weblinkCreated' : data.weblinkCreated, 'taskId' : data.taskId,
+						'referenceId' : (data.referenceId ? data.referenceId : 0),
+						'shared' : data.shared,
+						'isTeamFolder': (data.referenceId || info.isTeamFolder ? true : false),
+						'fileRevision' : data.fileRevision,
+						'starred': data.starred,
+						'starredTime': data.starredTime
+				};
+				nlist.push(data2);
+			}
+			return nlist;
+		},
+		'getlistData' : function(data) {
+			if(data.parentId) {
+				for(var i=0; i < this.alist.length; i++) {
+					if(this.alist[i].fileId == data.parentId) {
+						return this.alist[i];
+					}
+				}
+			} else if(data.myPath) {
+				for(var i=0; i < this.alist.length; i++) {
+					if(this.alist[i].myPath + this.alist[i].fileName == data.myPath) {
+						return this.alist[i];
+					}
+				}
+			}else {
+				for(var i=0; i < this.alist.length; i++) {
+					if(this.getitem(i, data) != -1) {
+						return this.alist[i];
+					}
+				}
+			}
+			return null;
+		},
+		'getItemData' : function(type, i) {
+			if(type == 'ALL') {
+				return this.alist[i].child;
+			} else if(type == 'DIR') {
+				var arr = [];
+				for(var j=0; j < this.alist[i].child.length; j++) {
+					var data = this.alist[i].child[j];
+					if(data.fileType == 'DIR') {
+						arr.push(data);
+					}
+				}
+				return arr;
+			} else if(type == 'FILE') {
+				var arr = [];
+				for(var j=0; j < this.alist[i].child.length; j++) {
+					var data = this.alist[i].child[j];
+					if(data.fileType == 'FILE' && !data.hide) {
+						arr.push(data);
+					}
+				}
+				return arr;
+			} else if(type == 'FILENOSHARE') {
+				var arr = [];
+				for(var j=0; j < this.alist[i].child.length; j++) {
+					var data = this.alist[i].child[j];
+					if(data.fileType == 'FILE') {
+						var index = data.fileName.lastIndexOf(".");
+						var type = data.fileName.substr(index + 1, data.fileName.length).toLowerCase();
+						if (type != 'zip') {
+							arr.push(data);
+						}
+					}
+				}
+				return arr;
+			} else if(type == 'PC_ALL') {
+				var arr = [];
+				for(var j=0; j < this.alist[i].child.length; j++) {
+					var data = this.alist[i].child[j];
+					if(data.fileType == 'FILE') {
+						var index = data.fileName.lastIndexOf(".");
+						var type = data.fileName.substr(index + 1, data.fileName.length).toLowerCase();
+						if (type != 'zip' || type != 'txt') {
+							arr.push(data);
+						}
+					} else {
+						arr.push(data);
+					}
+				}
+				return arr;
+			}
+		},
+		'getList' : function(id, pcheck) {
+			var index = -1;
+			pcheck = false;
+			for(var i=0; i< this.alist.length; i++) {
+				if(this.alist[i].fileId == id) {
+					index = i;
+					break;
+				}
+			}
+			if(index != -1 && pcheck) {
+				if(id == this.rootid) {
+					return index;
+				} else {
+					for(var i=0; i< this.alist.length; i++) {
+						if(this.alist[i].myPath + this.alist[i].fileName + '/' == this.alist[index].myPath) {
+							return index;
+						}
+					}
+					return -1;
+				}
+			}
+			return index;
+		},
+		'getListInfo' : function(index) {
+			return this.alist[index];
+		},
+		'getPrevList' : function(data) {
+			for(var i=0; i < this.alist.length; i++) {
+				if(this.getitem(i, data) != -1) {
+					return i;
+				}
+			}
+			return -1;
+		},
+		'getpathList' : function(path) {
+			for(fileId in this.teamDataInfo) {
+				if(this.teamDataInfo[fileId].path == path) {
+					path = this.teamDataInfo[fileId].myPath;
+					break;
+				}
+			}
+			for(var i=0; i< this.alist.length; i++) {
+				if(this.alist[i].path + this.alist[i].fileName + '/' == path) {
+					return i;
+				} else if(this.alist[i].myPath + this.alist[i].fileName + '/' == path) {
+					return i;
+				}
+			}
+			return -1;
+		},
+		'setList' : function(list) {
+			if(!list.directoryInfo) {
+				return;
+			}
+			if(list.directoryInfo.fileType == 'FILE') {
+				return;
+			}
+			for(var i=this.alist.length-1; i >= 0; i--) {
+				if(this.alist[i].fileId == list.directoryInfo.fileId) {
+					this.alist.splice(i, 1);
+					break;
+				}
+			}
+
+			if(!list.directoryInfo.hide) {
+				this.alist.push(this.cList(list));
+			}
+			this.limitUploadSize = typeof list.limitUploadSize != 'undefined' ? list.limitUploadSize : 0;
+		},
+		'updateList' : function(data) {
+			var index = this.getList(data.fileId);
+			if(index != -1) {
+				var chageninfo = {'path': '', 'myPath': ''};
+				var nameLength = this.alist[index].fileName.length;
+				var type;
+
+				if(this.alist[index].myPath) {
+					chageninfo.myPath =  this.alist[index].myPath + this.alist[index].fileName;
+
+				}
+				if(this.alist[index].path) {
+					if(this.alist[index].referenceId) {
+						chageninfo.path = '';
+					} else {
+						chageninfo.path = this.alist[index].path + this.alist[index].fileName;
+					}
+
+				}
+				this.updatePathChildList(chageninfo, data.fileName, nameLength);
+
+				for (fileId in this.teamDataInfo) {
+					if(chageninfo.myPath) {
+						if(this.teamDataInfo[fileId].myPath.lastIndexOf(chageninfo.myPath) != -1) {
+							this.teamDataInfo[fileId].myPath = this.teamDataInfo[fileId].myPath.replace(chageninfo.myPath, this.alist[index].myPath + data.fileName);
+						}
+					}
+					if(chageninfo.path) {
+						if(this.teamDataInfo[fileId].path.lastIndexOf(chageninfo.path) != -1) {
+							this.teamDataInfo[fileId].path = this.teamDataInfo[fileId].path.replace(chageninfo.path, this.alist[index].path + data.fileName);
+						}
+					}
+				}
+				this.alist[index].fileName = data.fileName;
+			}
+		},
+		'removeList' : function(i , recursive) {
+			if(recursive) {
+				var path = this.alist[i].myPath + this.alist[i].fileName;
+				this.alist.splice(i, 1);
+				this.removeChildList(path);
+			} else {
+				this.alist.splice(i, 1);
+			}
+		},
+		'removeChildList' : function(path) {
+			for(var j=this.alist.length-1; j >= 0; j--) {
+				var index = this.alist[j].myPath.lastIndexOf(path);
+				if(index != -1) {
+					this.alist.splice(j, 1);
+				}
+			}
+		},
+		'updatePathChildList' : function(info, changeName, length) {
+			var nlen = info.path.length - length;
+			var nlen2 = info.myPath.length - length;
+			for(var j=this.alist.length-1; j >= 0; j--) {
+				var index = -1;
+				if(info.myPath) {
+					if(this.alist[j].myPath) {
+						index = this.alist[j].myPath.lastIndexOf(info.myPath);
+					}
+				}
+				if(index != -1) {
+					var path2;
+					path2 = this.alist[j].myPath;
+					this.alist[j].myPath = info.myPath.substring(0, nlen2) + changeName + path2.substring(info.myPath.length);
+				}
+				index = -1;
+				if(info.path) {
+					if(this.alist[j].path) {
+						index = this.alist[j].path.lastIndexOf(info.path);
+					}
+				}
+				if(index != -1) {
+					var path2;
+					path2 = this.alist[j].path;
+					this.alist[j].path = info.path.substring(0, nlen) + changeName + path2.substring(info.path.length);
+				}
+			}
+		},
+		'updatePathChildList2' : function(prevpath, newpath) {
+			for(var j=this.alist.length-1; j >= 0; j--) {
+				var index = -1;
+				if(prevpath.myPath) {
+					if(this.alist[j].myPath) {
+						index = this.alist[j].myPath.lastIndexOf(prevpath.myPath);
+					}
+					if(index != -1) {
+						this.alist[j].myPath = this.alist[j].myPath.replace(prevpath.myPath, newpath.myPath);
+						if(!prevpath.path && newpath.path && newpath.defaultPath) {
+							this.alist[j].path = this.alist[j].myPath.replace(newpath.defaultPath, newpath.path);
+							if(this.alist[j].child.length) {
+								for(var i = 0; i < this.alist[j].child.length; i++) {
+									this.alist[j].child[i].isTeamFolder = true;
+								}
+							}
+						}
+					}
+				}
+				index = -1;
+				if(prevpath.path) {
+					if(this.alist[j].path) {
+						index = this.alist[j].path.lastIndexOf(prevpath.path);
+					}
+					if(index != -1) {
+						if(newpath.path) {
+							this.alist[j].path = this.alist[j].path.replace(prevpath.path, newpath.path);
+						} else {
+							this.alist[j].path = newpath.path;
+							if(this.alist[j].child.length) {
+								for(var i = 0; i < this.alist[j].child.length; i++) {
+									this.alist[j].child[i].isTeamFolder = false;
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		'getitem' : function(i, data) {
+			var list = this.alist[i].child;
+			for(var j=0; j < list.length; j++) {
+				if(data.fileId == list[j].fileId) {
+					return j;
+				}
+			}
+			return -1;
+		},
+		'getitemData' : function(data) {
+			var index = this.getList(data.parentId);
+			if(index != -1) {
+				var index2 = listData.getitem(index, data);
+				if(index2 != -1) {
+					return this.alist[index].child[index2];
+				} else {
+					return -1;
+				}
+			} else {
+				return -1;
+
+			}
+		},
+		'setitem' : function(i, data) {
+			var isTeamfolder = false;
+			if(this.alist[i].path) {
+				if(this.alist[i].path.lastIndexOf('PATH://team/') != -1) {
+					isTeamfolder = true;
+				}
+			}
+			var data2 = {
+					'fileId' : data.fileId, 'fileName' : data.fileName, 'fileType' : data.fileType,
+					'lastModified' : data.lastModified, 'lastRevision' : data.lastRevision, 'size': data.size,
+					'weblinkCreated' : data.weblinkCreated, 'taskId' : data.taskId, 'referenceId': data.referenceId,
+					'shared' : data.shared,
+					'isTeamFolder': (data.referenceId || isTeamfolder ? true : false),
+					'fileRevision' : data.fileRevision ? data.fileRevision : 0,
+					'starred': data.starred
+			};
+			this.alist[i].child.push(data2);
+		},
+		'updateitem' : function(i, data) {
+			var index = this.getitem(i, data);
+			if(data.referenceId) {
+				data.isTeamFolder = true;
+			}
+			if(index != -1) {
+				this.alist[i].child[index] = $.extend(this.alist[i].child[index], data);
+			}
+		},
+		'removeitem' : function(i, data) {
+			var index = this.getitem(i, data);
+			if(index != -1) {
+				this.alist[i].child.splice(index, 1);
+			}
+		},
+		'update' : function(type, list) {
+			for(var i=0; i < list.length; i++) {
+				var index = -1;
+				var index2 = -1;
+				var data2 = list[i];
+				var data = this.changeEvent(type, data2);
+				var arr='';
+				if(!data) {
+					continue;
+				}
+
+				/*if(data.info.fileType == 'DIR') {
+					this.chageDataList['uploader'].push(data);
+				}*/
+				this.chageDataList['pchome'].push(JSON.stringify(data));
+				this.chageDataList['tree'].push(JSON.stringify(data));
+				this.chageDataList['pchome1'].push(JSON.stringify(data));
+
+				if(data.eventType == 'FILEADD' || data.eventType == 'DIRADD' || data.eventType == 'FILECOPY') {
+					index = this.getList(data.parentId);
+					if(index != -1) {
+						var index2 = this.getitem(index, data.info);
+						if(index2 == -1) {
+							this.setitem(index, data.info);
+							if(data.info.fileType == 'DIR' && !data.info.referenceId) {
+								var referenceId = 0;
+								var path = '', myPath = '';
+								if(this.alist[index].path) {
+									if(this.alist[index].referenceId) {
+										path = listData.teamDataInfo[this.alist[index].referenceId].path;
+									} else {
+										path = this.alist[index].path + this.alist[index].fileName + '/';
+									}
+								}
+								myPath = this.alist[index].myPath + this.alist[index].fileName + '/';
+
+								var data2 = {
+									'directoryInfo'	: {
+										'fileId': data.info.fileId,
+										'fileName' : data.info.fileName,
+										'referenceId' : referenceId,
+										'path' : path,
+										'myPath' :	myPath
+									},
+									'list' : []
+								};
+								this.setList(data2);
+							}
+						}
+					}
+				} else if(data.eventType == 'RENAME') {
+					index = this.getList(data.parentId);
+					if(index != -1) {
+						this.updateitem(index, data.info);
+						if(data.info.fileType == 'DIR') {
+							this.updateList(data.info);
+						}
+					}
+				} else if(data.eventType == 'UPDATE' || data.eventType == 'STAR') {
+					index = this.getList(data.parentId);
+					if(index != -1) {
+						//test
+						var index2 = this.getitem(index, data.info);
+						if(index2 != -1) {
+							this.updateitem(index, data.info);
+							if(this.alist[index].child[index2].fileName != data.info.fileName) {
+								/*alert('UPDATE name not same. p: '+ this.alist[index].child[index2] + ', n: ' + data.info.fileName);*/
+							}
+						}
+						// test
+					}
+				} else if(data.eventType == 'FILEMOVE') {
+					index = this.getPrevList(data.info);
+					var isexitprev = true;
+					index2 = this.getList(data.parentId);
+
+					if(index != -1) {
+						var index3 = this.getitem(index, data.info);
+						if(index3 != -1) {
+							arr =  $.extend(this.alist[index].child[index3], data.info);
+							this.alist[index].child.splice(index3, 1);
+						} else {
+							arr = data.info;
+						}
+					} else {
+						if(data.info.copiedFileId) {
+							data.info.fileId = data.info.copiedFileId;
+						}
+						arr = data.info;
+					}
+					if(index2 != -1) {
+						var index3 = this.getitem(index2, arr);
+						if(index3 != -1) {
+							arr =  $.extend(this.alist[index].child[index3], arr);
+							this.alist[index].child.splice(index3, 1);
+						}
+						this.setitem(index2, arr);
+					}
+				} else if(data.eventType == 'DIRMOVE') {
+					index = this.getPrevList(data.info);
+					index2 = this.getList(data.parentId);
+					if(index != -1) {
+						var index3 = this.getitem(index, data.info);
+						if(index3 != -1) {
+							arr =  $.extend(this.alist[index].child[index3], data.info);
+							this.alist[index].child.splice(index3, 1);
+						} else {
+							/*alert('DIRMOVE item is not exist.');*/
+						}
+					}
+					if(index2 != -1) {
+						if(data.info.copiedFileId) {
+							data.info.fileId = data.info.copiedFileId;
+						}
+						arr = $.extend(arr, data.info);
+						this.setitem(index2, arr);
+					}
+					index = this.getList(data.info.fileId);
+
+					if(index != -1) {
+						//test
+						if(this.alist[index].fileName != data.info.fileName) {
+							/*alert('DIRMOVE name not same. p:  '+ this.alist[index].fileName + ', n: ' + data.info.fileName);*/
+						}
+						// test
+						if(index2 != -1) {
+							/* index this index2 parent */
+							var prevPathinfo = { 'path' : '', 'myPath' : ''};
+							var newPathinfo = { 'path' : '', 'myPath' : ''};
+
+							if(this.alist[index].referenceId) {
+								//empty
+							} else {
+								if(this.alist[index].path) {
+									var path = this.alist[index].path;
+
+									if(this.alist[index2].path) {
+										if(this.alist[index2].referenceId) {
+											this.alist[index].path = this.teamDataInfo[this.alist[index2].referenceId].path;
+										} else {
+											this.alist[index].path = this.alist[index2].path + this.alist[index2].fileName + '/';
+										}
+										prevPathinfo.path = path + this.alist[index].fileName;
+										newPathinfo.path = this.alist[index].path  +  data.info.fileName;
+									} else {
+										prevPathinfo.path = path + this.alist[index].fileName;
+										this.alist[index].path = '';
+										for(j=0; j < this.alist[index].child.length; j++) {
+											this.alist[index].child[j].isTeamFolder = false;
+										}
+										newPathinfo.path = '';
+									}
+								} else {
+									if(this.alist[index2].path) {
+										var path;
+										if(this.alist[index2].referenceId) {
+											path = this.teamDataInfo[this.alist[index2].referenceId].path;
+											newPathinfo.path = this.teamDataInfo[this.alist[index2].referenceId].path;
+											newPathinfo.defaultPath = this.teamDataInfo[this.alist[index2].referenceId].myPath;
+										} else {
+											for(fileid in this.teamDataInfo) {
+												if(this.alist[index2].path.lastIndexOf(this.teamDataInfo[fileid].path) != -1) {
+													newPathinfo.path = this.teamDataInfo[fileid].path;
+													path = this.alist[index2].path  +  data.info.fileName;
+													newPathinfo.defaultPath = this.teamDataInfo[fileid].myPath;
+													break;
+												}
+											}
+										}
+										for(j=0; j < this.alist[index].child.length; j++) {
+											this.alist[index].child[j].isTeamFolder = true;
+										}
+										this.alist[index].path = path;
+									}
+								}
+							}
+
+							if(this.alist[index].myPath) {
+								var path = this.alist[index].myPath;
+								this.alist[index].myPath = this.alist[index2].myPath + this.alist[index2].fileName + '/';
+
+								prevPathinfo.myPath = path + this.alist[index].fileName;
+								newPathinfo.myPath = this.alist[index].myPath  +  data.info.fileName;
+							}
+							this.alist[index].fileName = data.info.fileName;
+
+							this.updatePathChildList2(prevPathinfo, newPathinfo);
+						} else {
+							this.removeList(index, 1);
+						}
+					}
+				} else if(data.eventType == 'DELETE' || data.eventType == 'REMOVE') {
+					index = this.getList(data.parentId);
+					if(index != -1) {
+						this.removeitem(index, data.info);
+					}
+					if(data.info.fileType == 'DIR') {
+						index = this.getList(data.info.fileId);
+						if(index != -1) {
+							this.removeList(index, 1);
+						}
+					}
+					if(data.eventType == 'REMOVE' && data.info.referenceId) {
+						if(data.info.referenceId) {
+							delete this.teamDataInfo[data.info.referenceId];
+						}
+					}
+					if(data.changesets) {
+						index = this.getList(data.changesets[0].parentId);
+						if(index != -1) {
+							var arr =  $.extend(data.info, {'fileId' : data.changesets[0].targetId});
+							this.setitem(index, arr);
+							/*if(data.info.fileType == 'DIR' && !data.info.referenceId) {
+								var referenceId = 0;
+								var path = '', myPath = '';
+								if(this.alist[index].path) {
+									if(this.alist[index].referenceId) {
+										path = listData.teamDataInfo[this.alist[index].referenceId].path;
+									} else {
+										path = this.alist[index].path + this.alist[index].fileName + '/';
+									}
+								}
+								myPath = this.alist[index].myPath + this.alist[index].fileName + '/';
+
+								var data2 = {
+									'directoryInfo'	: {
+										'fileId': data.info.fileId,
+										'fileName' : data.info.fileName,
+										'referenceId' : referenceId,
+										'path' : path,
+										'myPath' :	myPath
+									},
+									'list' : []
+								};
+								this.setList(data2);
+							}*/
+						}
+					}
+				} else if(data.eventType == 'REMOVEHIDDEN') {
+					index = this.getList(data.parentId);
+					if(index != -1) {
+						if(data.info.fileType != 'DIR') {
+							this.removeitem(index, data.info);
+						}
+					}
+					if(data.info.fileType == 'DIR') {
+						index = this.getList(data.info.fileId);
+						if(index != -1) {
+							this.removeList(index, 1);
+						}
+					}
+				} else if(data.eventType == 'RESOTRE') {
+					index = this.getList(data.parentId);
+					if(index != -1) {
+						var index2 = this.getitem(index, data.info);
+						if(index2 != -1) {
+							//test
+							if(this.alist[index].child[index2].fileName != data.info.fileName) {
+								/*alert('RESTORE name not same. p: '+ this.alist[index].child[index2] + ', n: ' + data.info.fileName);*/
+							}
+							this.updateitem(index, data.info);
+							//test
+						}  else {
+							this.setitem(index, data.info);
+						}
+					}
+					if(data.info.fileType == 'DIR') {
+						index = this.getList(data.info.fileId);
+						if(index != -1) {
+							this.removeList(index, 1);
+						}
+					}
+				} else {
+					/*alert('not find event type.' + data.eventType);*/
+				}
+			}
+		},
+		'jsonGetList' : function(id, scb, fcb) {
+			var obj = this;
+			var webdata = {
+					'parentId': id,
+					'fileStatus' : "NORMAL"
+			};
+			popcorn.getlist(webdata,
+			function(res) {
+				if(res.resultCode == 0) {
+					setNoti('list', res);
+					if(!obj.revision) {
+						obj.revision = res.revision;
+					}
+					if(res.directoryInfo) {
+						res.directoryInfo.myPath = res.directoryInfo.path;
+						res.directoryInfo.path = null;
+						res.directoryInfo.isTeamFolder = false;
+					}
+					obj.setList(res);
+					/*console.log('jsonGetList');
+					console.log(obj.alist);*/
+				} else if (res.resultCode == Enum.service.REGULARSERVICE || res.resultCode == Enum.service.EMGERGENSERVICE){
+					location.href = '/' + LanguagePack.CURRENT_LOCALE + '/servercheck';
+					return;
+				}
+				if(scb) {
+					var mainArguments = Array.prototype.slice.call(arguments);
+					mainArguments.push(id);
+					scb.apply(null, mainArguments);
+				}
+			}, fcb);
+		},
+		'jsonGetList2' : function(path, scb, fcb) {
+			var obj = this;
+			var webdata = {
+					'path' : path,
+					'fileStatus' : "NORMAL"
+			};
+			popcorn.getKnowledgeList(null,function (response){
+				knowledgeList = [];
+				for(var i = 0; i<response.list.length; i++) {
+					knowledgeList.push(response.list[i].fileId)
+				}
+				popcorn.getlist(webdata,
+				function(res) {
+					if(res.resultCode == 0) {
+						setNoti('list', res);
+						//if(!obj.revision) {
+							obj.revision = res.revision;
+						//}
+						if(res.directoryInfo) {
+							res.directoryInfo.myPath = res.directoryInfo.path;
+							res.directoryInfo.path = null;
+							res.directoryInfo.isTeamFolder = false;
+						}
+						obj.setList(res);
+						/*console.log('jsonGetList2');
+						console.log(obj.alist);*/
+					} else if (res.resultCode == Enum.service.REGULARSERVICE || res.resultCode == Enum.service.EMGERGENSERVICE){
+						location.href = '/' + LanguagePack.CURRENT_LOCALE + '/servercheck';
+						return;
+					}
+					if(scb) {
+						var mainArguments = Array.prototype.slice.call(arguments);
+						mainArguments.push(path);
+						scb.apply(null, mainArguments);
+					}
+				}, fcb);
+			}, null);
+		},
+		'jsonGetTeamList' : function(id, scb, fcb) {
+			var obj = this;
+
+			var webdata = {
+					'folderList' : [{
+						'folderId' : id,
+						'path' : null
+					}],
+					'fileType' : 'ALL',
+					'recursive' : false,
+					'fileStatus' : 'NORMAL'
+			};
+			popcorn.getTeamlist(webdata,
+			function(res) {
+				if(res.resultCode == 0) {
+					setNoti('list', res);
+					var result = obj.changeTeamData(obj, res);
+					obj.setList(result);
+					/*console.log('jsonGetTeamList');
+					console.log(obj.alist);*/
+				}
+				if(scb) {
+					var mainArguments = Array.prototype.slice.call(arguments);
+					mainArguments.push(id);
+					scb.apply(null, mainArguments);
+				}
+			}, fcb);
+		},
+		'jsonGetTeamList2' : function(path, scb, fcb) {
+			var obj = this;
+
+			var webdata = {
+					'folderList' : [{
+						'folderId' : null,
+						'path' : path
+					}],
+					'fileType' : 'ALL',
+					'recursive' : false,
+					'fileStatus' : 'NORMAL'
+			};
+			popcorn.getTeamlist(webdata,
+			function(res) {
+				if(res.resultCode == 0) {
+					setNoti('list', res);
+					var result = obj.changeTeamData(obj, res);
+					obj.setList(result);
+					/*console.log('jsonGetTeamList2');
+					console.log(obj.alist);*/
+				}
+				if(scb) {
+					var mainArguments = Array.prototype.slice.call(arguments);
+					mainArguments.push(path);
+					scb.apply(null, mainArguments);
+				}
+			}, fcb);
+		},
+		'errorSync' : function() {
+			listData.isSync = false;
+			listData.SyncCB = null;
+		},
+		'jsonSync' : function(scb, fcb, data, id) {
+			var obj = this;
+			var arr = [];
+
+			if(obj.isSync) {
+				obj.SyncCB = scb;
+				if(id) {
+					obj.SyncId = id;
+				}
+				return;
+			}
+			obj.isSync = true;
+			if(data) {
+				if(data.cancel) {
+					obj.isSync = false;
+					obj.SyncCB = null;
+					return;
+				}
+				arr = data.eventList[data.current-1];
+			}
+			var webdata = {
+					'revision': this.revision ? this.revision : -1,
+					'eventList': arr,
+					'driveId': this.rootid
+			};
+
+			popcorn.sync(webdata,
+			function(res) {
+				if(res.resultCode == 0) {
+					setNoti('sync', res);
+					if(obj.revision) {
+						var result = obj.changeSyncData(obj, res.resultList);
+						obj.update(2, result);
+						var result = obj.changeSyncData(obj, res.eventList);
+						obj.update(1, result);
+						obj.revision = res.revision;
+					}
+					if(data) {
+						if(data.current != data.total) {
+							setTimeout(function() {
+								if(data.cancel) {
+									return;
+								}
+								data.current++;
+								obj.jsonSync(scb, fcb, data, id);
+							}, 0);
+						}
+					}
+				} else if (res.resultCode == Enum.service.REGULARSERVICE || res.resultCode == Enum.service.EMGERGENSERVICE){
+					location.href = '/' + LanguagePack.CURRENT_LOCALE + '/servercheck';
+					return;
+				}
+				obj.isSync = false;
+
+				if(!data || data.current == data.total) {
+					if(isPchome) {
+						var newArr = [];
+						for(var i=0; i< listData.chageDataList['pchome1'].length; i++) {
+							var data2 = JSON.parse(listData.chageDataList['pchome1'][i]);
+							if(data2.info.fileType == 'FILE') {
+								if(data2.eventType == 'REMOVE' || data2.eventType == 'RENAME') {
+									newArr.push(data2);
+								} else if(data2.eventType == 'RESOTRE') {
+									if(typeof data2.info.shared != "undefined") {
+										newArr.push(data2);
+									}
+								}
+							} else {
+								if(data2.eventType == 'REMOVE') {
+									newArr.push(data2);
+								}
+							}
+						}
+						if(newArr.length) {
+							var jsonArr = JSON.parse(JSON.stringify(newArr));
+							try {
+								for(var j=0; j < jsonArr.length; j++) {
+									if(jsonArr[j].info && typeof jsonArr[j].info.referenceId != 'undefined' && jsonArr[j].info.referenceId == 0) {
+										jsonArr[j].info.referenceId = "";
+									}
+								}
+							} catch(err) {
+								console.log(err);
+							}
+							pchome_fileInfo['fileInfo'] = jsonArr;
+							sendMessageToNative('pchome_sync', getFileInfo());
+						}
+						listData.chageDataList['pchome1'] = [];
+					}
+					if(obj.change) {
+						var isTeamfolder = false;
+						for (fileId in obj.teamDataInfo) {
+							isTeamfolder = true;
+							break;
+						}
+						if(isTeamfolder) {
+							var arg = Array.prototype.slice.call(arguments);
+							if(id) {
+								arg.push(id);
+							}
+							obj.jsonTeamSync(scb, fcb, id, arg);
+						}
+					} else {
+						if(obj.SyncCB) {
+							var mainArguments = Array.prototype.slice.call(arguments);
+							if(obj.SyncId) {
+								mainArguments.push(obj.SyncId);
+							}
+							obj.SyncCB.apply(null, mainArguments);
+							obj.SyncCB = null;
+						} else {
+							if(scb) {
+								var mainArguments = Array.prototype.slice.call(arguments);
+								if(id) {
+									mainArguments.push(id);
+								}
+								scb.apply(null, mainArguments);
+							}
+						}
+					}
+				} else {
+					if(obj.SyncCB) {
+						var mainArguments = Array.prototype.slice.call(arguments);
+						if(obj.SyncId) {
+							mainArguments.push(obj.SyncId);
+						}
+						obj.SyncCB.apply(null, mainArguments);
+						obj.SyncCB = null;
+					} else {
+						if(scb) {
+							var mainArguments = Array.prototype.slice.call(arguments);
+							if(id) {
+								mainArguments.push(id);
+							}
+							scb.apply(null, mainArguments);
+						}
+					}
+				}
+			}, fcb);
+		},
+		'jsonTeamSync' : function(scb, fcb, id, sparam) {
+			var obj = this;
+
+			if(obj.isSync && scb) {
+				obj.SyncCB = scb;
+				return;
+			}
+			if(scb) {
+				obj.isSync = true;
+			}
+
+			obj.change = false;
+			var folderList = [];
+			var fileId;
+			for (fileId in obj.teamDataInfo) {
+				folderList.push({'folderId' : obj.teamDataInfo[fileId].fileId , 'revision' : obj.teamDataInfo[fileId].revision});
+			}
+			if(folderList.length) {
+				var webdata = {
+					'folderList' : folderList
+				};
+
+				popcorn.syncTeam(webdata,
+						function(res) {
+							if(res.resultCode == 0) {
+								setNoti('sync', res);
+								var result = obj.changeSyncTeamData(obj, res.list, id);
+								obj.update(1, result);
+								/*console.log('jsonTeamSync');
+								console.log(res.list);
+								console.log(obj.alist);*/
+							}
+							// } else if(res.resultCode == 218){
+							// 	location.reload(true);
+							// }
+							obj.isSync = false;
+							if(isPchome) {
+								var newArr = [];
+								for(var i=0; i< listData.chageDataList['pchome1'].length; i++) {
+									var data2 = JSON.parse(listData.chageDataList['pchome1'][i]);
+									if(data2.info.fileType == 'FILE') {
+										if(data2.eventType == 'REMOVE' || data2.eventType == 'RENAME') {
+											newArr.push(data2);
+										} else if(data2.eventType == 'RESOTRE') {
+											if(typeof data2.info.shared != "undefined") {
+												newArr.push(data2);
+											}
+										}
+									} else {
+										if(data2.eventType == 'REMOVE') {
+											newArr.push(data2);
+										}
+									}
+								}
+								if(newArr.length) {
+									var jsonArr = JSON.parse(JSON.stringify(newArr));
+									try {
+										for(var j=0; j < jsonArr.length; j++) {
+											if(jsonArr[j].info && typeof jsonArr[j].info.referenceId != 'undefined' && jsonArr[j].info.referenceId == 0) {
+												jsonArr[j].info.referenceId = "";
+											}
+										}
+									} catch(err) {
+										console.log(err);
+									}
+									pchome_fileInfo['fileInfo'] = jsonArr;
+									sendMessageToNative('pchome_sync', getFileInfo());
+								}
+								listData.chageDataList['pchome1'] = [];
+							}
+							if(obj.reloadSync) {
+								obj.reloadSync = false;
+								obj.jsonSync(scb, fcb, null, id);
+							} else {
+								if(sparam) {
+									if(obj.SyncCB) {
+										var mainArguments = Array.prototype.slice.call(sparam);
+										if(obj.SyncId) {
+											mainArguments.push(obj.SyncId);
+										} else if(id) {
+											mainArguments.push(id);
+										}
+										obj.SyncCB.apply(null, mainArguments);
+										obj.SyncCB = null;
+									} else {
+										if(scb) {
+											var mainArguments = Array.prototype.slice.call(sparam);
+											if(id) {
+												mainArguments.push(id);
+											}
+											scb.apply(null, mainArguments);
+										}
+									}
+								} else {
+									if(obj.SyncCB) {
+										var mainArguments = Array.prototype.slice.call(arguments);
+										if(obj.SyncId) {
+											mainArguments.push(obj.SyncId);
+										} else if(id) {
+											mainArguments.push(id);
+										}
+										obj.SyncCB.apply(null, mainArguments);
+										obj.SyncCB = null;
+									} else {
+										if(scb) {
+											var mainArguments = Array.prototype.slice.call(arguments);
+											if(id) {
+												mainArguments.push(id);
+											}
+											scb.apply(null, mainArguments);
+										}
+									}
+								}
+							}
+						}, fcb);
+			}
+		},
+		'jsonSave' : function(scb, fcb, data) {
+			var webdata = {};
+
+			if(typeof _viewtype != 'undefined') {
+				if(ispoformat) {
+					// console.log('---------------------data', data);
+					webdata = {
+						polarisDocumentId : data.poformatId
+						, exportToDrive: +(data.dstId)
+						, fileName: data.fileName
+						, path: data.path
+					}
+					popcorn.savePoformatDoc(webdata,
+						function(res) {
+							if(scb) {
+								scb.apply(null, arguments);
+							}
+						}, fcb);
+					return;
+				}
+			}
+
+			if(data.type == 'shared_view') {
+				if(typeof _viewtype != 'undefined') {
+					webdata = {
+						id: (($commentData['workId']) ? $commentData['workId'] : null)
+						,fileId : data.fileId
+						, folderId : data.dstId
+					};
+				} else {
+					webdata.fid = data.fileId;
+					webdata.tid = data.dstId;
+				}
+				popcorn.saveSharedDoc(webdata,
+						function(res) {
+							if(scb) {
+								scb.apply(null, arguments);
+							}
+						}, fcb);
+			} else {
+				webdata.weblinkId = data.fileId;
+				webdata.targetId = data.dstId;
+				popcorn.saveWeblinkDoc(webdata,
+						function(res) {
+							if(scb) {
+								scb.apply(null, arguments);
+							}
+						}, fcb);
+			}
+		}
+};
+
+var listDataListPaging = {
+		'limit' : 50,
+		'init' : function() {
+			var ua = window.navigator.userAgent;
+			var msie = ua.indexOf('MSIE ');
+			var isIE;
+			var ieVersion;
+
+			if(msie > 0) {
+				// IE 10 or older => return version number
+				ieVersion = parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+				isIE = true;
+			}
+
+			if(!isIE) {
+				var trident = ua.indexOf('Trident/');
+				if (trident > 0) {
+					// IE 11 => return version number
+					ieVersion = 11;
+					isIE = true;
+				}
+			}
+			if(!isIE) {
+				var edge = ua.indexOf('Edge/');
+				if (edge > 0) {
+					// IE 12 => return version number
+					ieVersion = 12;
+					isIE = true;
+				}
+			}
+
+			if(isIE) {
+				if(ieVersion <= 8) {
+					this.limit = 30;
+				} else if(ieVersion == 9) {
+					this.limit = 50;
+				} else if(ieVersion >= 10) {
+					this.limit = 100;
+				}
+			} else {
+				this.limit = 100;
+			}
+		},
+		'getlimit' : function() {
+			return this.limit;
+		},
+		'getPagingData' : function(list, num) {
+			var newArr = [];
+
+			if(list.length > this.limit) {
+				if(num < 0) {
+					return;
+				}
+				var prev = num * this.limit;
+				var last = prev + this.limit;
+
+
+				if(last > list.length) {
+					if(!prev) {
+						newArr = list.slice(prev, list.length);
+					} else {
+						newArr = list.slice(prev - this.limit, list.length);
+					}
+				} else {
+					if(!prev) {
+						newArr = list.slice(prev, last);
+					} else {
+						newArr = list.slice(prev - this.limit, last);
+					}
+				}
+			} else {
+				newArr = list;
+			}
+			return newArr;
+		}
+}
+
+listDataListPaging.init();
+
+var listDataTreePaging = {
+		'visibleRow' : 50,
+		'list' : {},
+		'pageCount' : 1,
+		'currentRow' : 0,
+		'calculatePaging' : function(fileId, list, info, pageNum, start) {
+			var index = listData.getList(fileId);
+			if(index != -1) {
+				currentRow++;
+
+				if(pageCount >= pageNum - 1) {
+					var data = listData.getListInfo(index);
+				}
+				var arr = this.sort(listData.getItemData('DIR', index), start);
+
+				if(arr.length == 0) {
+					return [];
+				} else {
+					for(var i=0; i < arr.length; i++) {
+						if(info[arr.fileId].open) {
+							calculatePaging(arr.fileId, list, info, num, true);
+						}
+					}
+
+				}
+			}
+			return;
+		},
+		'getPagingData' : function(info, pageNum) {
+			this.list = [];
+			this.pageCount = 1;
+			this.currentRow = 0;
+			return calculatePaging(listData.rootid, list, info, pageNum, true);
+		},
+		'sort' : function(object, isRoot) {
+			var newObject = JSON.parse(JSON.stringify(object));
+			return newObject.sort(function(a, b) {
+				if(a.isTeamFolder && b.isTeamFolder) {
+					if(a.fileName > b.fileName) {
+						return 1;
+					} else {
+						return -1;
+					}
+				} else if(a.isTeamFolder) {
+					if(isRoot == 'root') {
+						if(b.fileName.toLowerCase() == 'inbox') {
+							return 1;
+						} else {
+							return -1;
+						}
+					} else {
+						return -1;
+					}
+				} else if(b.isTeamFolder) {
+					if(isRoot == 'root') {
+						if(a.fileName.toLowerCase() == 'inbox') {
+							return -1;
+						} else {
+							return 1;
+						}
+					} else {
+						return 1;
+					}
+				} else {
+					if(isRoot == 'root') {
+						if(a.fileName.toLowerCase() == 'inbox') {
+							return -1;
+						} else if(b.fileName.toLowerCase() == 'inbox') {
+							return 1;
+						}
+					}
+					if(a.fileName > b.fileName) {
+						return 1;
+					} else {
+						return -1;
+					}
+				}
+			});
+		}
+}
+var addressData = {
+		'sorigin' : [],
+		'horigin' : [],
+		'searcharr' : [],
+		'pouser' : {},
+		'ponotuser' : {},
+		'nouser' : {},
+		'revision' : null,
+		'isstart' : false,
+		'complete' : false,
+		'ischange' : false,
+		'page' : 1,
+		'chageDataList' : {'popup_chat' : [], 'popup_team' : [], 'popup_cooperation2' : []},
+		'iscontain' : function(arr, item) {
+			if(!arr.length) {
+				return true;
+			}
+			var first = $(arr).get(0);
+			var last = $(arr).get(-1);
+			if(first.n < item.n && item.n < last.n) {
+				return true;
+			} else {
+				return false;
+			}
+		},
+		'find' : function(item) {
+			var obj;
+			obj = this.pouser;
+			if(obj[item.e]) {
+				return obj[item.e];
+			}
+			obj = this.ponotuser;
+			if(obj[item.e]) {
+				return obj[item.e];
+			}
+			return null;
+		},
+		'setAddress' : function(addArr) {
+			for(var i = 0; i < addArr.length; i++) {
+				if(typeof addArr[i].sh == 'undefined') {
+					addArr[i].sh = true;
+				}
+				if(typeof addArr[i].n == 'undefined') {
+					addArr[i].n = addArr[i].e;
+				}
+
+				if(addArr[i].uid) {
+					this.pouser[addArr[i].e] = addArr[i];
+				} else {
+					this.ponotuser[addArr[i].e] = addArr[i];
+				}
+
+				if(addArr[i].sh) {
+					this.sorigin.push(addArr[i]);
+				} else {
+					this.horigin.push(addArr[i]);
+				}
+			}
+		},
+		'sort' : function() {
+			this.sorigin.sort(
+					function(a, b){
+						if(a.n > b.n) {
+							return 1;
+						} else {
+							return -1;
+						}
+					});
+			this.horigin.sort(
+					function(a, b){
+						if(a.n > b.n) {
+							return 1;
+						} else {
+							return -1;
+						}
+					});
+		},
+		'search' : function(keyword, all) {
+			var newarr = []
+			var arr = this.sorigin;
+			for(var i=0; i< arr.length; i++) {
+				var data = arr[i];
+				var nameText = data.n;
+				var emailText = data.e;
+
+				var name = data.n.toLowerCase();
+				var email = data.e.toLowerCase();
+				var noSpaceName = name.replace(/ /g,"");
+				var issearch = false;
+
+				if(typeof all != 'undefined') {
+					if(data.e == keyword) {
+						issearch = true;
+					}
+				} else {
+					if(email.indexOf(keyword) != -1) {
+						issearch = true;
+					} else {
+						if(name.length) {
+							if(name.indexOf(keyword) != -1) {
+								issearch = true;
+							} else if(noSpaceName.indexOf(keyword) != -1) {
+								issearch = true;
+							} else if(keyword.length == 1 && emailData.reghang.test(keyword)) {
+								if (emailData.checkHang(name[0], keyword)) {
+									issearch = true;
+								}
+							}
+						}
+					}
+				}
+
+				if(issearch) {
+					newarr.push(data);
+				}
+			}
+			return newarr;
+
+		},
+		'updateAddress' : function(addArr) {
+			for(var i=0; i < addArr.length; i++) {
+				var obj = this.find(addArr[i]);
+				/*if(addArr[i].uid) {
+					obj = this.pouser[addArr[i].e];
+				} else {
+					obj = this.ponotuser[addArr[i].e];
+				}*/
+				var data = {};
+				if(!obj) {
+					if(typeof addArr[i].sh == 'undefined') {
+						addArr[i].sh = true;
+					}
+					if(typeof addArr[i].n == 'undefined') {
+						addArr[i].n = addArr[i].e;
+					}
+					if(addArr[i].uid) {
+						obj = this.pouser[addArr[i].e] = addArr[i];
+					} else {
+						obj = this.ponotuser[addArr[i].e] = addArr[i];
+					}
+					data = obj;
+					data.type = 'new';
+					if(addArr[i].sh) {
+						this.sorigin.push(addArr[i]);
+					} else {
+						this.hrigin.push(addArr[i]);
+					}
+				} else {
+					var type = null;
+					if(typeof addArr[i].sh == 'undefined') {
+						addArr[i].sh = true;
+					}
+					if(typeof addArr[i].n == 'undefined') {
+						addArr[i].n = addArr[i].e;
+					}
+					if(obj.sh) {
+						for(var j=0; j < this.sorigin.length; j++) {
+							if(this.sorigin[j].id == addArr[i].id) {
+								if(obj.sh != addArr[i].sh) {
+									this.sorigin.splice(j, 1);
+									this.horigin.push(addArr[i]);
+									type = 'change';
+								} else {
+									this.sorigin[j] = addArr[i];
+								}
+								break;
+							}
+						}
+					} else {
+						for(var j=0; j < this.horigin.length; j++) {
+							if(this.horigin[j].id == addArr[i].id) {
+								if(obj.sh != addArr[i].sh) {
+									this.horigin.splice(j, 1);
+									this.sorigin.push(addArr[i]);
+									type = 'change';
+								} else {
+									this.horigin[j] = addArr[i];
+								}
+								break;
+							}
+						}
+					}
+					if(addArr[i].uid) {
+						this.pouser[addArr[i].e] = addArr[i];
+					} else {
+						this.ponotuser[addArr[i].e] = addArr[i];
+					}
+					data = addArr[i];
+					if(!type) {
+						data.type = 'modify';
+					} else {
+						data.type = type;
+					}
+				}
+				this.chageDataList['popup_chat'].push(data);
+				this.chageDataList['popup_cooperation2'].push(data);
+				this.chageDataList['popup_team'].push(data);
+			}
+			if(addArr.length) {
+				this.sort();
+			}
+		},
+		'jsonGetRevision' : function(scb, fcb) {
+			var obj = this;
+			if(obj.isstart) {
+				return;
+			}
+			obj.isstart = true;
+			popcorn.getAddressRevision(
+			function(res) {
+				if(res.resultCode == 0) {
+					obj.revision = res.r;
+					if(res.c) {
+						obj.jsonGetAddress(res.r, scb, fcb);
+					} else {
+						obj.complete = true;
+					}
+				}
+			},
+			function(res){
+			});
+		},
+		'jsonHideAddress' : function(item, scb, fcb) {
+			var obj = this;
+
+			var webdata  = {
+					'r' : obj.revision,
+					'l' : [item.id]
+			};
+
+			popcorn.hideAddress(webdata,
+			function(res) {
+				if(res.resultCode == 0) {
+					if(obj.complete) {
+						obj.revision = res.r;
+						var obj2;
+						if(item.uid) {
+							obj2 =  $.extend(null, obj.pouser[item.e]);
+						} else {
+							obj2 =  $.extend(null, obj.ponotuser[item.e]);
+						}
+						obj2.sh = false;
+						obj.updateAddress([obj2]);
+					} else {
+						obj.ischange = true;
+					}
+				}
+				scb.apply(null, arguments);
+			}, fcb);
+		},
+		'jsonShowAddress' : function(item, scb, fcb) {
+			var obj = this;
+			var webdata  = {
+					'r' : obj.revision,
+					'l' : [item.id]
+			};
+			popcorn.showAddress(webdata,
+			function(res) {
+				if(res.resultCode == 0) {
+					if(obj.complete) {
+						obj.revision = res.r;
+						var obj2;
+						if(item.uid) {
+							obj2 = $.extend(null, obj.pouser[item.e]);
+						} else {
+							obj2 = $.extend(null, obj.ponotuser[item.e]);
+						}
+						obj2.sh = true;
+						obj.updateAddress([obj2]);
+					}
+					else {
+						obj.ischange = true;
+					}
+				}
+				scb.apply(null, arguments);
+			}, fcb);
+		},
+		'jsonGetAddress' : function(r, scb, fcb) {
+			var obj = this;
+			var webdata  = {
+					/*'r' : r,*/
+					'r' : -1,
+					'p' : obj.page,
+					'c' : 100
+			};
+			popcorn.getAddressList(webdata,
+			function(res) {
+				if(res.resultCode == 0) {
+					obj.setAddress(res.l);
+					if(res.l.length == 100) {
+						obj.page++;
+						obj.jsonGetAddress(obj.revision, scb, fcb);
+						return;
+					} else {
+						obj.complete = true;
+						obj.sort();
+
+					}
+					if(obj.ischange) {
+						obj.jsonUpateAddress(scb, fcb);
+					}
+				}
+				scb.apply(null, arguments);
+			}, fcb);
+		},
+		'jsonUpateAddress' : function(scb, fcb) {
+			var obj = this;
+			if(obj.revision == 0) {
+				return;
+			}
+			if(obj.ischange) {
+				obj.ischange = false;
+			}
+			var webdata  = {
+					'r' : obj.revision
+			};
+			popcorn.getAddressChangeList(webdata,
+			function(res) {
+				if(res.resultCode == 0) {
+					obj.revision = res.r;
+					obj.updateAddress(res.l);
+				}
+				scb.apply(null, arguments);
+			}, fcb);
+		},
+		'jsonAddAddress': function(itemArr, scb, fcb) {
+			var obj = this;
+
+			var webdata  = {
+					'l' : itemArr
+			};
+			popcorn.addAddress(webdata,
+			function(res) {
+				if(res.resultCode == 0) {
+					if(obj.complete) {
+						obj.revision = res.r;
+						if(res.l) {
+							obj.updateAddress(res.l);
+						}
+					}
+				}
+				scb.apply(null, arguments);
+			}, fcb);
+		}
+}
+
+var groupUserData = {
+		'origin' : {},
+		'find' : function(item) {
+			var obj = this.origin;
+			if(item.e) {
+				return obj[item.e];
+			}
+			return null;
+		},
+		'setUser' : function(item, type) {
+			var obj = this.origin;
+			if(type == 1) {
+				if(!item.id) {
+					obj[item.e] = item;
+				}
+			} else {
+				if(!item.id && !obj[item.e]) {
+					obj[item.e] = item;
+				}
+			}
+		},
+		'removeUser' : function(item) {
+			var obj = this.origin;
+			obj[item.e] = null;
+		},
+		'updateUser' : function(item, type) {
+			var obj = this;
+			var item2 = obj.find(item);
+			if(!item2) {
+				obj.setUser(item, 1);
+			} else {
+				if(item.id) {
+					obj.removeUser(item2);
+				} else {
+					obj.setUser(item, type);
+				}
+			}
+		}
+}
+
+var emailData = {
+		'reghang' : /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/,
+		'array' : {
+			'ko' : [ 'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'],
+			'en' : [ 'A', 'B', 'C', 'D','E', 'F','G','H','I','J','K','L','M','N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+			'ja' : [ 'あ', 'か', 'が', 'さ', 'ざ', 'た', 'だ', 'な', 'は', 'ば', 'っ', 'ぱ', 'わ', 'ま', 'や', 'ら'],
+			'num' : ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+		},
+		'checkHang' : function(first, text) {
+			var CompleteCode = first.charCodeAt(0);
+			var UniValue = CompleteCode - 0xAC00;
+			var Jong = UniValue % 28;
+			var Jung = ( ( UniValue - Jong ) / 28 ) % 21;
+			var Cho = parseInt (( ( UniValue - Jong ) / 28 ) / 21);
+
+			for(var i=0; i < this.array.ko.length; i++) {
+				if(text == this.array.ko[i]) {
+					if(Cho == i) {
+						return true;
+					} else {
+						return false;
+					}
+				}
+			}
+			var CompleteCode2 = text.charCodeAt(0);
+			var UniValue2 = CompleteCode2 - 0xAC00;
+			var Jong2 = UniValue2 % 28;
+			var Jung2 = ( ( UniValue2 - Jong2 ) / 28 ) % 21;
+			var Cho2 = parseInt (( ( UniValue2- Jong2 ) / 28 ) / 21);
+
+			if(Cho == Cho2 && Jung == Jung2 && Jong == Jong2) {
+				return true;
+			}
+			return false;
+		},
+}
+
+var jsonData = {
+		'find' : function(obj, key, val) {
+			var objects = [];
+			for (var i in obj) {
+				if (!obj.hasOwnProperty(i)) continue;
+				if (typeof obj[i] == 'object') {
+					objects = objects.concat(getObjects(obj[i], key, val));
+				} else if (i == key && obj[key] == val) {
+					objects.push(obj);
+				}
+			}
+			return objects;
+		},
+		'sort' : function(keyword, obj) {
+			return obj.sort(function(a, b){
+				if(a.keyword > b.keyword) {
+					return 1;
+				} else {
+					return -1;
+				}
+			});
+
+		}}
+
+var syncfn = {
+		'pathLimit' : 1024,
+		'nameLimit' : 255,
+		'count' : 20,
+		'createEventInfo' : function (list) {
+			var arr = [], arr2 = [];
+			var count = 0;
+			for(var i = 0; i < list.length; i++) {
+				arr.push(list[i]);
+				count++;
+				if(count == syncfn.count) {
+					arr2.push(arr);
+					count= 0;
+					arr = [];
+				}
+			}
+			if(arr.length) {
+				arr2.push(arr);
+			}
+			var eventinfo =	 {
+					"divide" : false,
+					"current" : 1,
+					"total" : 1,
+					"revision" : listData.revision,
+					"eventList" : arr2,
+					"parentid" : listData.rootid
+			};
+			if(syncfn.count < list.length) {
+				eventinfo.total = parseInt(list.length / syncfn.count);
+				if(list.length % syncfn.count) {
+					eventinfo.total++;
+				}
+				eventinfo.divide = true;
+			}
+			return eventinfo;
+		},
+		'verifyname' : function(info) {
+			var msg = '';
+			var index = -1;
+
+			if(info.path.length + 1 > syncfn.pathLimit) {
+				if(info.selector) {
+					info.selector.val('');
+				}
+				msg = LanguagePack.POPUP_EXCESSPATHLENGTH(1000);
+			}
+			if(!msg.length && info.name.length) {
+				if(info.name.length > syncfn.nameLimit) {
+					var length = syncfn.nameLimit;
+					if(info.fileType == 'FILE') {
+						msg = LanguagePack.POPUP_EXCESSPATHLENGTH2_FILE(syncfn.nameLimit);
+						var length2 = info.name.lastIndexOf(".");
+						length = length - (info.name.length - length2 - 1);
+					} else {
+						msg = LanguagePack.POPUP_EXCESSPATHLENGTH2_FOLDER(syncfn.nameLimit);
+						length = length + 1;
+					}
+					info.selector.val(info.name.substring(0, length - 1));
+				}
+			}
+			if(msg.length) {
+				if(info.selector) {
+					toastMessage(msg);
+				}
+				return true;
+			}
+			return false;
+		},
+		'verify' : function(info) {
+			var error = {};
+			var event = info.event;
+			var checkType = {'path' : false, 'name': false, 'path2' : false };
+
+			if(event == 'upload' || event == 'add' || event == 'rename') {
+				checkType.path = true;
+				checkType.name = true;
+			} else if(event == "copy" || event == "move") {
+				checkType.path = true;
+				if(/*event == "move" && */info.type == 'FILE') {
+					checkType.path2 = true;
+				}
+			}
+
+			if(checkType.path2) {
+				if(info.path.lastIndexOf('PATH://drive/') == -1) {
+					var index = info.name.lastIndexOf(".");
+					var type = info.name.substring(index + 1).toLowerCase();
+					var fileName = info.name.substr(0,index);
+					if(type == 'slide' || type == 'sheet' || type == 'word') {
+						error = { 'event' : info.event, 'type' : 'path2', 'fileName' : fileName};
+						return error;
+					} else if(event == 'move' && info.shared) {
+						error = { 'event' : info.event, 'type' : 'warring', 'fileName' : info.name};
+						return error;
+					}
+				}
+			}
+
+			if(checkType.path) {
+				if(info.path.length + 1 > syncfn.pathLimit) {
+					error = { 'event' : info.event, 'type' : 'path'};
+					return error;
+				}
+				console.log(info.path.length + 1);
+				if(info.name) {
+					if(info.name.length > syncfn.nameLimit) {
+						error = { 'event' : info.event, 'type' : 'name'};
+						return error;
+					}
+				}
+			}
+
+			if(checkType.name) {
+				if(info.name.indexOf("\\") != -1 || info.name.indexOf('/') != -1 || info.name.indexOf(':') != -1 || info.name.indexOf('*') != -1
+					|| info.name.indexOf('?') != -1 || info.name.indexOf('"') != -1 || info.name.indexOf('"') != -1 || info.name.indexOf('<') != -1
+					|| info.name.indexOf('>') != -1 || info.name.indexOf('|') != -1) {
+					error = { 'event' : info.event, 'type' : info.fileType == 'FILE' ? 'nameF': 'nameD'};
+					return error;
+				}
+				if( /^\.|\.$/.test(info.name)) {
+					error = { 'event' : info.event, 'type' : info.fileType == 'FILE' ? 'commaF': 'commaD'};
+					return error;
+				}
+			}
+			return null;
+		},
+		'verify2Team' : function(info) {
+			var error = {};
+			var event = info.event;
+			var checkType = {'path' : false, 'name': false, 'path2' : false };
+
+			if(event == "move" && info.type == 'FILE') {
+				var index = info.name.lastIndexOf(".");
+				var type = info.name.substring(index + 1).toLowerCase();
+				var fileName = info.name.substr(0,index);
+				if(type == 'slide' || type == 'sheet' || type == 'word') {
+					error = { 'event' : info.event, 'type' : 'path2', 'fileName' : fileName};
+					return error;
+				} else if(event == 'move' && info.shared) {
+					error = { 'event' : info.event, 'type' : 'warring', 'fileName' : info.name};
+					return error;
+				}
+			}
+
+			return null;
+		},
+		'erroMsgPopup' : function (error) {
+			var event = error.event;
+			var type = error.type;
+			var popup;
+			if(event == 'upload') {
+				//console.log(event);
+			} else if(event == "add" || event == "rename") {
+				var name;
+				if (event == "add") {
+					name = LanguagePack.KEYWORD_NEWFOLDER;
+				} else {
+					name = LanguagePack.KEYWORD_RENAME;
+				}
+				var popupMessage = new Array();
+				if(type == 'path') {
+					popupMessage[0] = LanguagePack.POPUP_EXCESSPATHLENGTH(1000);
+				} else if(type == 'name') {
+					popupMessage[0] = LanguagePack.POPUP_EXCESSPATHLENGTH2(syncfn.nameLimit);
+				} else if(type == 'nameF') {
+					popupMessage[0] = LanguagePack.POPUP_ERRORBYINVALIDCHARS(LanguagePack.KEYWORD_FILE);
+				} else if(type == 'nameD') {
+					popupMessage[0] = LanguagePack.POPUP_ERRORBYINVALIDCHARS(LanguagePack.KEYWORD_FOLDER);
+				} else if(type == 'commaF') {
+					popupMessage[0] = LanguagePack.POPUP_ERRORBYINVALIDFULLSTOPFILE;
+				} else if(type == 'commaD') {
+					popupMessage[0] = LanguagePack.POPUP_ERRORBYINVALIDFULLSTOPDIR;
+				}
+				if(popupMessage.length) {
+					popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, name, {'popupMessage' : popupMessage}, error.cb, defaultAlertCB, defaultAlertCB);
+				}
+			} else if(event == 'copy' || event == 'move') {
+				var iNoticeStyle;
+				if(type == 'path2') {
+					if(error.msg) {
+						var popupMessage = new Array();
+						popupMessage[0] = error.msg;
+						popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, name, {'popupMessage' : popupMessage}, error.cb, defaultAlertCB, defaultAlertCB);
+					} else {
+						var popupMessage = new Array();
+						if(event == 'copy') {
+							if(error.isAll) {
+								if(error.total == 1)
+									popupMessage[0] = LanguagePack.BUSINESS_COPY_EDITFILE(error.fileName);
+								else
+									popupMessage[0] = LanguagePack.BUSINESS_COPY_EDITFILE_N_2(error.fileName, error.total - 1);
+							} else {
+								popupMessage[0] = LanguagePack.BUSINESS_COPY_EDITFILE_N;
+							}
+						} else {
+							if(error.isAll) {
+								if(error.total == 1)
+									popupMessage[0] = LanguagePack.BUSINESS_MOVE_EDITFILE(error.fileName);
+								else
+									popupMessage[0] = LanguagePack.BUSINESS_MOVE_EDITFILE_N_2(error.fileName, error.total - 1);
+							} else {
+								popupMessage[0] = LanguagePack.BUSINESS_MOVE_EDITFILE_N;
+							}
+						}
+						popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, name, {'popupMessage' : popupMessage}, defaultAlertCB, defaultAlertCB, defaultAlertCB); //GMX-7872
+					}
+				} else if(type == 'warring') {
+					var popupMessage = new Array();
+					if(event == 'move') {
+						if(error.total == 1) {
+							popupMessage[0] = LanguagePack.BUSINESS_MOVE_WARRING_SHAREDFILE(error.fileName);
+						} else {
+							popupMessage[0] = LanguagePack.BUSINESS_MOVE_WARRING_SHAREDFILES(error.fileName, error.total - 1);
+						}
+					}
+					popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM_CANCEL, name, {'popupMessage' : popupMessage}, error.cb, defaultAlertCB, defaultAlertCB);
+				} else {
+					if(error.msg) {
+						var popupMessage = new Array();
+						popupMessage[0] = error.msg;
+						popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, name, {'popupMessage' : popupMessage}, error.cb, defaultAlertCB, defaultAlertCB);
+					} else {
+						if(error.isAll) {
+							iNoticeStyle = (event == 'copy')? PopupDataValue.NOTICE_STYLE_SUBTITLE_ITEM_NOT_ABLE_TO_COPY : PopupDataValue.NOTICE_STYLE_SUBTITLE_ITEM_NOT_ABLE_TO_MOVE;
+						} else {
+							iNoticeStyle = (event == 'copy')? PopupDataValue.NOTICE_STYLE_SUBTITLE_SOME_ITEMS_NOT_ABLE_TO_COPY : PopupDataValue.NOTICE_STYLE_SUBTITLE_SOME_ITEMS_NOT_ABLE_TO_MOVE;
+						}
+						iNoticeStyle |= PopupDataValue.NOTICE_STYLE_CONTENT_EXCESSIVE_FILE_NAME_LENGTH;
+						popup = new PopupMessage(PopupType.NOTICE, null, null, {"noticeStyle": iNoticeStyle ,"noticeData": syncfn.pathLimit}, error.cb, defaultAlertCB, defaultAlertCB);
+					}
+				}
+
+			}
+			popup.create();
+			popup.show();
+		},
+		'movetoPopup' : function (data) {
+			var popup;
+			var popupMessage = new Array();
+
+			var name = data.name;
+			if(data.type == 'FILE') {
+				var index = name.lastIndexOf(".");
+				var type = name.substring(index + 1).toLowerCase();
+				if(type == 'slide' || type == 'sheet' || type == 'word') {
+					name = name.substr(0, index);
+				}
+			}
+
+			if(data.count > 1) {
+				popupMessage[0] = LanguagePack.POPUP_TEAMFOLDERMOVE_SELECT_N_NEW(name, data.count-1);
+			} else {
+				/*GMX-7361*/
+				popupMessage[0] = LanguagePack.POPUP_TEAMFOLDERDMOVE_NEW(name);
+			}
+
+			var cancelCB = function(e) {
+				defaultAlertCB(e);
+				toastMessage(LanguagePack.BUSINESS_TOAST_MOVECANCEL);
+			};
+
+			var popup = new PopupMessage(PopupType.DEFAULT, null, null, {popupMessage:popupMessage}, data.cb, cancelCB, cancelCB);
+			popup.create();
+			popup.show();
+		},
+		'createProgressPopup' : function(data) {
+			var title;
+			var contentString;
+			var eventType = data.eventinfo.eventList[0][0].eventType;
+			if (eventType == 'FILEMOVE' || eventType == 'FILEMOVE' || eventType == 'DIRMOVE') {
+				title = LanguagePack.KEYWORD_MOVE;
+				contentString = LanguagePack.SHARE_MOVING_MSG;
+			} else if (eventType == 'FILECOPY') {
+				title = LanguagePack.KEYWORD_COPY;
+				contentString = LanguagePack.POPUP_COPYING_MSG;
+			}
+
+			var popup = new PopupMessage(PopupType.SYNC, null, title, {'userData': data.eventinfo, 'contentString': contentString}, data.cb, data.cb, data.cb);
+			popup.create();
+			popup.show();
+			popup.setProgress({'progress' : '0%'});
+			return popup;
+		},
+		'setProgress' : function(popup, percent) {
+			popup.setProgress({'progress': percent +'%'});
+		},
+		'completeMsg' : function(data, origin) {
+			//eventType, event, total
+			if (!data.eventList.length) {
+				return;
+			}
+			var error = { 'type' : '', 'messages' : []};
+			var string = "";
+			var iNoticeStyle;
+			var syncEvent;
+			if(origin) {
+				syncEvent = data.eventList[0];
+			} else {
+				syncEvent = data.eventList[0][0];
+			}
+
+			var type = syncEvent.filetype ? syncEvent.filetype : syncEvent.fileType;
+			var name = syncEvent.name;
+			if(type == "FILE") {
+				var index = name.lastIndexOf(".");
+				var type = name.substring(index + 1).toLowerCase();
+				if(type == 'slide' || type == 'sheet' || type == 'word') {
+					name = name.substr(0, index);
+				}
+			}
+			syncEvent.name = CreateDotDot((type == "FILE") ? "fileName":"dirName", name, false, 150);
+
+			switch(syncEvent.eventType)
+			{
+			case "DIRADD":
+				string = LanguagePack.TOAST_CREATEFOLDER(name);
+				break;
+			case "UPDATE":
+				if(syncEvent.hide == "SET") {
+					/*if(data.resultTotal == 1) {
+						string = LanguagePack.TOAST_DELETESELECTEDFILE(name);
+					} else {
+						string = LanguagePack.TOAST_DELETESELECTEDFILE_N(data.resultTotal);
+					}*/
+					if(data.restore) {
+						string = LanguagePack.BUSINESS_TOAST_REMOVE;
+					} else {
+						string = LanguagePack.TOAST_DELETESELECTEDFILE_N(data.resultTotal);
+					}
+				}
+				if(data.errorCode.length) {
+					if(data.errorCode[0].code == Enum.sync.NOSUCHFILE) {
+						if(syncEvent.hide == "RELEASE") {
+							if(data.resultSuccessTotal) {
+								if(data.resultTotal == 1) {
+									string = LanguagePack.TOAST_RESTOREITEM(name);
+								} else {
+									string = LanguagePack.TOAST_RESTOREITEM_N(data.resultSuccessTotal);
+								}
+							} else {
+								string = LanguagePack.SCREEN_NODOCEXIST;
+							}
+						}
+					} else if(data.errorCode[0].code == Enum.sync.MAXSTORAGEEXCESS) {
+						if(syncEvent.hide == "RELEASE") {
+							if(data.resultTotal != data.resultSuccessTotal) {
+								if(data.resultSuccessTotal) {
+									iNoticeStyle = PopupDataValue.NOTICE_STYLE_SUBTITLE_SOME_ITEMS_NOT_ABLE_TO_RESTORE | PopupDataValue.NOTICE_STYLE_CONTENT_EXCESSIVE_CAPACITY;
+								} else {
+									iNoticeStyle = PopupDataValue.NOTICE_STYLE_SUBTITLE_ITEMS_NOT_ABLE_TO_RESTORE | PopupDataValue.NOTICE_STYLE_CONTENT_EXCESSIVE_CAPACITY;
+								}
+							}
+						}
+					}
+				} else {
+					if(syncEvent.hide == "RELEASE") {
+						if(data.isRestore) {
+							if(data.restoreCount == 1) {
+								string = LanguagePack.TOAST_RESTOREITEM(name);
+							} else {
+								string = LanguagePack.TOAST_RESTOREITEM_N(data.restoreCount);
+							}
+						} else {
+							if(data.resultTotal == 1) {
+								string = LanguagePack.TOAST_RESTOREITEM(name);
+							} else {
+								string = LanguagePack.TOAST_RESTOREITEM_N(data.resultTotal);
+							}
+						}
+					}
+				}
+				break;
+			case "RENAME":
+				if (syncEvent.fileType == "FILE") {
+					string = LanguagePack.TOAST_CHANGEFILE;
+				} else {
+					string = LanguagePack.TOAST_CHANGEFOLDER;
+				}
+				break;
+			case "DIRMOVE":
+			case "FILEMOVE":
+				if(data.errorCode.length) {
+					if(data.resultSuccessTotal) {
+						error.type = 5;
+					} else {
+						error.type = 6;
+					}
+					if(data.errorCode[0].code == Enum.sync.NOSUCHFILE || data.errorCode[0].code == Enum.sync.FILEACCESSVIOLATIONBYINVALIDUSER) {
+						error.messages.push(LanguagePack.SCREEN_NODOCEXIST2);
+					} else if(data.errorCode[0].code == Enum.sync.HIDDENFILEACCESSVIOLATION) {
+						error.messages.push(LanguagePack.SCREEN_NODOCEXIST2);
+					} else if(data.errorCode[0].code == Enum.sync.SHAREDFILE_MOVE_FAIL) {
+						error.messages.push(LanguagePack.MOVEFFAILETEAMFOLDER);
+					} else if(data.errorCode[0].code == Enum.sync.POLARISDOCUMENTFILE_MOVETOSHARE_FAIL) {
+						error.messages.push(LanguagePack.POLARISDOCUMENTFILE_MOVETOSHARE_FAIL);
+					} else if(data.errorCode[0].code == Enum.sync.MAXSTORAGEEXCESS) {
+						error.messages.push(LanguagePack.POPUP_CLOUDSTORAGESHORTAGE(gUserLevel));
+						//logTracking
+						var webData = $LOGMODEL.getData();
+						webData['ti'].t = LogType.tracking.page;
+						if(isPchome){
+							if(isMacOffice())
+								webData['obj'].dp = 'StorageOverPopup.machome';
+							else
+								webData['obj'].dp = 'StorageOverPopup.pchome';
+						} else {
+							webData['obj'].dp = 'StorageOverPopup.web';
+						}
+						webData['obj'].dt = 'Move';
+						$LOGMODEL.sendData(webData);
+					} else {
+						if(data.resultSuccessTotal) {
+							var data2 = listData.getlistData(syncEvent);
+							if(data2) {
+								var name2;
+								name2 = data2.fileName;
+								if(data2.fileName == "drive") {
+									name2 = LanguagePack.KEYWORD_DRIVE(gUserLevel);
+								}
+								name2 = CreateDotDot("dirName", name2, false, 150);
+
+								if(data.restore) {
+									string = LanguagePack.BUSINESS_TOAST_MOVE;
+								} else {
+									if(data.resultSuccessTotal == 1) {
+										string = LanguagePack.TOAST_COPYFILE(name, name2);
+									} else {
+										string = LanguagePack.TOAST_COPYITEM_N(data.resultSuccessTotal, name2);
+									}
+								}
+							}
+						}
+					}
+				} else {
+					var name2 = '';
+					var data2 = listData.getlistData(syncEvent);
+
+					if(data2) {
+						var name2;
+						name2 = data2.fileName;
+						if(data2.fileName == "drive") {
+							name2 = LanguagePack.KEYWORD_DRIVE(gUserLevel);
+						}
+						name2 = CreateDotDot("dirName", name2, false, 150);
+					} else {
+						if(syncEvent.path) {
+							var arr = syncEvent.path.split('/');
+							name2 = arr[arr.length-1];
+						}
+						if(name2 == "drive") {
+							name2 = LanguagePack.KEYWORD_DRIVE(gUserLevel);
+						}
+						name2 = CreateDotDot("dirName", name2, false, 150);
+					}
+
+					if(name2) {
+						if(data.restore) {
+							string = LanguagePack.BUSINESS_TOAST_MOVE;
+						} else {
+							if(data.resultSuccessTotal == 1) {
+								string = LanguagePack.TOAST_COPYFILE(name, name2);
+							} else {
+								string = LanguagePack.TOAST_COPYITEM_N(data.resultSuccessTotal, name2);
+							}
+						}
+					}
+				}
+				break;
+			case "DELETE":
+				if(data.resultSuccessTotal) {
+					string = LanguagePack.TOAST_DELETEPERMANENTLYITEM_N(data.resultSuccessTotal);
+				} else {
+					string = LanguagePack.SCREEN_NODOCEXIST;
+				}
+				break;
+			case "FILECOPY":
+				if(data.errorCode.length) {
+					if(data.resultSuccessTotal) {
+						error.type = 3;
+					} else {
+						error.type = 4;
+					}
+					if(data.errorCode[0].code == Enum.sync.NOSUCHFILE || data.errorCode[0].code == Enum.sync.FILEACCESSVIOLATIONBYINVALIDUSER) {
+						error.messages.push(LanguagePack.SCREEN_NODOCEXIST2);
+					} else if(data.errorCode[0].code == Enum.sync.HIDDENFILEACCESSVIOLATION) {
+						error.messages.push(LanguagePack.SCREEN_NODOCEXIST2);
+					} else if(data.errorCode[0].code == Enum.sync.SHAREDFILE_MOVE_FAIL) {
+						error.messages.push(LanguagePack.MOVEFFAILETEAMFOLDER);
+					} else if(data.errorCode[0].code == Enum.sync.MAXSTORAGEEXCESS) {
+						error.messages.push(LanguagePack.POPUP_CLOUDSTORAGESHORTAGE(gUserLevel));
+						//logTracking
+						var webData = $LOGMODEL.getData();
+						webData['ti'].t = LogType.tracking.page;
+						if(isPchome){
+							if(isMacOffice())
+								webData['obj'].dp = 'StorageOverPopup.machome';
+							else
+								webData['obj'].dp = 'StorageOverPopup.pchome';
+						} else {
+							webData['obj'].dp = 'StorageOverPopup.web';
+						}
+						webData['obj'].dt = 'Copy';
+						$LOGMODEL.sendData(webData);
+					} else {
+						if(data.resultSuccessTotal) {
+							var data2 = listData.getlistData(syncEvent);
+							if(data2) {
+								var name2;
+								name2 = data2.fileName;
+								if(data2.fileName == "drive") {
+									name2 = LanguagePack.KEYWORD_DRIVE(gUserLevel);
+								}
+								name2 = CreateDotDot("dirName", name2, false, 150);
+
+								if(data.resultSuccessTotal == 1) {
+									string = LanguagePack.TOAST_COPYFOLDER(name, name2);
+								} else {
+									string = LanguagePack.TOAST_COPYFOLDER_N(data.resultSuccessTotal, name2);
+								}
+							}
+						}
+					}
+				} else {
+					var data2 = listData.getlistData(syncEvent);
+					if(data2) {
+						var name2;
+						name2 = data2.fileName;
+						if(data2.fileName == "drive") {
+							name2 = LanguagePack.KEYWORD_DRIVE(gUserLevel);
+						}
+						name2 = CreateDotDot("dirName", name2, false, 150);
+
+						if(data.resultTotal == 1) {
+							string = LanguagePack.TOAST_COPYFOLDER(name, name2);
+						} else {
+							string = LanguagePack.TOAST_COPYFOLDER_N(data.resultTotal, name2);
+						}
+					}
+				}
+				break;
+			default:
+				console.log('event type not exist');
+				break;
+			}
+			if(error.type) {
+				var popup = new PopupMessage(PopupType.NOTICE2, null, null, error, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.show();
+			} else if(iNoticeStyle) {
+				var popup = new PopupMessage(PopupType.NOTICE, null, null, {noticeStyle: iNoticeStyle}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.show();
+			} else if(string) {
+				toastMessage(string);
+				if(data.restore) {
+					var $restore = $('<a href="#">' + LanguagePack.BUSINESS_TOAST_UNDO + '</a>');
+					$restore.bind('click', function(e) {
+						if(e.preventDefault) e.preventDefault();
+						$("#toastpop").hide();
+						var eventinfo = syncfn.createEventInfo(data.restore.event);
+						eventinfo.restoreCount = data.restore.count;
+						eventinfo.isRestore = true;
+
+						if(eventinfo.divide) {
+							var result = function(e) {
+								var eventinfo = e.data.param.userData;
+								eventinfo.cancel = true;
+								defaultAlertCB(e);
+							};
+							popup = syncfn.createProgressPopup({'eventinfo': eventinfo, 'cb': result});
+							eventinfo.popup = popup;
+						}
+
+						listData.jsonSync(function(res, id) {
+							if(CheckResult(null, res) == null) {
+								return;
+							}
+							if(!eventinfo.resultTotal) {
+								eventinfo.resultTotal = 0;
+								eventinfo.resultSuccessTotal = 0;
+								eventinfo.errorCode = [];
+							}
+							var start = (eventinfo.current-1) * syncfn.count;
+							for(var i=0; i < res.resultList.length; i++) {
+								if(!res.resultList[i].resultCode) {
+									eventinfo.resultSuccessTotal++;
+								} else {
+									eventinfo.errorCode.push({'code' : res.resultList[i].resultCode});
+								}
+								eventinfo.resultTotal++;
+							}
+							if(eventinfo.popup) {
+								syncfn.setProgress(eventinfo.popup, eventinfo.current/eventinfo.total * 100);
+							}
+							if(eventinfo.current == eventinfo.total) {
+								syncfn.completeMsg(eventinfo);
+							}
+
+							if(data.restore.callback) {
+								data.restore.callback(res, eventinfo);
+							}
+						}, null, eventinfo);
+					});
+					$("#toastpop span").append($restore);
+				}
+			}
+		},
+		'completeSaveMsg' : function(res, data) {
+			var cb = defaultAlertCB;
+			var popupMessage = new Array();
+			var error = { 'type' : '', 'messages' : []};
+
+			if(res.resultCode == Enum.success.OK) {
+				popupMessage[0] = LanguagePack.TOAST_SAVEDOCINMYCLOUD(gUserLevel);
+			} else if(res.resultCode == Enum.sync.MAXSTORAGEEXCESS) {
+				error.type = 4;
+				error.messages.push(LanguagePack.POPUP_CLOUDSTORAGESHORTAGE(gUserLevel));
+			} else if(res.resultCode == Enum.common.INVALIDOPERATION) {
+				popupMessage[0] = LanguagePack.POPUP_VIEWERERROR_CANNOTSAVEFILETHESAMEUSERSHARED;
+			} else if (res.resultCode == Enum.account.LOGOUTBYDEVICEDISCONNECT) {
+				popupMessage[0] = LanguagePack.POPUP_LOGOUTBYOTHERSESSIONS;
+				cb = logout;
+			} else if (res.resultCode == Enum.account.EMAILNOTEXIST || res.resultCode == Enum.account.LOGOUTBYACCOUNTDELETED) {
+				popupMessage[0] = LanguagePack.POPUP_REMOVE_ACCOUNT;
+				cb = logout;
+			} else if(res.resultCode == Enum.account.LOGOUTBYPASSWORDCHANGED) {
+				popupMessage[0] = LanguagePack.POPUP_LOGOUTBYPASSWORDCHANGED;
+				cb = logout;
+			} else {
+				popupMessage[0] = LanguagePack.POPUP_FAILTOSAVEBYUNKNOWNERRORRETRYAGAIN(data.detFileName);
+			}
+
+			if(error.type){
+				var popup = new PopupMessage(PopupType.NOTICE2, null, null, error, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.show();
+			} else {
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {popupMessage:popupMessage}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.show();
+			}
+
+		}
+}
+
+var inviteList = {
+	'resultList' : [],
+	'sortData' : {},
+	'get' : function() {
+		return this.resultList;
+	},
+	'a_get' : function(scb, fcb) {
+		var obj = this;
+		var webdata = {
+				'requestCount' : 10,
+		};
+		popcorn.getInvitedList(webdata, function(res) {
+			if(CheckResult(null, res)) {
+				obj.resultList = res.result.resultList;
+				scb.apply(null, arguments);
+			}
+		}, function() {
+
+		});
+	},
+	'a_delete' : function(data, scb, fcb) {
+		var obj = this;
+		var webdata = {
+				'deleteType' : data.type,
+				'idDelete' : data.id
+		};
+		popcorn.deleteInvitedList(webdata, function(res) {
+			if(CheckResult(null, res)) {
+				if(data.type == 'ALL') {
+					obj.resultList = [];
+				} else if(data.type == 'GROUP') {
+					for(var i=0; i < obj.resultList.length; i++) {
+						if(obj.resultList[i].inviteGroup[0].idInvite == data.id) {
+							obj.resultList.splice(i, 1);
+							break;
+						}
+					}
+				}
+				scb.apply(null, arguments);
+			}
+		}, function() {
+
+		});
+	}
+}

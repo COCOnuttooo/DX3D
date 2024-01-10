@@ -1,0 +1,346 @@
+﻿$(document).ready(function() {
+	var viewerObj = null;
+	var convertPage = 0; 
+	var startPage = 0;
+	var checktime = null;
+	var stop = false;
+	
+	var requestinfo = {
+			'_100' : { 
+				'timer' : null
+			},
+			'_125' : {
+				'timer' : null
+			},
+			'_150' : {
+				'timer' : null
+			},
+			'_175' : {
+				'timer' : null
+			},
+			'_200' : {
+				'timer' : null
+			},
+			'_resolution' : {
+				'timer' : null
+			}
+	};
+	var islog = false;
+	
+	function sendRequestToServer(info, start, end, ratio, resolution, handwrite) {
+		stop = false;
+		clearInterval(checktime);
+		checktime = null;
+		
+		startPage = start;
+		currentPage = start;
+		
+		var webdata = {
+				'startPage' :start,
+				'endPage' : end,
+				'password' : info.password,
+				'ratio' : (ratio < 100 ? 100 : ratio),
+				'resolution' : resolution/*,
+				'isexcel' : info.isexcel*/
+		};
+		if(info.isPoDoc) {
+			webdata.polarisDocumentId = info.poformatId;
+			webdata.commandIndex = info.poformatSd;
+		} else {
+			webdata.weblinkId = info.gfileID;
+			webdata.fileRevision = info.grevision;
+		}
+		
+		popcorn.requestConvert(webdata , (info.isPoDoc ? 'poformat' : _viewtype), function(res) {
+			if(res == null || res.resultCode == 0) {
+				//console.log("sendRequestToServer start: " + start + ' end: ' + end);
+				requestConvert(webdata, info, start, end, ratio, resolution, handwrite); 
+			}
+		}, function(res) {
+
+		});
+	}
+	var isFlotingOnceComplted = false
+	function requestConvert(data, info, start, end, ratio, resolution, handwrite) {
+		if(checktime == null) {
+			checktime = setTimeout(function() { 
+				checkCurrentStatus();
+			}, 150000);   
+		} 
+		popcorn.getDocumentInfo(data, function(res) { 
+			successCB(res, info, start, end, ratio, resolution, handwrite, data);
+			
+			if(ai_asdoc && res.resultCode === 230) {
+				//SVR-3409
+				ai_asdoc.setLockFile(true);
+				ai_asdoc.isAnalyzingComplete(false);
+				$('.askdoc_floating').remove();
+			} else {
+				var flag = false;
+				for(var i = 0; i<res.convertState.length; i++) {
+					if(res.convertState[i] === 1) {
+						flag = true;
+						ai_asdoc.isAnalyzingComplete(false);
+						break;
+					}
+				}
+				if(flag && !ai_asdoc.isLock) {
+					$('.askdoc_floating').show();
+					if(!isFlotingOnceComplted) {
+						ai_asdoc.showFloating();
+						isFlotingOnceComplted=true;
+					}
+				}
+			}
+		}, errorCB, (info.isPoDoc ? 'poformat' : _viewtype) ); 
+	}
+	
+	function checkCurrentStatus() {
+		if(convertPage == startPage) {
+			//console.log("checkCurrentStatus");
+			checktime = null;
+			var data = {
+					'status' : 'error',
+					'note' : "1000"
+			};
+			$(viewerObj).trigger('receive-data',data);
+			stop = true;
+		} else {
+			startPage = convertPage;
+			checktime = setTimeout(function(){ checkCurrentStatus(); }, 150000);
+		}
+
+	}
+	function registViewerObj(_obj) {
+		viewerObj = _obj;
+	}
+
+	
+	function successCB(res, info, start, end, ratio, resolution, handwrite, requestData) {
+		var data = {};	
+		if(stop) {
+			return;
+		}
+		if(res.resultCode) {
+			var request;
+			var new_ratio = ratio; 
+			if(ratio) {
+				if(ratio < 100) {
+					new_ratio = 100;
+				}
+				request = requestinfo['_' + new_ratio].timer;
+			} else {
+				request = requestinfo['_resolution'].timer;
+			}
+			clearInterval(checktime);
+			clearTimeout(request);
+			
+			switch(res.resultCode) {
+			case Enum.account.LOGOUTBYDEVICEDISCONNECT:
+				var popupMessage = new Array();
+				popupMessage[0] = LanguagePack.POPUP_LOGOUTBYOTHERSESSIONS;
+				var popup = new PopupMessage(PopupType.DEFAULT,ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {popupMessage:popupMessage}, goLoginCB, goLoginCB, goLoginCB);
+				popup.create();
+				popup.show();
+				break;
+			case Enum.account.EMAILNOTEXIST:
+			case Enum.account.LOGOUTBYACCOUNTDELETED:
+				var popupMessage = new Array();
+				popupMessage[0] = LanguagePack.POPUP_REMOVE_ACCOUNT;
+				var popup = new PopupMessage(PopupType.DEFAULT,ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {popupMessage:popupMessage}, goLoginCB, goLoginCB, goLoginCB);
+				popup.create();
+				popup.show();
+				break;
+			case Enum.account.LOGOUTBYPASSWORDCHANGED:
+				var popupMessage = new Array();
+				popupMessage[0] = LanguagePack.POPUP_LOGOUTBYPASSWORDCHANGED;
+				try {
+					if(_chromeCast) {
+						popupMessage[0] = LanguagePack.POPUP_LOGOUTBYPASSWORDCHANGED_CHROMECAST;
+					}
+				} catch(err) {
+					
+				}
+				var popup = new PopupMessage(PopupType.DEFAULT,ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {popupMessage:popupMessage}, goLoginCB, goLoginCB, goLoginCB);
+				popup.create();
+				popup.show();
+				break;
+		    case Enum.sync.CONVERTFAIL_PASSWORD:
+		    case Enum.sync.CONVERTFAIL_NOTSUPPORT:
+		    case Enum.sync.CONVERTFAIL_INTERNALERROR:
+		    case Enum.sync.CONVERTFAIL_NOTSUPPORT_PASSWORD:
+		    case Enum.sync.CONVERTFAIL_NOTSUPPORT_TYPE:
+		    case Enum.sync.CONVERTFAIL_NOTSUPPORT_VERSION:
+		    	data = {
+						'status' :'error',
+						'note' : res.resultCode,
+						'publicKey' : res.publicKey
+				};
+				$(viewerObj).trigger('receive-data',data);
+				break;
+		    case Enum.poformat.NOPODOCWITHGIVENID:
+		    case Enum.poformat.BEFOREPODOCRECOVERY1:	
+		    case Enum.poformat.BEFOREPODOCRECOVERY2:
+		    case Enum.poformat.DOINGPODOCRECOVERY:
+		    case Enum.poformat.AFTERPODOCRECOVERY:
+		    	data = {
+						'status' :'error',
+						'note' : res.resultCode
+				};
+				$(viewerObj).trigger('receive-data',data);
+				break;
+			default:
+				if(CheckResult(null, res) == null) {
+					//console.log(res.resultCode);
+					data = {
+							'status' :'commonerror', 
+							'note' : res.resultCode
+					};
+					$(viewerObj).trigger('receive-data',data);
+				} else {
+					data = {
+							'status' :'error',
+							'note' : res.resultCode
+					};
+					if(res.publicKey) {
+						data.publicKey = res.publicKey;
+					}
+					$(viewerObj).trigger('receive-data', data);
+				}
+			}
+			if(res.resultCode != Enum.sync.CONVERT_WAITING) {
+				clearInterval(checktime);
+			}
+		} else {
+			if(res.status == 'downloading') {
+				data = {
+						'status' : 'downloading',
+						'totalpage' :0, 
+						'pagenum' : 0,
+						'image' : '',
+						'note' : res.note
+				};
+				$(viewerObj).trigger('receive-data', data);
+			} else if(res.status == 'initializing') {			
+				data = {
+						'status' : 'initializing',
+						'totalpage' : 0, 
+						'pagenum' :0,
+						'image' : '',
+						'note' : res.note
+				};
+				$(viewerObj).trigger('receive-data', data);
+			} else if(res.status == 'converting') {
+				if(info.isPoDoc) {
+					if(info.poformatSd != poformatSd) {
+						return;
+					}
+				} else {
+					if(info.grevision != grevision) {
+						return;
+					}
+				}
+				
+				if(!islog && _viewtype != 'weblink_view') {
+					islog = true;
+				}	
+				var status; 
+				var suspend = false;
+				
+				if(handwrite) {
+					status = res.convertHandwritingState;
+				} else {
+					status = res.convertState;
+				}
+				var type = 'completed';
+				if(status.length == 0) {
+					type = 'converting';
+				} else {
+					for(var i= start-1; i < end; i++) {
+						if(status[i] == 0) {
+							type = 'converting';
+							break;
+						}
+					}
+				}
+				data.convertState = res.convertState;
+				data.convertHandwritingState = res.convertHandwritingState;
+				data.totalPage = res.totalPage;
+				data.status = type;
+				data.start = start;
+				data.end = end;
+				data.ratio = ratio;
+				data.resolution = resolution; 
+				data.handwrite = handwrite;
+				if(info.isexcel) {
+					if(res.convertSheetInfo.length == 0|| res.convertSheetInfo[start-1].width == 0) {
+						suspend = true;
+						type == 'converting';
+					}
+					data.convertSheetInfo = res.convertSheetInfo;
+					data.note = res.note;
+				}
+				if(!suspend) {
+					if(type == 'completed') {
+						clearInterval(checktime);
+					}
+					$(viewerObj).trigger('receive-data', data);
+				}
+				
+				if(type == 'converting') {
+					var request;
+					var new_ratio = ratio; 
+					if(ratio) {
+						if(ratio < 100) {
+							new_ratio = 100;
+						}
+						request = requestinfo['_' + new_ratio].timer;
+					} else {
+						request = requestinfo['_resolution'].timer;
+					}
+					clearTimeout(request);
+					request = setTimeout(function() {
+						requestConvert(requestData, info, start, end, ratio, resolution, handwrite); 
+					}, 1500);
+				}
+			} else if(res.status == 'completed') {
+				clearInterval(checktime);
+				if(info.isPoDoc) {
+					if(info.poformatSd != poformatSd) {
+						return;
+					}
+				} else {
+					if(info.grevision != grevision) {
+						return;
+					}
+				}
+				if(!islog && _viewtype != 'weblink_view') {
+					islog = true;
+				}	
+				data.convertState = res.convertState;
+				data.convertHandwritingState = res.convertHandwritingState;
+				data.totalPage = res.totalPage;
+				data.status = res.status;
+				data.start = start;
+				data.end = end;
+				data.ratio = ratio;
+				data.resolution = resolution; 
+				data.handwrite = handwrite;
+				if(info.isexcel) {
+					data.convertSheetInfo = res.convertSheetInfo;
+					data.note = res.note;
+				}
+				$(viewerObj).trigger('receive-data', data);
+			}
+		}
+	}
+
+	function errorCB(res) {
+		clearInterval(checktime);
+	}
+
+	$.polling = {
+			'sendRequest' : sendRequestToServer,
+			'registObj' : registViewerObj
+	};	 
+});

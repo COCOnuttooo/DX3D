@@ -28,4 +28,12 @@ void GridScene::PostRender()
 {
 }
 
+void GridScene::P1ReRender()
+{
+}
+
+void GridScene::P2ReRender()
+{
+}
+
 

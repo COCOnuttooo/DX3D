@@ -1,0 +1,133 @@
+$(document).ready(function() {
+	function dataSring() {
+/*
+	    this.getResource = function(_type) {
+	    	switch(_type)
+	    	{
+	    		case "CREATESHARE": 
+	    			return '문서가 공유되었습니다.';
+	    		case "ADDCOMMENT":
+	    			return '새로운 댓글이 있습니다.';
+	    		case "DELETECOMMENT":
+	    			return '코멘트를 삭제하였습니다.';
+	    		case "FILEUPDATE":
+	    			return '파일이 업데이트 되었습니다.';
+	    		case "FILEADD":
+	    			return '새 파일이 공유되었습니다.';
+	    		case "FILEDELETE":
+	    			return '공유 파일이 삭제 되었습니다.';
+	    		case "ATTENDEEADD":
+	    			return '새로운 게스트가 추가되었습니다.';
+	    		case "ATTENDEEDELETE":
+	    			return '게스트에 변화가 있습니다.';
+	    		case "DOCCASTFILECHANGE":
+	    			return 'Doccast 변경되었습니다.';
+	    		case "CREATEDOCCAST":
+	    		case "DOCCASTRESTART":
+	    			return 'Doccast가 진행중입니다.';
+	    		case "DOCCASTEND":
+	    			return 'DocCast가 종료되었습니다.';
+	    		case "DOCCASTRENEW":
+	    			return 'DocCast 진행중입니다.';
+	    	}
+	    	
+	    };
+	*/    
+	    this.getResourceLog = function(_type,_info) {
+	    	var value = null;
+	    	switch(_type)
+	    	{
+	    		case "CREATESHARE": 
+    				{
+		    			if(_info.fileCount > 1)
+		    				{
+		    					if(_info.attendeeCount > 2)
+		    						{
+		    							value = LanguagePack.CREATESHARE_PLURAL_ATTEND( _info.fileName,_info.fileCount-1, _info.attendeeName,_info.attendeeCount-2);
+		    						}
+		    					else
+		    						value = LanguagePack.CREATESHARE_SINGLE_ATTEND( _info.fileName,_info.fileCount-1, _info.attendeeName);
+		    				}
+		    			else if(_info.fileCount == 1)
+		    				{
+		    					if(_info.attendeeCount > 2)
+		    					{
+		    						value = LanguagePack.CREATESHARE_PLURAL_FILE( _info.fileName,_info.attendeeName, _info.attendeeCount-2);
+		    					}
+		    					else
+		    						value = LanguagePack.CREATESHARE_SINGLE_FILE( _info.fileName,_info.attendeeName);
+		    				}
+		    			else
+		    				value = LanguagePack.CREATESHARE;
+    				}
+	    			
+	    			return value;
+	    		case "DELETECOMMENT":
+	    			return LanguagePack.DELETECOMMENT; 
+	    		case "FILEUPDATE":
+	    			value = LanguagePack.FILEUPDATE( _info.fileName); 
+	    			return value;
+	    		case "FILEADD":
+	    			value = LanguagePack.FILEADD( _info.fileName); 
+	    			return value;
+	    		case "FILEDELETE":
+	    			value = LanguagePack.FILEDELETE( _info.fileName); 
+	    			return value;
+	    		case "ATTENDEEADD":
+	    			if(_info.attendeeCount == 1) //[MID:36476]
+	    				{
+	    					value = LanguagePack.ATTENDEEADD_SINGLE(_info.attendeeName); 
+	    				}
+	    			else if(_info.attendeeCount > 1)
+	    				{
+	    					value = LanguagePack.ATTENDEEADD_PLURAL(_info.attendeeName,_info.attendeeCount-1); 
+	    				}
+	    			return value;
+	    		case "ATTENDEEDELETE":
+	    			if(_info.attendeeCount == 1) //[MID:36476]
+    				{
+	    				value = LanguagePack.ATTENDEEDELETE_SINGLE(_info.attendeeName); 
+    				}
+	    			else if(_info.attendeeCount > 1)
+    				{
+	    				value = LanguagePack.ATTENDEEDELETE_PLURAL(_info.attendeeName,_info.attendeeCount-1); 
+    				}
+	    			return value;
+	    		case "DOCCASTFILECHANGE":
+	    			return "";//return 'Doccast 변경되었습니다.';// 표기 안함
+	    		case "CREATEDOCCAST":
+	    			return LanguagePack.CREATEDOCCAST;
+	    		case "DOCCASTRENEW":
+	    		case "DOCCASTRESTART":
+	    			return LanguagePack.RESTARTDOCCAST;
+	    		case "DOCCASTEND":
+	    			return LanguagePack.DOCCASTEND;
+	    		case "DELETE":
+	    			return LanguagePack.STOPTASKSHARE;  // 시나리오 요청중
+	    		case "FILERENAMED":
+	    			return LanguagePack.FILERENAMED(_info.fileName,_info.newFileName);
+	    		case "UPDATEPUBLIC":
+	    			if(_info.public)
+	    				return LanguagePack.UPDATEPERMISSION_OPEN;
+	    			else
+	    				return LanguagePack.UPDATEPERMISSION_CLOSED;
+	    	}
+	    	
+	    };
+	}
+	
+	dataSring.prototype = {
+			/*
+			'getResource':function(_type){
+				return this.getResource(_type);
+			}
+			*/
+			'getResourceLog':function(_type,_info){
+				return this.getResourceLog(_type,_info);
+			}
+	};
+	
+	var activityresObj = new dataSring();
+	$.activityresObj = activityresObj;
+	
+});

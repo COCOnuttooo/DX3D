@@ -1,0 +1,205 @@
+/**
+ * Facebook, Twitter 연동 관련 api 
+ * 20131031
+ */
+var facebookKey = null;
+var gdomain = null;
+/***** Twitter *****/
+if(navigator.userAgent.indexOf("MSIE 8") < 0) {
+try {
+	!function(d,s,id){
+		var js,fjs=d.getElementsByTagName(s)[0];
+		if(!d.getElementById(id)){
+			js=d.createElement(s);
+			js.id=id;
+			js.src='https://platform.twitter.com/widgets.js';
+			fjs.parentNode.insertBefore(js,fjs);
+		}
+	} (document,'script','twitter-wjs'); 
+} catch(err) {}
+}
+
+$(document).ready(function() {
+	var baseUrl = location.href;
+	var domain = null;
+	var protocol = null;
+	var docInfo = [];
+
+	domain = baseUrl.split("://");
+	protocol = domain[0] + "://";
+	domain = domain[1].split("/");
+	domain = domain[0];
+
+	if (domain == "pcofficewebview.polarisoffice.com" || domain == "polarisoffice.com" || domain == "www.polarisoffice.com") {
+		facebookKey = "604130069659449";
+		gdomain = 'www.polarisoffice.com';
+	} else if(domain == "link.polarisoffice.com"){
+		facebookKey = "237724663051364";
+		gdomain = domain;
+	} else if(domain == "verifycloud.polarisoffice.com" || domain == "verify-pcview.polarisoffice.com" || domain == "vf-ca-cloud.polarisoffice.com" || domain == "vf-ca-pcview.polarisoffice.com") {
+		facebookKey = "383041053072556";/*facebookKey = "1433859010210983";*/
+		gdomain = 'vf-ca-cloud.polarisoffice.com';
+	} else if(domain == 'inhouse.polarisoffice.com') {
+		facebookKey = '485365294897140';
+		gdomain = 'inhouse.polarisoffice.com';
+	} /*else if(domain == "verify-pcview.polarisoffice.com") {
+		facebookKey = "842835462491903";
+		gdomain = domain;
+	}*/
+});
+function twitterWinOpen(elId, tDataUrl, title, e) {
+	var twitterLocale = LanguagePack.CURRENT_LAN;
+	if(twitterLocale=='jp') twitterLocale='ja';
+	else if(twitterLocale=='cn') twitterLocale='zh-CN';
+	
+	var options = {
+		text : (title===undefined? LanguagePack.TWITTER_RECOMMEND : title)
+//		, via : (via===undefined? 'POLARISOfficeLink' : via)
+	};
+	var des = '&'+$.param( options );
+	
+	if(tDataUrl.search('://')<0) {
+		tDataUrl = 'http://'+tDataUrl;
+	}
+	
+	var twitterUrl = 'https://twitter.com/intent/tweet?lang='+twitterLocale+'&url='+tDataUrl+des;
+	//window.open(twitterUrl,"", "width=550, height=500, scrollbars=1","_blank");
+	
+	if(e == true) {
+		window.open(twitterUrl,"", "width=550, height=500, scrollbars=1","_blank");
+	} else {
+		$('#'+elId).attr('href', twitterUrl);
+	}
+}
+
+function twitterWinOpen2(tDataUrl, title, via) {
+	var twitterLocale = LanguagePack.CURRENT_LAN;
+	if(twitterLocale=='jp') twitterLocale='ja';
+	else if(twitterLocale=='cn') twitterLocale='zh-CN';
+	
+	var options = {
+		text : (title===undefined? LanguagePack.TWITTER_RECOMMEND : title)
+//		, via : (via===undefined? 'POLARISOfficeLink' : via)
+	};
+	var des = '&'+$.param( options );
+	
+	if(tDataUrl.search('://')<0) {
+		tDataUrl = 'http://'+tDataUrl;
+	}
+	
+	return 'https://twitter.com/intent/tweet?lang='+twitterLocale+'&url='+tDataUrl+des;
+}
+
+function twitterTextLengthCheck(docTitleTxt) {
+	var snsTitleTxt = docTitleTxt;
+	var tLength = docTitleTxt.length;
+	var substrIdx = 30;
+	var lengLimitIdx = 44;
+	if(LanguagePack.CURRENT_LAN =='en') {
+		if(docTitleTxt.length<43) return docTitleTxt;
+		substrIdx = 30;
+		lengLimitIdx = 44;
+	} else {
+		if(docTitleTxt.length<55) return docTitleTxt;
+		substrIdx = 40;
+		lengLimitIdx = 56;
+	}
+	if(snsTitleTxt.indexOf("...")>-1) {
+		substrIdx = snsTitleTxt.indexOf("...");
+	}
+	snsTitleTxt = snsTitleTxt.substring(0, substrIdx)+"..."+snsTitleTxt.substring( (tLength-lengLimitIdx)+substrIdx+3, tLength);
+	
+	return snsTitleTxt;
+}
+
+
+/***** Facebook *****/ 
+var fbookLocale = 'ko_KR';
+
+$('document').ready(function(){
+	if($('#fb-root').length<1){
+		$('body').prepend('<div id="fb-root"></div>');
+	}
+	fbookLocale = LanguagePack.CURRENT_LAN;
+	if(fbookLocale=='en') fbookLocale='en_US';
+	else if(fbookLocale=='ko') fbookLocale='ko_KR';
+	else if(fbookLocale=='jp') fbookLocale='ja_JP';
+	else if(fbookLocale=='cn') fbookLocale='zh_CN';
+	else if(fbookLocale=='ru') fbookLocale='ru_RU';
+	else if(fbookLocale=='es') fbookLocale='es_ES';
+	else if(fbookLocale=='pl') fbookLocale='pl_PL';
+	else if(fbookLocale=='de') fbookLocale='de_DE';
+	else if(fbookLocale=='id') fbookLocale='in_ID';
+	else if(fbookLocale=='it') fbookLocale='it_IT';
+	else if(fbookLocale=='tw') fbookLocale='zh_TW';
+	else if(fbookLocale=='ptPT') fbookLocale='pt_PT';
+	else if(fbookLocale=='ptBR') fbookLocale='pt_BR';
+	else if(fbookLocale=='tr') fbookLocale='tr_TR';
+	else if(fbookLocale=='ar') fbookLocale='ar_AR';
+	else if(fbookLocale=='fr') fbookLocale='fr_FR';
+	
+	//Load the Facebook SDK after the locale is determined.
+	(function(d){
+	    var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+	    if (d.getElementById(id)) {return;}
+	    js = d.createElement('script'); js.id = id; js.async = true;
+	    js.src = '//connect.facebook.net/'+fbookLocale+'/all.js';
+	    ref.parentNode.insertBefore(js, ref);
+	 }(document));
+	
+});
+
+window.fbAsyncInit = function() {
+	FB._https = true;
+	FB._secure = true;
+	
+	  // init the FB JS SDK
+	  FB.init({
+	    appId      : facebookKey,     // verify                   // App ID from the app dashboard
+//	    channelUrl : 'https://link.polarisoffice.com/pc_browser/channel.html',     // verify      // Channel file for x-domain comms
+	    status     : true,                                 // Check Facebook Login status
+	    xfbml      : true                                  // Look for social plugins on the page
+	  });
+
+	//   FB.api('/me', function(response) {
+	//   });
+
+};
+
+function fbookWinOpen(fDataUrl, winId, optionStr) {
+	var fWinId;
+		fWinId = (winId===undefined ? 'facebooksharedialog' : winId);
+	var optionArgs;
+		optionArgs = (optionStr===undefined ? 'width=626,height=436' : optionStr);
+		
+	 window.open(
+         'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(fDataUrl), 
+         fWinId, 
+         optionArgs
+     ); 
+}
+
+function fbookDialogOpen(fDataUrl, docTitle, docImage, docDesc) {
+	var imagesrc = 'https://' + gdomain + CF_PATH + '/resources/image/Link_bi.png?20141104';
+	var displayOption = 'popup';
+	if ( (navigator.appName == 'Netscape' && navigator.userAgent.search('Trident') != -1) || (navigator.userAgent.toLowerCase().indexOf("msie") != -1) ) { // IE 일 경우
+		displayOption = 'iframe';
+	}
+ 	FB.ui({
+	     method: 'feed',
+		 name: (docTitle===undefined ? LanguagePack.POLink_DOC_RECOMMEND : docTitle),
+		 display: displayOption,
+	     caption: gdomain,
+	     locale: fbookLocale,
+	     description: (docDesc===undefined ? LanguagePack.POLink_META_DESC : docDesc ),
+	     link: fDataUrl,
+	     picture: (docImage===undefined ? imagesrc : docImage)
+	    }, function(response) {
+	      if (response && response.post_id) {
+//	        alert(LanguagePack.KEYWORD_FBOOKPOSTSUC);
+	      } else {
+//	        alert(LanguagePack.KEYWORD_FBOOKPOSTERR);
+	      }
+	  }); 
+		
+}

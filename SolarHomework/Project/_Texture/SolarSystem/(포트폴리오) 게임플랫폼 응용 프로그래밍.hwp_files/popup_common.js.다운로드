@@ -1,0 +1,507 @@
+var PopupManagement = new function() {
+	var popupBox = null;
+	var stack = new Array();
+
+	this.getCurrentPopup = function() {
+		return popupBox;
+	};
+
+	this.pushPopup = function(popupObj) {
+		popupBox = popupObj;
+		stack.push(popupBox);
+	};
+
+	this.removePopup = function() {
+		if (stack.length == 0) {
+			popupBox = null;
+			return popupBox;
+		}
+
+		var popupObj = stack.pop();
+		if (stack.length == 0)
+			popupBox = null;
+		else
+			popupBox = stack[0];
+
+		return popupObj;
+	};
+}();
+
+var PopupViewID = new function() {
+	this.VIEW_ALIGN_BOX = '#popup_message_view_align';
+	this.VIEW_BOX = '#popup_message_view';
+	this.FORM = '#popup_message_form';
+	this.TITLE = '#popup_message_title';
+	this.CONTENT_BOX = '#popup_message_content';
+	this.BUTTON_BOX = '#popup_message_button';
+	this.CONFIRM_BUTTON = '#popup_confirm_btn';
+	this.CANCEL_BUTTON = '#popup_cancel_btn';
+	this.CLOSE_BUTTON = '#popup_close_btn';
+	this.PROGRESSBAR = '#popup_sync_progressbar';
+	this.MESSAGE = '#popup_message_default_message';
+	this.URL_COPY_THUMBNAIL = '#popup_url_copy_thumbnail';
+	this.URL_COPY_FILENAME = '#popup_url_copy_filename';
+	this.URL_COPY_FILENAME = '#popup_url_copy_filename';
+	this.URL_COPY_WEBLINK = '#popup_url_copy_weblink';
+	this.ACCOUNT_DELETION_PASSWORD_INPUTBOX = '#popup_account_deletion_password';
+	this.ACCOUNT_CHANGE_NEWACCOUNT_INPUTBOX = '#popup_account_change_newaccount';
+	this.ACCOUNT_CHANGE_PASSWORD_INPUTBOX = '#popup_account_change_password';
+	this.FULLNAME_CHANGE_FIRSTNAME ='#popup_fullname_change_firstname';
+	this.FULLNAME_CHANGE_LASTNAME ='#popup_fullname_change_lastname';
+	this.PASSWORD_CHANGE_PASSWORD_INPUTBOX = '#popup_password_change_password';
+	this.PASSWORD_CHANGE_NEWPASSWORD_INPUTBOX = '#popup_password_change_newpassword';
+	this.PASSWORD_CHANGE_CONFIRMPASSWORD_INPUTBOX = '#popup_password_change_confirmpassword';
+	this.PASSWORD_REGIST_INPUTBOX = '#popup_password_regist';
+	this.RESHARE_BUTTON = '#popup_reshare_btn';
+}();
+
+var PopupViewClass = new function() {
+	this.OTHER_POPUP_BOX = '.popup.other';
+	this.OTHER_POPUP_BOX2 = '.popup2.other';
+	this.VIEW_ALIGN = '.popup_message_view_align';
+	this.CLOSE_BUTTON = '.btn_close';
+	this.SYNC_BOX = '.bx_sync';
+	this.MESSAGE = '.txt_3line';
+	this.URL_COPY = '.bx_url';
+	this.INPUT = '.input';
+	this.INPUT_DT = '.input_dt';
+}();
+
+var PopupDataKey = new function() {
+	this.POPUP = 'popup';
+	this.POPUP_TYPE = 'popupType';
+	this.POPUP_MESSAGE = 'popupMessage';
+	this.POPUP_BUBBLE_MESSAGE = 'popupBubbleMessage';
+	this.NOTICE_STYLE = 'noticeStyle';
+	this.NOTICE_DATA = 'noticeData';
+	this.CAPACITY = 'capacity';
+	this.THUMBNAIL = 'thumbnail';
+	this.THUMBNAIL_TYPE = 'thumbnailType';
+	this.FILENAME = 'filename';
+	this.FILE_TYPE = 'type';
+	this.WEBLINK = 'weblink';
+	this.PROGRESS = 'progress';
+	this.DISCONNECTION_TYPE = 'disconnectionType';
+	this.DISCONNECTION_DEVICE_NAME = 'disconnectionDeviceName';
+	this.DISCONNECTION_DEVICE_ID = 'disconnectionDeviceId';
+	this.NEW_ACCOUNT = 'newAccount';
+	this.FIRSTNAME = 'firstname';
+	this.LASTNAME = 'lastname';
+	this.PASSWORD = 'password';
+	this.NEW_PASSWORD = 'newPassword';
+	this.CONFIRM_PASSWORD = 'confirmPassword';
+	this.USER_DATA = 'userData';
+}();
+
+var PopupDataValue = new function() {
+	this.NOTICE_STYLE_CONTENT_MASK = 0x00000001;
+	this.NOTICE_STYLE_CONTENT_LENGTH = 6;
+	this.NOTICE_STYLE_CONTENT_EXCESSIVE_CAPACITY = 0x00000001;
+	this.NOTICE_STYLE_CONTENT_FILE_EXTENTION_NOT_SUPPORTED = 0x00000002;
+	this.NOTICE_STYLE_CONTENT_EXCESSIVE_FILE_NAME_LENGTH = 0x00000004;
+	this.NOTICE_STYLE_CONTENT_EMPTRY_FILE_SIZE = 0x00000008;
+	this.NOTICE_STYLE_SUBTITLE_MASK = 0xffff0000;
+	this.NOTICE_STYLE_SUBTITLE_SOME_ITEMS_NOT_ABLE_TO_UPLOAD = 0x00010000;
+	this.NOTICE_STYLE_SUBTITLE_ITEM_NOT_ABLE_TO_UPLOAD = 0x00020000;
+	this.NOTICE_STYLE_SUBTITLE_SOME_ITEMS_NOT_ABLE_TO_COPY = 0x00030000;
+	this.NOTICE_STYLE_SUBTITLE_ITEM_NOT_ABLE_TO_COPY = 0x00040000;
+	this.NOTICE_STYLE_SUBTITLE_SOME_ITEMS_NOT_ABLE_TO_MOVE = 0x00050000;
+	this.NOTICE_STYLE_SUBTITLE_ITEM_NOT_ABLE_TO_MOVE = 0x00060000;
+	this.NOTICE_STYLE_SUBTITLE_ITEMS_NOT_ABLE_TO_RESTORE = 0x00070000;
+	this.NOTICE_STYLE_SUBTITLE_SOME_ITEMS_NOT_ABLE_TO_RESTORE = 0x00080000;
+	this.THUMBNAIL_PORTRAIT = 'portrait';
+	this.THUMBNAIL_LANDSCAPE = 'landscape';
+	this.DISCONNECTION_TYPE_WEB = 'web';
+	this.DISCONNECTION_TYPE_APP = 'app';
+}();
+
+var PopupType = new function() {
+	this.DEFAULT = 0;
+	this.NOTICE = 1;
+	this.URL_COPY = 2;
+	this.SYNC = 3;
+	this.DEVICE_DISCONNECTION = 4;
+	this.ACCOUNT_DELETION = 5;
+	this.ACCOUNT_CHANGE = 6;
+	this.FULLNAME_CHANGE = 7;
+	this.PASSWORD_CHANGE = 8;
+	this.PASSWORD_CONFIRM = 9;
+	this.SET_EMAIL= 10;
+	this.INPUTBOX = 11;
+	this.REGIST = 12;
+	this.PASSWORD_REGIST = 13;
+	this.REGISTNEW = 14;
+	this.WRONG_PASSWORD = 15;
+	this.RESHARE = 17;
+	this.RESTORE = 18;
+	this.ACCOUNT_MERGE = 19;
+	this.PROMOTION = 20;	
+}();
+
+var ButtonType = new function() {
+	this.CONFIRM = 0;
+	this.CANCEL = 1;
+	this.CLOSE = 2;
+	this.CONFIRM_CANCEL = 3;
+	this.COMPLITE = 4;
+	this.COMPLETE_CLOSE = 5;
+	this.CONFIRM2 = 6;
+	this.CONFIRM_VERIFY = 7;
+	this.REGIST_CANCEL = 8;
+	this.REGISTNEW_CANCEL = 9;
+	this.DELETE_CANCEL = 10;
+	this.CHANGE_CANCEL = 11;
+	this.RESTORE_PREV = 12;
+	this.CONFIRM_SETINFO = 13;
+	this.YES_NO = 14;
+	this.CLOSE_CANCEL = 15;
+	this.RESHARE = 16;
+	this.RESTORE = 17;
+	this.ACCOUNT_MERGE = 18;
+	this.COUPON_REG = 19;
+}();
+
+var PopupTitleText = new function() {
+	this.DEFAULT = LanguagePack.KEYWORD_ALERT;
+	this.NOTICE = LanguagePack.KEYWORD_ALERT;
+//	this.URL_COPY = LanguagePack.POPUP_PUBLIC_LINK_COPY;
+	this.URL_COPY = LanguagePack.POPUP_URL_COPY;
+	this.SYNC = LanguagePack.POPUP_SYNC;
+	this.DEVICE_DISCONNECTION = LanguagePack.POPUP_DISCONNECT;
+	this.ACCOUNT_DELETION = LanguagePack.KEYWORD_CONFIRM_PASSWORD;
+	this.ACCOUNT_CHANGE = LanguagePack.KEYWORD_CHANGEACCOUNT;
+	this.FULLNAME_CHANGE = LanguagePack.KEYWORD_CHANGEUSERNAME;
+	this.PASSWORD_CHANGE = LanguagePack.KEYWORD_CHANGEPASSWORD;
+	this.PASSWORD_SET = LanguagePack.KEYWORD_SET_PASSWORD;
+	this.SET_EMAIL = LanguagePack.CHINAVER_SET_EMAIL_TITLE;
+	this.ACCOUNT_MERGE = LanguagePack.ACCOUNT_MERGE;
+}();
+
+var PopupBoxUI = new function() {
+	this.BOX2 =
+			'<div class="popup_message_view_align" style="position:fixed;width:0;/*height:50%;*/top:0;display:none;z-index:50">' +
+			'	<div id="popup_message_view" class="popup" style="display:none;">' +
+			'		<div id="popup_message_content" class="popup_content"></div>' +
+			'		<div id="popup_message_button" class="bx_btn"></div>' +
+			'	</div>' +
+			'</div>';
+	this.BOX =
+			'<div class="popup_message_view_align" style="position:fixed;left:50%;/*height:50%;*/top:50%;display:none;z-index:50">' +
+			'	<div id="popup_message_view" class="popup" style="display:none;">' +
+			'		<h1 id="popup_message_title"></h1>' +
+			'		<div id="popup_message_content" class="popup_content"></div>' +
+			'		<div id="popup_message_button" class="bx_btn"></div>' +
+			'		<span class="btn_close">' +
+			'			<a id="popup_close_btn" href="" alt="' + LanguagePack.KEYWORD_CLOSE + '"><img src="' + CF_PATH + '/resources/image/Polaris/popup_button_close.png" /></a>' +
+			'		</span>' +
+			'	</div>' +
+			'</div>';
+	this.BOX_M =
+		'<div class="popup_message_view_align" style="position:fixed;left:50%;/*height:50%;*/top:50%;display:none;z-index:50">' +
+		'	<div id="popup_message_view" class="popup mobile_pop" style="display:none;">' +
+		'		<h1 id="popup_message_title"></h1>' +
+		'		<div id="popup_message_content" class="popup_content"></div>' +
+		'		<div id="popup_message_button" class="bx_btn"></div>' +
+		'		<span class="btn_close">' +
+		'			<a id="popup_close_btn" href="" alt="' + LanguagePack.KEYWORD_CLOSE + '"><img src="' + CF_PATH + '/resources/image/Polaris/popup_button_close.png" /></a>' +
+		'		</span>' +
+		'	</div>' +
+		'</div>';
+
+	this.FORM =
+		'<form id="popup_message_form" method="post" class="bubble">' +
+		'	<div id="popup_message_content" class="popup_content"></div>' +
+		'	<div id="popup_message_button" class="bx_btn"></div>' +
+		'</form>';
+}();
+
+var PopupContentUI = new function() {
+	this.getDocumentIcon = function(type) {
+		return '<img src="' + CF_PATH + '/maxage1/common/img/v4/s_' + type + '.svg" />';
+	};
+
+	this.getNoticeCapacityMessage = function(size) {
+		return LanguagePack.POPUP_FILECAPACITY + size + LanguagePack.POPUP_EXCESS_AMOUNT;
+	};
+
+	this.getBubbleMessageUI = function(className, message) {
+		var ui = '<p class="txt ' + className + ' show"><img alt="" src="' + CF_PATH + '/resources/image/Polaris/arrow_disc.png" class="arrow" />' + message + '</p>';
+		return ui;
+	};
+
+	this.getBubbleMessageUI2 = function(message, top, left) {
+		var ui = '<p class="txt txt_1 show" style="top:'+ top + 'px;'+ ((left != undefined && left != null) ? 'left:'+ left + 'px;' : '') +'"><img alt="" src="' + CF_PATH + '/resources/image/Polaris/arrow_disc.png" class="arrow" />' + message + '</p>';
+		return ui;
+	};
+
+	this.DEFAULT =
+			'<p id="popup_message_default_message" class="txt_3line"></p>';
+
+	this.getNoticeUI = function(subtitle, messages) {
+		function appendNoticeMessages() {
+			var length = messages.length;
+			for (var i = 0; i < length; i++)
+				ui += '	<li><span>' + messages[i] + '</span></li>';
+			'</ul>';
+		}
+
+		var ui =
+			'<div class="txt_set01">' + subtitle + '</div>' +
+			'<ul class="notice">';
+
+		appendNoticeMessages();
+		return ui;
+	};
+
+	this.URL_COPY =
+		'<div class="bx_url">' +
+//		'	<div class="photo_portrait"><img id="popup_url_copy_thumbnail" src="" /></div>' +
+//		'	<div id="popup_url_copy_filename" class="url"></div>' +
+//		'	<div class="input"><input id="popup_url_copy_weblink" type="text" value="" readonly /></div>' +
+		'	<div class="photo_portrait"><img src="' + CF_PATH + '/maxage1/common/img/v4/s_pptx.svg" /></div>' +
+		'	<div id="popup_url_copy_filename" class="url"></div>' +
+		'	<dl class="input">' +
+		'		<dt class="input_dt"><input type="text" id="popup_url_copy_weblink" readonly value="" /></dt>' +
+		'		<dd>' +
+		'			<a id="invite_start" href onclick="launchAddressBook(event);" title="'+ LanguagePack.KEYWORD_SHAREBYEMAIL + '" class="social_01" title="mail" style="cursor: pointer;"><span>mail</span></a>' +
+		'			<a id="facebook_start" href onclick="launchAddressBook(event);" title="'+ LanguagePack.KEYWORD_SHAREONFACEBOOK + '" class="social_02" class="facebook" style="cursor: pointer;"><span>facebook</span></a>' +
+		'			<a id="twitter_start" href="https://twitter.com/intent/tweet" title="'+ LanguagePack.KEYWORD_SHAREONTWITTER + '" target="_blank" class="social_03" class="twitter" style="cursor: pointer;"><span>twitter</span></a>' +
+		'		</dd>' +
+		'	</dl>' +
+		'</div>';
+
+	this.URL_COPY2 =
+		'<div class="bx_url">' +
+		'	<div class="photo_portrait"><img src="' + CF_PATH + '/maxage1/common/img/v4/s_pptx.svg" /></div>' +
+		'	<div id="popup_url_copy_filename" class="url"></div>' +
+		'	<dl class="input">' +
+		'		<dt class="input_dt"><input type="text" id="popup_url_copy_weblink" readonly value="" /></dt>' +
+		'	</dl>' +
+		'</div>';
+
+	this.SYNC =
+			'<div class="bx_sync">' +
+			'	<div class="bar"><div id="popup_sync_progressbar" style="width:37%;"></div></div>' +
+			'	<p class="txt">' + LanguagePack.POPUP_SYNCHRONIAING + '</p>' +
+			'</div>';
+
+	this.getSyncContentUI = function(contentString) {
+		var ui =
+			'<div class="bx_sync">' +
+			'	<div class="bar"><div id="popup_sync_progressbar" style="width:37%;"></div></div>' +
+			'	<p class="txt">' + contentString + '</p>' +
+			'</div>';
+		return ui;
+	};
+
+	this.getDeviceDisconnectionAppUI = function(deviceName) {
+		var ui =
+		'<div class="txt_set01">' + LanguagePack.POPUP_CONFIRMDISCONNECTDEVICESESSION(deviceName) +
+		'</div>';
+
+		return ui;
+	};
+
+	this.getDeviceDisconnectionWebUI = function(deviceName) {
+		var ui =
+		'<div class="txt_set01">' + LanguagePack.POPUP_CONFIRMDISCONNECTBROWSERSESSION(deviceName) +
+		'</div>';
+
+		return ui;
+	};
+	this.SET_EMAIL =
+		'<div class="txt_set02">' + LanguagePack.CHINAVER_SET_EMAIL_STR +
+		'</div>' +
+		'<div class="input_setting">' +
+		' <label class="pos" for="popup_account_deletion_password">' + LanguagePack.BUBBLE_ENTERYOUREMAIL + '</label>' +
+		'	<input id="popup_account_deletion_password" class="setting" type="text" />' +
+		'</div>';
+	this.ACCOUNT_DELETION =
+			'<div class="txt_set02">' + LanguagePack.ENTERSERVICEPASSWORD +
+			'</div>' +
+			'<div class="input_setting">' +
+			' <label class="pos" for="popup_account_deletion_password">' + LanguagePack.KEYWORD_PASSWORD + '</label>' +
+			'	<input id="popup_account_deletion_password" class="setting" type="password" />' +
+			'</div>';
+	this.PASSWORD_CONFIRM =
+		'<div class="txt_set02">' + LanguagePack.BUBBLE_ENTERPASSWORD +
+		'</div>' +
+		'<div class="input_setting">' +
+		' <label class="pos" for="popup_account_deletion_password">' + LanguagePack.KEYWORD_PASSWORD + '</label>' +
+		'	<input id="popup_account_deletion_password" class="setting" type="password" />' +
+		'</div>';
+	this.WRONG_PASSWORD =
+		'<div class="txt_set02">' + LanguagePack.BUBBLE_WRONGPASSWORD + '<br>' + LanguagePack.BUBBLE_ENTERPASSWORD +
+		'</div>' +
+		'<div class="input_setting">' +
+		' <label class="pos" for="popup_account_deletion_password">' + LanguagePack.KEYWORD_PASSWORD + '</label>' +
+		'	<input id="popup_account_deletion_password" class="setting" type="password" />' +
+		'</div>';
+
+	this.ACCOUNT_CHANGE =
+			'<ul class="input_setting2">' +
+			'	<li class="first"><input id="popup_account_change_newaccount" class="setting" type="text" value="" placeholder="' + LanguagePack.KEYWORD_NEW_ACCOUNT + '" /></li>' +
+			'	<li><input id="popup_account_change_password" class="setting" type="password" placeholder="' + LanguagePack.KEYWORD_PASSWORD +'" /></li>' +
+			'</ul>';
+
+	this.FULLNAME_CHANGE =
+		'<ul class="input_setting2">' +
+		'	<li class="first"><input id="popup_fullname_change_firstname" class="setting" type="text" value="" placeholder="' + LanguagePack.KEYWORD_NAME + '" /></li>' +
+		'	<li><input id="popup_fullname_change_lastname" class="setting" type="text" placeholder="' + LanguagePack.KEYWORD_LASTNAME + '" /></li>' +
+		'</ul>';
+
+	this.PASSWORD_CHANGE =
+			'<ul class="input_setting3">' +
+			'	<li class="first"><input id="popup_password_change_password" class="setting" type="password" placeholder="' + LanguagePack.KEYWORD_CURRENT_PASSWORD + '" /></li>' +
+			'	<li><input id="popup_password_change_newpassword" class="setting" type="password" placeholder="' + LanguagePack.KEYWORD_NEW_PASSWORD + '" /></li>' +
+			'	<li><input id="popup_password_change_confirmpassword" class="setting" type="password" placeholder="' + LanguagePack.KEYWORD_CONFIRM_PASSWORD + '" /></li>' +
+			'</ul>';
+	this.INPUTBOX = function(type, label, value) {
+		var str = '<p id="popup_message_default_message" class="txt_3line"></p>' + '<div class="input_setting">';
+		if(typeof value != "undefined" && value !="") {
+			str += ' <label class="pos off" for="popup_account_deletion_password">' + label + '</label>';
+		} else {
+			value = "";
+			str += ' <label class="pos" for="popup_account_deletion_password">' + label + '</label>';
+		}
+		str += ' <input id="popup_account_deletion_password" class="setting" type="' + type + '" value="' + value + '"/>' + '</div>';
+		return str;
+	};
+
+	this.PASSWORD_REGIST =
+		'<div class="txt_set02">' + LanguagePack.ENTERSERVICEPASSWORD +
+		'</div>' +
+		'<div class="input_setting">' +
+		' <label class="pos" for="popup_password_regist">' + LanguagePack.KEYWORD_PASSWORD + '</label>' +
+		'	<input id="popup_password_regist" class="setting" type="password" />' +
+		'</div>';
+	
+	this.setPasswordStr = function(_msg, _pwdtoggle){
+		var addtoggledel = ' <label class="pos" for="popup_account_deletion_password">' + LanguagePack.KEYWORD_PASSWORD + '</label>';
+		var addtogglereg = ' <label class="pos" for="popup_password_regist">' + LanguagePack.KEYWORD_PASSWORD + '</label>';
+		var addtoggle = '';
+		var placeholder = '';
+		if(_pwdtoggle) {
+			placeholder = ' placeholder="' + LanguagePack.KEYWORD_PASSWORD +'" ';
+			addtoggledel = ' <input id="popup_account_deletion_password2" class="setting" type="text" '+placeholder+' />';
+			addtogglereg = ' <input id="popup_password_regist2" class="setting" type="text" '+placeholder+' />';
+			addtoggle = '<a href="#" class="hidepwd"><img src="' + CF_PATH + '/resources/image/Polaris/new/popup/notice/pw_hide.png"></a>'+
+			'<a href="#" class="showpwd"><img src="' + CF_PATH + '/resources/image/Polaris/new/popup/notice/pw_show.png"></a>';
+		}
+		this.ACCOUNT_DELETION =
+			'<div class="txt_set02">' + _msg +
+			'</div>' +
+			'<div class="input_setting">' +  addtoggledel +
+			'	<input id="popup_account_deletion_password" class="setting" type="password" '+placeholder+' />' + addtoggle +
+			'</div>';
+
+		this.SET_EMAIL =
+			'<div class="txt_set02">' + _msg +
+			'</div>' +
+			'<div class="input_setting">' +
+			' <label class="pos" for="popup_account_deletion_password">' + LanguagePack.BUBBLE_ENTERYOUREMAIL + '</label>' +
+			'	<input id="popup_account_deletion_password" class="setting" type="text" />' +
+			'</div>';
+
+		this.PASSWORD_REGIST =
+			'<div class="txt_set02">' + _msg +
+			'</div>' +
+			'<div class="input_setting">' +  addtogglereg +
+			'	<input id="popup_password_regist" class="setting" type="password" '+placeholder+' />' + addtoggle +
+			'</div>';
+		
+		this.ACCOUNT_MERGE =
+			'<div class="txt_set02">' + _msg +
+			'</div>' +
+			'<div class="input_setting">' +  addtoggledel +
+			'	<input id="popup_account_deletion_password" class="setting" type="password" '+placeholder+' />' + addtoggle +
+			'</div>';
+	};
+	this.setEmailAndPwd = function(_msg, _content){
+		var con_str = LanguagePack.CHINAVER_SET_EMAIL_PWD_STR;
+		var msg_str = LanguagePack.BUBBLE_ENTERYOUREMAIL;
+		if(_msg) {
+			msg_str = _msg;
+		}
+		if(_content) {
+			con_str = _content;
+		}
+		this.ACCOUNT_CHANGE =
+			'<div class="txt_set02" style="padding-bottom: 0px;">' + con_str + '</div>' +
+			'<ul class="input_setting2" style="padding: 20px 0;">' +
+			'	<li class="first"><input id="popup_account_change_newaccount" class="setting" type="text" value="" placeholder="' + msg_str + '" /></li>' +
+			'	<li><input id="popup_account_change_password2" class="setting" type="text" placeholder="' + LanguagePack.KEYWORD_PASSWORD +'" />'+
+			'<input id="popup_account_change_password" class="setting" type="password" placeholder="' + LanguagePack.KEYWORD_PASSWORD +'" />'+
+			'<a href="#" class="hidepwd"><img src="' + CF_PATH + '/resources/image/Polaris/new/popup/notice/pw_hide.png"></a>'+
+			'<a href="#" class="showpwd"><img src="' + CF_PATH + '/resources/image/Polaris/new/popup/notice/pw_show.png"></a>'+
+			'</li></ul>';
+	};
+	this.PROMOTION =
+		'<p id="popup_message_default_message" class="promotion_txt txt_3line"></p>';
+
+}();
+
+var PopupButtonUI = new function() {
+	this.CONFIRM =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_CONFIRM + '</a>';
+	this.COMPLITE =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_COMPLETED +'</a>';
+	this.CANCEL =
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+
+	this.CLOSE =
+			'<a class="btn" href="">' + LanguagePack.KEYWORD_CLOSE + '</a>';
+	this.COMPLETE_CLOSE =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_CLOSE +'</a>';
+
+	this.CONFIRM_CANCEL =
+			'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_CONFIRM + '</a> ' +
+			'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+	this.CONFIRM2_CANCEL =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.POPUP_DISCONNECT + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+	this.CONFIRM2 =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.POPUP_NOTLOADFLASH_BUTTON + '</a>';
+	this.CONFIRM_VERIFY =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_CONFIRM + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.EMAILAUTHENTICATION + '</a>';
+	this.REGIST_CANCEL =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.POPUP_REGIST + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+	this.REGISTNEW_CANCEL =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.POPUP_REGISTNEW + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+	this.DELETE_CANCEL =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_TITLE_DELETETRASHCAN + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+	this.CHANGE_CANCEL =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_CHANGE + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+	this.RESTORE_PREV =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_RECOVER_PREV + '</a>';
+	this.CONFIRM_SETINFO =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_CONFIRM + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.POPUP_SNS_SETINFO + '</a>';
+	this.YES_NO =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_YES + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_NO + '</a>';
+	this.CLOSE_CANCEL =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.TEAM_CLOSE_CONTINUE + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+	this.RESHARE =
+		'<a id="popup_reshare_btn" class="btn" href="">' + LanguagePack.COOPERATION_AUTHENTICATED + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>'	+
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_CONFIRM + '</a> ';
+	this.RESTORE =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.PC_RESTORE_POP_SAVE + '</a> ' +
+		'<a id="popup_reshare_btn" class="btn" href="">' + LanguagePack.PC_RESTORE_POP_SAVE_NOT + '</a>'	+
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+	this.ACCOUNT_MERGE =
+		'<a id="popup_reshare_btn" class="btn" href="">' + LanguagePack.FIND_PASSWORD + '</a> ' +
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_CONFIRM + '</a> ' +
+		'<a id="popup_cancel_btn" class="btn" href="">' + LanguagePack.KEYWORD_CANCEL + '</a>';
+	this.COUPON_REG =
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.POPUP_REGIST + '</a> ' +
+		'<a id="popup_confirm_btn" class="btn" href="">' + LanguagePack.KEYWORD_REGIST + '</a> ' ;
+}();
+

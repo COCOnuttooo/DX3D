@@ -1,0 +1,500 @@
+var adsWebdata = {
+	"userId": "",
+	"manufacturerId": "0",
+	"deviceType": 0,
+	"version": "0"
+};
+
+if ((typeof isMobile) != 'undefined' && isMobile == true) {
+	adsWebdata = {
+		"userId": "",
+		"manufacturerId": "0",
+		"deviceType": 1,
+		"version": "0"
+	};
+}
+
+adsWebdata.userId = gUserId;
+
+// check to call api
+var isCheckAdInfo = false;
+// check ad user
+var isShowAds = false;
+// check to load ad
+var isLoadAds = false;
+
+function getAdsInfo(type, onSuccessCB) {
+	if(type === 'mobileWeb'){
+		adsWebdata.deviceType = 0;
+	}
+	popcorn.getAdvertiseinfo(adsWebdata, function (res) {
+		isCheckAdInfo = true;
+		if ((typeof res.listAdvertizementSceneInfo) == 'undefined') {
+			isShowAds = false;
+			$(".adsense").css('display', 'none');
+		} else {
+			isShowAds = true;
+		}
+
+		//sendLog.sendPageLog(type);
+
+		if (onSuccessCB != null && isShowAds)
+			onSuccessCB(res);
+		//console.log(res);
+	}, function (res) {
+		//console.log(res);
+	});
+	/*
+	* webview 광고 테스트트
+	isCheckAdInfo = true;
+	isShowAds = true;
+	if(onSuccessCB != null && isShowAds)
+		onSuccessCB();*/
+}
+
+var adsType = {
+	'comment': 0,
+	'share': 1,
+	'mobile_bottom': 2,
+	'webview_bottom': 3,
+	'mobile_bottom_share':4,
+};
+
+function addAdsScript(type) {
+
+	if (isCheckAdInfo) {
+		if (isShowAds)
+			setAdsScript(type);
+		return;
+	}
+
+	getAdsInfo(type, function (res) {
+		setAdsScript(type);
+	});
+	return;
+}
+
+function setAdManagerAndCoupangScript(id) {
+	var elem = document.getElementById("revision_notice");
+	getAdsInfo('mobileWeb', function(res) {
+		if(res.resultCode === 0) {
+			var adslist = res.listAdvertizementSceneInfo;
+			var len = adslist.length;
+			if (len == 0)
+		return;
+		//logTracking
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.event;
+		webData['obj'].dp = "AdBanner";
+		webData['obj'].ec = "ux";
+		webData['obj'].ea = "cl";		
+
+		for (var i = 0; i < len; i++) {
+			var ads = adslist[i];
+			if (!ads.vendorTypes)
+				continue;
+			var adScenarioId = ads.adScenarioId;
+			var vendorType = ads.vendorTypes.split(';');
+			var adsUrl = '';
+			var adsRefresh = ads.autoRefresh;
+			var firstVendor = vendorType[0].toLowerCase();
+			// SetCookieEscape('mediation', ads.vendorTypes);
+			// SetCookieEscape('ar', adsRefresh);
+
+			switch (adScenarioId) {
+				case 61: //계정정보 상단
+					if(adScenarioId !== id) break;
+					if(elem) break;
+					if(firstVendor == 'mobwith'){
+						adsUrl = 'https://www.mobwithad.com/banner/bottom?zone=1085';
+						$.extend(webData, {
+							'cobj': {
+								'zoneid': 1085
+							}
+						});
+						$LOGMODEL.sendData(webData);	
+					} else {
+						adsUrl = '/ko/ads/' + firstVendor + '/share_doc_sheet?vendors=' + ads.vendorTypes + '&refresh=' + adsRefresh;
+					}
+					var script = '<div class="adWrapp">' +
+					'<a href="#" class="btn_close">CLOSE</a>' +
+					'<iframe src=' + adsUrl + ' style="width:100%; height:52px"></iframe>' + 
+					'</div>';
+					$("#msg_area").css('top', '100px')
+					$('#modal').prepend(script);
+					$('.adWrapp a.btn_close').css({
+						"position": "absolute",
+						"top": "2px",
+						"left": "15px",
+						"width": "18px",
+						"height": "18px",
+						"text-indent": "-9999em",
+						"zoom": 1.2,
+						"background": "url(" + CF_PATH + "/maxage1/common/img/button/notice_close.png) no-repeat",
+						"cursor":"pointer"
+					});
+					$('.adWrapp a.btn_close').on('click', function (e) {					
+						commonPreventEvent(e);
+						$('.adWrapp').remove();
+						$("#msg_area").css('top', '49px')
+					});
+					$('.adWrapp').css({
+						'display': 'flex',
+						'justify-content': 'center',
+						'height': '51px',
+						"margin-top":'51px',
+						"position":'relative'
+					});
+					break;
+				case 62: //공유문서 모바일
+				if(adScenarioId !== id) break;
+				if(elem) break;
+				if(firstVendor == 'mobwith'){
+					adsUrl = 'https://www.mobwithad.com/banner/bottom?zone=1085';
+					$.extend(webData, {
+						'cobj': {
+							'zoneid': 1085
+						}
+					});
+					$LOGMODEL.sendData(webData);	
+				} else {
+					adsUrl = '/ko/ads/' + firstVendor + '/share_doc_mobile?vendors=' + ads.vendorTypes + '&refresh=' + adsRefresh;
+				}
+				var script = '<iframe src=' + adsUrl + ' style="width:100%; display:flex; justify-content: center; height:102px"></iframe>';
+				var close_btn = '<a href="#" class="btn_close">CLOSE</a>'
+				$('.ad_google').append(close_btn);
+				$('.ad_google a.btn_close').css({
+					"position": "absolute",
+					"top": 0,
+					"left": 0,
+					"width": "18px",
+					"height": "18px",
+					"text-indent": "-9999em",
+					"zoom": 1.2,
+					"background": "url(" + CF_PATH + "/maxage1/common/img/button/ad_editor_close.png) no-repeat",
+				});
+				$('.ad_google a.btn_close').on('click', function (e) {					
+					commonPreventEvent(e);
+					$('.ad_google').remove();
+				});
+				$('.ad_google').append(script);
+				$('.ad_google').css({
+					'display': 'flex',
+					'justify-content': 'center',
+					'height': '101px',
+					"z-index": '999'
+				});
+				$('.ad_google').show();
+				break;
+			}
+		}
+		}
+	})
+
+}
+
+
+function setAdsScript(type) {
+	if (isLoadAds)
+		return;
+
+	var script = '';
+	var headScript = '';
+
+	//Home
+	//	if(type == "home_ad"){
+	//		/*script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>'
+	//					+ '<!-- 인프라 200_200 디스플레이 -->'
+	//					+ '<ins class="adsbygoogle"'
+	//					+ 'style="display:inline-block;width:200px;height:200px"'
+	//					+ 'data-ad-client="ca-pub-0158351920968537"'
+	//					+ 'data-ad-slot="1693025093"></ins>'
+	//					+ '<script>'
+	//					+ '(adsbygoogle = window.adsbygoogle || []).push({});'
+	//					+ '</script>';*/
+	//		
+	//		if(testGroupId == web_16){
+	//			script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>'
+	//						+ '<!-- 파일브라우저 하단_ 텍스트 광고 -->'
+	//						+ '<ins class="adsbygoogle"'
+	//						+ 'style="display:inline-block;width:200px;height:200px"'
+	//						+ 'data-ad-client="ca-pub-1096422525292795"'
+	//						+ 'data-ad-slot="5414905461"></ins>'
+	//						+ '<script>'
+	//						+ '(adsbygoogle = window.adsbygoogle || []).push({});'
+	//						+ '</script>';
+	//		}else{
+	//			script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>'
+	//						+ '<!-- 파일브라우저 하단_ 디스플레이 광고 -->'
+	//						+ '<ins class="adsbygoogle"'
+	//						+ 'style="display:inline-block;width:200px;height:200px"'
+	//						+ 'data-ad-client="ca-pub-1096422525292795"'
+	//						+ 'data-ad-slot="8368371865"></ins>'
+	//						+ '<script>'
+	//						+ '(adsbygoogle = window.adsbygoogle || []).push({});'
+	//						+ '</script>';     
+	//		}
+	//	}
+	//Web View
+	if (type == adsType.comment) {
+		script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>' +
+			'<!-- 웹뷰어 코멘트 -->' +
+			'<ins class="adsbygoogle"' +
+			'style="display:inline-block;width:394px;height:119px"' +
+			'data-ad-client="ca-pub-1096422525292795"' +
+			'data-ad-slot="9198325463"></ins>' +
+			'<script>' +
+			'(adsbygoogle = window.adsbygoogle || []).push({});' +
+			'</script>';
+		$('.ad_google02').append(script);
+		$('.ad_google03').hide();
+	}
+
+	//Web Share doc View
+	if (type == adsType.share) {
+		return; //Off Web Share doc View ads... [PD Requirement]
+		script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>' +
+			'<!-- 공유문서열기 -->' +
+			'<ins class="adsbygoogle"' +
+			'style="display:inline-block;min-width:320px;max-width:1200px;width:100%;height:105px"' +
+			'data-ad-client="ca-pub-1096422525292795"' +
+			'data-ad-slot="2872590265"></ins>' +
+			'<script>' +
+			'(adsbygoogle = window.adsbygoogle || []).push({});' +
+			'</script>' +
+			'<script>' +
+			'$(\'.ad_google03\').delay(1000).animate({\'bottom\':0}, 600)' +
+			'</script>';
+		$('.ad_google03').append(script);
+	}
+
+	//PC Home
+	/*if(adsType == "pchome_document_ad"){
+		script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>'
+					+ '<!-- 인프라 200_200 디스플레이 -->'
+					+ '<ins class="adsbygoogle"'
+					+ 'style="display:inline-block;width:200px;height:200px"'
+					+ 'data-ad-client="ca-pub-0158351920968537"'
+					+ 'data-ad-slot="1693025093"></ins>'
+					+ '<script>'
+					+ '(adsbygoogle = window.adsbygoogle || []).push({});'
+					+ '</script>';
+		
+		if(testGroupId == 10){
+			script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>'
+						+ '<!-- 파일브라우저 하단_ 텍스트 광고 -->'
+						+ '<ins class="adsbygoogle"'
+						+ 'style="display:inline-block;width:200px;height:200px"'
+						+ 'data-ad-client="ca-pub-1096422525292795"'
+						+ 'data-ad-slot="5414905461"></ins>'
+						+ '<script>'
+						+ '(adsbygoogle = window.adsbygoogle || []).push({});'
+						+ '</script>';
+		}else{
+			script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>'
+						+ '<!-- 파일브라우저 하단_ 디스플레이 광고 -->'
+						+ '<ins class="adsbygoogle"'
+						+ 'style="display:inline-block;width:200px;height:200px"'
+						+ 'data-ad-client="ca-pub-1096422525292795"'
+						+ 'data-ad-slot="8368371865"></ins>'
+						+ '<script>'
+						+ '(adsbygoogle = window.adsbygoogle || []).push({});'
+						+ '</script>';     
+		}
+	}*/
+	//Mobile Web View
+	if (type == adsType.mobile_bottom) {
+		script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>' +
+			'<!-- 모바일문서하단 -->' +
+			'<ins class="adsbygoogle"' +
+			'style="display:inline-block;min-width:320px;max-width:1200px;width:100%;height:100px"' +
+			'data-ad-client="ca-pub-1096422525292795"' +
+			'data-ad-slot="7163189065"></ins>' +
+			'<script>' +
+			'(adsbygoogle = window.adsbygoogle || []).push({});' +
+			'</script>';
+
+		$('.ad_google').append(script);
+		$('.ad_google').show();
+		setTimeout(function () {
+			if ($('#mobile_bottom_ad').height() != 0) {
+				$('.ad_google').children().remove();
+				isLoadAds = false;
+				setAdsScript(adsType.mobile_bottom);
+			}
+		}, 60 * 1000);
+	} else if (type == adsType.webview_bottom) {
+		script = '<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>' +
+			'<!-- Share Docs for PC -->' +
+			'<ins class="adsbygoogle"' +
+			'style="display:inline-block;width:300px;height:100px"' +
+			'data-ad-client="ca-pub-1096422525292795"' +
+			'data-ad-slot="1760722087"></ins>' +
+			'<script>' +
+			'(adsbygoogle = window.adsbygoogle || []).push({});' +
+			'</script>';
+		$('div.ad_box').append(script);
+		$('.ad_google02').css('display', 'block');
+		$('aside.panel section.msg a.btn_close').on('click', function (e) {
+			commonPreventEvent(e);
+			$('.ad_google02').css('background', 'none');
+		});
+		$('#webView div.menu ul.depth1 a.menu_03').on('click', function (e) {
+			commonPreventEvent(e);
+			$('.ad_google02').css('background', '#fff');
+		});
+		setTimeout(function () {
+			if ($('#viewer_comment_ad').height() != 0) {
+				$('div.ad_box').children().remove();
+				isLoadAds = false;
+				setAdsScript(adsType.webview_bottom);
+			}
+		}, 60 * 1000);
+	} else if(type === adsType.mobile_bottom_share) {
+
+	}
+	/*
+	* webview 광고 테스트
+	if(type == adsType.mobile_bottom){
+		headScript = '<script async="async" src="https://www.googletagservices.com/tag/js/gpt.js"></script>'
+					+ '<script>'
+					+ 'var googletag = googletag || {};'
+					+ 'googletag.cmd = googletag.cmd || [];'
+					+ 'googletag.cmd.push(function() {'
+					+ 'googletag.defineSlot("/168141967/WebAdunit/MobileWebAdUnit", [468, 60], "div-gpt-ad-1502344732175-0").addService(googletag.pubads());'
+					+ 'googletag.pubads().enableSingleRequest();'
+					+ 'googletag.pubads().collapseEmptyDivs();'
+					+ 'googletag.enableServices();'
+					+ '});'
+					+ '</script>';
+		script = '<!-- /168141967/WebAdunit/MobileWebAdUnit -->'
+					+ '<script>'
+					+ 'googletag.cmd.push(function() { googletag.display("div-gpt-ad-1502344732175-0"); });'
+					+ '</script>';
+
+		$('head').append(headScript);
+		$('.ad_google').attr('id','div-gpt-ad-1502344732175-0').append(script);
+	} else if (type == adsType.webview_bottom) {
+		headScript = '<script async="async" src="https://www.googletagservices.com/tag/js/gpt.js"></script>'
+					+ '<script>'
+					+ 'var googletag = googletag || {};'
+					+ 'googletag.cmd = googletag.cmd || [];'
+					+ 'googletag.cmd.push(function() {'
+					+ 'googletag.defineSlot("/168141967/WebAdunit/PCWeb", [728, 90], "div-gpt-ad-1502344976327-0").addService(googletag.pubads());'
+					+ 'googletag.pubads().enableSingleRequest();'
+					+ 'googletag.pubads().collapseEmptyDivs();'
+					+ 'googletag.enableServices();'
+					+ '});'
+					+ '</script>';
+		script = '<!-- /168141967/WebAdunit/MobileWebAdUnit -->'
+					+ '<script>'
+					+ 'googletag.cmd.push(function() { googletag.display("div-gpt-ad-1502344976327-0"); });'
+					+ '</script>';
+
+		$('head').append(headScript);
+		$('.ad_viwer').attr('id','div-gpt-ad-1502344976327-0').append(script);
+		$('#ad_close').on('click', function(e){
+			commonPreventEvent(e);
+			commonStopPropagation(e);
+			removeAds(adsType.webview_bottom);
+		});
+	}*/
+	isLoadAds = true;
+
+	sendLog.sendEventLog(type);
+
+	return script;
+}
+
+function removeAds(type) {
+	if (!isCheckAdInfo || !isShowAds)
+		return;
+
+	if (type == adsType.comment) {
+		$('.ad_google02.adsense').remove();
+	} else if (type == adsType.share) {
+		$('.ad_google03.adsense').remove();
+	} else if (type == adsType.mobile_bottom) {
+		$('.ad_google.adsense').remove();
+	} else if (type == adsType.webview_bottom) {
+		$('.ad_viwer').remove();
+	}
+
+}
+
+function getIsShowAd() {
+
+	if (isCheckAdInfo && isShowAds) {
+		if (isLoadAds && $('.adsense').height() <= 0)
+			return false;
+		return true;
+	}
+
+	return false;
+}
+
+var sendLog = {
+	'sendEventLog': function (type) {
+		var dp, dt;
+
+		//LoadingAlwaysOpenPC
+		if (type == adsType.share) {
+			dp = 'LoadingAlwaysOpenPC';
+		}
+
+		//Mobile Web View
+		if (type == adsType.mobile_bottom) {
+			dp = 'FileView.mobile';
+			dt = gdocext;
+		}
+
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.event;
+		webData['obj'].dp = dp;
+		webData['obj'].dt = dt;
+		webData['obj'].ec = 'System';
+		webData['obj'].ea = 'AD';
+		webData['obj'].el = 'ScriptRun';
+
+		$LOGMODEL.sendData(webData);
+	},
+	'sendPageLog': function (type) {
+
+		var dp, dt;
+
+		//LoadingAlwaysOpenPC
+		if (type == adsType.share) {
+			dp = 'LoadingAlwaysOpenPC';
+			dt = 'Loading';
+		}
+
+		//Mobile Web View
+		if (type == adsType.mobile_bottom) {
+			dp = 'FileView.mobile';
+			dt = gdocext;
+		}
+
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.page;
+		webData['obj'].dp = dp;
+		webData['obj'].dt = dt;
+		if (isShowAds) {
+			webData['obj'].el = 'AD';
+		} else {
+			webData['obj'].el = 'PV';
+		}
+
+		if (type == adsType.mobile_bottom) {
+			$.extend(webData, {
+				'cobj': {
+					'myDoc': ((gUserId == _OwnerID) ? true : false)
+				}
+			});
+		}
+		$LOGMODEL.sendData(webData);
+	}
+};
+
+function onClickAdCloseEvent(event) {
+	$('.adsense').remove();
+}

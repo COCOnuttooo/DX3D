@@ -1,0 +1,56 @@
+/**
+ * 로그 처리를 위한 초기화
+ * @param key
+ * @param options
+ * @returns
+ */
+function localyticsInitializeAndGetObject(key, options) {
+	if( options == null ) {
+		options = {  
+				 appVersion: "v1.0",  
+				 networkCarrier: "KT",
+				 polling: 10000,  
+				 uploadTimeout: 60000,
+				 sessionTimeoutSeconds: 30,
+				 storage: 100000,  
+				 logger: true};
+	}
+	window.localyticsSession = LocalyticsSession(key, options);
+	localyticsSession.open();
+	localyticsSession.upload();
+	
+	return localyticsSession;
+}
+
+/**
+ * 로그 이벤트 처리 펑션 
+ * @param eventName
+ * @param attributeObject
+ */
+function logEvent(eventName, attributeObject) {
+	try {
+		if( localyticsSession != null ) {
+			localyticsSession.tagEvent(eventName, attributeObject);
+		}
+	} catch(e) {
+		if( console != null ) {
+			console.log(e);
+		}
+	}
+}
+
+/**
+ * 로그 스크린(화면 단위) 처리 펑션
+ * @param screenName
+ */
+function logScreen(screenName) {
+	try {
+		if( localyticsSession != null ) {
+			localyticsSession.tagScreen(screenName);
+		}
+	} catch(e) {
+		if( console != null ) {
+			console.log(e);
+		}
+	}
+}

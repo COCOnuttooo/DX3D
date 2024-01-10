@@ -1,0 +1,139 @@
+let messageQueue = [];
+function aiPostMessage(msg){
+  const panelId = $("#_polaris_ai_panel_aiWrite").css("display") !== 'none' ? 'aiWrite' : 'txt2img'
+  const aiPanel = document.getElementById(`_polaris_ai_panel_${panelId}`);
+  const aiUrl = (IsProdouctionDomain() == 'prod') ? 'https://berlin.polarisoffice.com' : 'https://vf-berlin.polarisoffice.com';
+  if (aiPanel) {
+    aiPanel.contentWindow.postMessage(
+      msg, 
+      aiUrl
+    );
+  }
+}
+function isInsertError() {
+  const {objectType, status, objectCount} = po_editor.getCursoredLocation();
+  let supportFormat = [
+    {type : 'sheet', read : ['xlsx', 'xls', 'csv', 'sheet'], edit : ['xlsx']}
+    , {type : 'slide', read : ['pptx', 'ppt', 'slide'], edit : ['pptx']}
+    , {type : 'hwp', read : ['hwp', 'hwpx'], edit : ['hwp', 'hwpx']}
+    , {type : 'word', read : ['docx', 'doc', 'word'], edit : ['docx']}
+];
+  const type = supportFormat.filter(item => item.read.includes(gFileFormat))[0].type;
+
+  if(objectCount > 1) return true;
+  if(objectType === 5 || objectType === 8 || objectType === 9 || objectType === 20){
+    return true
+  }
+  if(type === 'sheet' && (objectType === 6 || objectType === 7)) return true;
+  if(type === 'sheet' && objectType === 3 && status === 'caret_marking') return true;
+  if(type === 'sheet' && objectCount === 0 && (status === 'caret_normal' || status === 'caret_marking' || status === 'caret_normal_bar' || status === 'caret_marking_bar')) {
+    po_editor.colseSheetCellEdit();
+  }
+  return false
+}
+
+$(function(){    
+    window.addEventListener(
+        'message',
+        (e) => {
+          try {
+            const { api, arg } = JSON.parse(e.data);
+            if (api) {
+              switch (api) {
+                case 'initComplete': {
+                  // get iframe element
+                  if(messageQueue.length > 0) {
+                    aiPostMessage(messageQueue.shift());
+                  }
+                  break;
+                }
+                case 'closePanel': {
+                    $(".ai_panel_frame").hide();
+                    break;
+                }
+                    
+                case 'insertText':
+                    po_editor.textInsertFromWebview(`<p>${arg}</p>`);
+                    break;
+                case 'insertHtml': {
+                  if(isInsertError()) {
+                    const msg = {
+                      cmd :'showToast',
+                      body: 'InsertFail',
+                    }
+                    aiPostMessage(msg)
+                  } else {
+                    po_editor.textInsertFromWebview(arg);
+                  }
+                    break;
+                  }
+                case 'insertString':
+                    po_editor.insertStringFromWebview(arg);
+                    break;
+                case 'downloadImage':{
+                    fetch(arg).then(res => res.blob())
+                    .then(res => {
+                        const url = window.URL.createObjectURL(res)
+                        const a = document.createElement("a")
+                        a.style = "display: none";
+                        a.href = url
+                        a.download = 'image.png'
+                        a.click()
+                        setTimeout(function () {
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url); // 메모리 해제
+                        }, 100);
+                    })
+                    break;
+                }
+                case 'insertImage': {
+                    fetch(arg).then(res => res.blob())
+                    .then(res => {
+                        po_editor.insertPicture(res)
+                    })
+                  break;
+                }
+                case 'getSessionInfo': {
+                  const msg = {
+                    cmd: 'sessionInfo',
+                    cmdID:arg,
+                    body: {
+                      //session info
+                      AID : getCookie('AID') ? getCookie('AID') : '',
+                      BID : getCookie('BID') ? getCookie('BID') : '',
+                      SID : getCookie('SID') ? getCookie('SID') : '',
+                      }
+                  };
+                  aiPostMessage(msg);
+                  break;
+                }
+                case 'openWindow' : {
+                  if(arg == 'credit') {
+                    window.open('/account#credit', '_blank');
+                  } else if(arg == 'upgradePlan') {
+                    window.open('/personal/office?upgrade=1', '_blank');
+                  } else {
+                    window.open(arg, '_blank');
+                  }
+                  break;
+                }
+                case 'copyClipboard' : {
+                  const obj = JSON.parse(arg);
+                  document.oncopy = e => {
+                    e.preventDefault();
+                    const dT = e.clipboardData;
+                    dT.setData('text/plain', obj.text);
+                    dT.setData('text/html', obj.html)
+                  }
+                  document.execCommand('copy');
+                  break;
+                }
+                default:
+                  break;
+              }
+            }
+          } catch (err) {}
+        },
+        false
+      );  
+})

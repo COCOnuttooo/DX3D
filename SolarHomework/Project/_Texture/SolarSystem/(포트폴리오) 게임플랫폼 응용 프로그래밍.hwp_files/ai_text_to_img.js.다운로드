@@ -1,0 +1,143 @@
+$(document).ready(function(){
+    //만들기 버튼 이벤트
+    $("#text_to_image .type02 .fix_r a").on("click", function(e){
+        e.preventDefault();
+        $("#text_to_image .gallery_large").append(loading);
+        buttonDisable($('#text_to_image').find('.btn.white, .btn.primary'));
+        $('#text_to_image').find('textarea').attr('readonly', true);
+        $("#text_to_image .gallery_large .list").children().remove();
+        successServiceMessage(LanguagePack.AI_TOOLS_STR55);
+        getTextToImage().then(res =>{
+            if(res.resultCode === 0){
+                const { deductCredit } = serviceInfo.find(item=> item.serviceType === 'DREAM_STUDIO');
+                sendLogMessage(LogType.tracking.event, 'ai.texttoimage.credit', 'TEXTTOIMAGE', 'ux', 'cl', null, {cobj : {type : 'text to image', used_credit :  deductCredit}});
+                successServiceMessage(LanguagePack.AI_TOOLS_STR53);
+                toastMessage(LanguagePack.AI_TOOLS_STR53);
+                $("#text_to_image .gallery_large .ai_loading").remove();
+                $('#text_to_image').find('textarea').attr('readonly', false);
+                //다운로드 이벤트
+                $("#text_to_image .bg .white").off();
+                $("#text_to_image .bg .white").on("click", function(e){
+                    e.preventDefault();
+                    textToImageFileDownload()
+                });
+                //삽입 이벤트
+                $("#text_to_image .bg .primary").off();
+                $("#text_to_image .bg .primary").on("click", function(e){
+                    e.preventDefault();
+                    //console.log($("#text_to_image .gallery_large .list .thums input").is(":checked"));
+                    insertImage(e)
+                });
+                res.result.forEach(item => {
+                    $("#text_to_image .gallery_large .list").append(`<label class="thums" style="background-image:url(data:image/png;base64,${item.base64})"><input type="checkbox" value="${item.base64}" name="image_form"/><div></div><span class="view">view</span></label>`);
+                    // $("#text_to_image .gallery_large .list .thums").css("background-image", `url(data:image/png;base64,${item.base64})`);
+                })
+
+                $("#text_to_image .gallery_large .list .view").on("click",function(){
+                    changePopupUrl(`data:image/png;base64,${$(this).siblings("input").val()}`);
+                    //console.log($(this).siblings("input"))
+                    //console.log($(this).siblings("input").val())
+                });
+                $('input[type="checkbox"][name="image_form"]').click(function() {
+                    if($(this).prop('checked')) {
+                       $('input[type="checkbox"][name="image_form"]').prop('checked',false);
+                       $('input[type="checkbox"][name="image_form"]').parent("label").removeClass("select")
+                       $(this).prop('checked',true);
+                       $(this).parent('label').addClass("select");
+                    }
+                    if ($(this).is(":checked")==true) {
+                        buttonRemoveDisable($('#text_to_image').find('.btn.primary, .btn.white'));
+                    } else {
+                        buttonDisable($('#text_to_image').find('.btn.white, .btn.primary'));
+                    }
+                });
+                
+            } else {
+                $("#text_to_image .gallery_large .ai_loading").remove();
+                $('#text_to_image').find('textarea').attr('readonly', false);
+                buttonDisable($('#text_to_image').find('.btn.primary, .btn.white'));
+                if(res.resultCode === 15002){
+                    errorServiceMessage(LanguagePack.AI_TOOLS_STR45);
+                } else if(res.resultCode === 15001){
+                    errorServiceMessage(LanguagePack.AI_TOOLS_STR76);
+                    toastMessage(LanguagePack.AI_TOOLS_STR76);
+                } else if(res.resultCode === 100) {
+                    po_editor.execute(null,'sessionError');
+                } else {
+                    errorServiceMessage(res.resultMsg);
+                    toastMessage(res.resultMsg);
+                }
+            }
+        })
+        .catch(() => {
+            errorServiceMessage(LanguagePack.AI_TOOLS_STR74 + ' ' + LanguagePack.AI_TOOLS_STR75);
+        })
+    })
+    $("#text_to_image .type02 textarea").on('input', function() {
+        if ($(this).val() !== '' && $(this).val().trim() !== '') {
+            buttonRemoveDisable($('#text_to_image .type02 .fix_r a'));
+        }
+        else {
+            buttonDisable($('#text_to_image .type02 .fix_r a'));
+        }
+    })
+})
+
+function aiTextToImg() {
+    return $(function(){
+        changeTitle('Text to Image');
+        $("#text_to_image").css("display","block");
+        console.log(serviceInfo);
+    })
+}
+
+async function getTextToImage() {
+    const inputText = $("#text_to_image .type02 textarea").val();
+    const data = await fetch(AI_TEXT_TO_IMAGE,{
+        method:"POST",
+        body:JSON.stringify({
+            text:inputText,
+            samples: 4
+        })
+    }).then(res => {
+        //console.log(res)
+        return res.json()
+    });
+    return data;
+}
+
+async function insertImage(e) {
+    const isChecked = $("#text_to_image .gallery_large .list .thums input").is(":checked");
+    if(!isChecked) return;
+    const url = $('input[name="image_form"]:checked').val();
+    //console.log(url);
+    //console.log($("#text_to_image .gallery_large .list .thums input").is(":checked"));
+    const res = await fetch(`data:image/png;base64,${url}`);
+    const blob = await res.blob() 
+    insertImageToDocument(e, blob, LanguagePack.AI_TOOLS_STR54);
+
+    toastMessage(LanguagePack.AI_TOOLS_STR54);
+}
+//ata:image/png;base64,${data}
+async function textToImageFileDownload() {
+    const isChecked = $("#text_to_image .gallery_large .list .thums input").is(":checked");
+    if(!isChecked) return;
+    const url = $('input[name="image_form"]:checked').val();
+    //console.log(url);
+    //console.log($("#text_to_image .gallery_large .list .thums input").is(":checked"));
+    const res = await fetch(`data:image/png;base64,${url}`);
+    const blob = await res.blob();
+    const downloadUrl = window.URL.createObjectURL(blob); // 해당 file을 가리키는 url 생성
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.download = 'image.png'; // a tag에 download 속성을 줘서 클릭할 때 다운로드가 일어날 수 있도록 하기
+    anchorElement.href = downloadUrl; // href에 url 달아주기
+    anchorElement.click(); // 코드 상으로 클릭을 해줘서 다운로드를 트리거
+    document.body.removeChild(anchorElement); // cleanup - 쓰임을 다한 a 태그 삭제
+    // fileDownload(blob)
+}
+
+function changePopupUrl(url) {
+    $("#img_popup").show();
+    $("#img_popup img").attr('src', url)
+}

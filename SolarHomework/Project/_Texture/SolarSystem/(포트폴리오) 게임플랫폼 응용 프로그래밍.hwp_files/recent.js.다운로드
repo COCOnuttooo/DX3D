@@ -1,0 +1,52 @@
+const recent = (function(){
+
+
+    function getRecentList() {
+        $(".recent_list .list").remove();
+        const data = {
+            "parentId": null,
+            "pcoffice": true
+        }
+
+        popcorn.getrecentlist2(data, function(res) {
+            if(res.resultCode === 0) {
+                const $target = document.querySelector(".recent_list");
+                if(res.recentList.length > 0){
+                    $(".recent_list .no_doc").hide()
+                    new ListItem({$target, initialState : res.recentList});
+                } else {
+                    $(".recent_list .no_doc").show()
+                }
+            } else if(res.resultCode === 100) {
+                po_editor.execute(null,'sessionError');
+            }
+    
+        }, function(error){console.log(error)})
+    }
+
+    const eventBinding = () => {
+        $('#openDoc .recent').on("click", function(e){
+            e.preventDefault();
+            $(".open_type_menu").children("a").removeClass("on");
+            $(this).addClass("on");
+            $(".list_document").children(".file_list").hide();
+            $(".list_document .recent_list").show();
+            getRecentList()
+        });
+    }
+
+
+
+    const init = () => {
+        eventBinding()
+    }
+    return {
+        init,
+        getRecentList
+    }
+})()
+
+$(function(){   
+    if(gUserId) 
+        recent.init();
+})

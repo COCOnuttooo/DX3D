@@ -1,0 +1,1128 @@
+﻿$(document).ready(function() {
+	//alert('document loaded');
+});
+
+var PopupMessage = function(popupType, buttonType, title, data, confirmCb, cancelCb, closeCb, reshareCb) {
+	// **************************************************
+	// Description: PopuMessage Private API - (Util)
+	// **************************************************
+	var getView = function(selector/*child*/, parent) {
+		var view = null;
+		if (parent == undefined || parent ==  null) {
+			view = $(selector);
+			return view;
+		}
+
+		view = parent.children(selector);
+		return view;
+	};
+
+	var getPopupMessageBoxCount = function() {
+		isPopupTreeFolder = false;
+		var view = getView(PopupViewClass.OTHER_POPUP_BOX);
+		for (var i = 0; i < view.length; i++) {
+			if ($(view[i]).css('display') == 'block') {	// View Code
+				isPopupTreeFolder = true;
+				break;
+			}
+		}
+		if(!isPopupTreeFolder) {
+			view = getView(PopupViewClass.OTHER_POPUP_BOX2);
+			for (var i = 0; i < view.length; i++) {
+				if ($(view[i]).css('display') == 'block') {	// View Code
+					isPopupTreeFolder = true;
+					break;
+				}
+			}
+		}
+
+		view = getView(PopupViewClass.VIEW_ALIGN);
+		if (isPopupTreeFolder == true)
+			return view.length;
+
+		return view.length - 1;
+	};
+
+	var findView = function(selector) {
+		// **************************************************
+		// Description: need to change how to find views
+		// **************************************************
+		var view = null;
+		switch (selector) {
+		case PopupViewClass.VIEW_ALIGN:
+			{
+				view = getView(selector);
+				if (index == 0 || (isPopupTreeFolder == true && index == 1))
+					return view;
+
+				if (isPopupTreeFolder == false)
+					return $(view[index]);
+
+				return $(view[index - 1]);
+			}
+		case PopupViewID.VIEW_BOX:
+			{
+				view = getView(selector, targetViewAlign);
+				return view;
+			}
+		case PopupViewID.TITLE:
+		case PopupViewID.CONTENT_BOX:
+		case PopupViewID.BUTTON_BOX:
+			{
+				if (targetForm == null) {
+					view = getView(selector,targetView);
+					return view;
+				}
+
+				view = getView(selector, targetForm);
+				return view;
+			}
+		case PopupViewID.CONFIRM_BUTTON:
+		case PopupViewID.CANCEL_BUTTON:
+			{
+				view = getView(selector, targetButton);
+				return view;
+			}
+		case PopupViewID.RESHARE_BUTTON:
+		{
+			view = getView(selector, targetButton);
+			return view;
+		}
+		case PopupViewID.CLOSE_BUTTON:
+			{
+				view = getView(selector, getView(PopupViewClass.CLOSE_BUTTON /*last-child*/, targetView));
+				return view;
+			}
+		case PopupViewID.FORM:
+			{
+				view = getView(selector, targetView);
+				return view;
+			}
+		case PopupViewID.MESSAGE:
+		{
+			view = getView(PopupViewClass.MESSAGE /*'first-child'*/, targetContent);
+			return view;
+		}
+		case PopupViewID.URL_COPY_THUMBNAIL:
+		case PopupViewID.URL_COPY_FILENAME:
+		case PopupViewID.URL_COPY_WEBLINK:
+			{
+				view = getView(PopupViewClass.URL_COPY /*first-child*/, targetContent);
+				if (selector == PopupViewID.URL_COPY_THUMBNAIL) {
+					view = view.children().first().children().first();
+					return view;
+				}
+
+				if (selector == PopupViewID.URL_COPY_FILENAME) {
+					view = getView(selector, view);
+					return view;
+				}
+
+				if (selector == PopupViewID.URL_COPY_WEBLINK) {
+//					view = getView(PopupViewClass.INPUT /*last-child*/, view).children().first();
+//					view = $("#popup_url_copy_weblink");
+					view = getView(PopupViewClass.INPUT /*last-child*/, view).children().first().children("input");
+					return view;
+				}
+			}
+		case PopupViewID.PROGRESSBAR:
+			{
+				view = getView(selector, getView(PopupViewClass.SYNC_BOX /*'first-child'*/, targetContent).children().first());
+				return view;
+			}
+		case PopupViewID.ACCOUNT_DELETION_PASSWORD_INPUTBOX:
+		case PopupViewID.PASSWORD_REGIST_INPUTBOX:
+			{
+				view = targetContent.children().last().children(selector);
+				return view;
+			}
+		case PopupViewID.ACCOUNT_CHANGE_NEWACCOUNT_INPUTBOX:
+		case PopupViewID.ACCOUNT_CHANGE_PASSWORD_INPUTBOX:
+			{
+				view = targetContent.children().first();
+				if (selector == PopupViewID.ACCOUNT_CHANGE_NEWACCOUNT_INPUTBOX) {
+					view = view.children().first().children(selector);
+					return view;
+				}
+
+				if (selector == PopupViewID.ACCOUNT_CHANGE_PASSWORD_INPUTBOX) {
+					view = view.children().last().children(selector);
+					return view;
+				}
+			}
+		case PopupViewID.FULLNAME_CHANGE_FIRSTNAME:
+		case PopupViewID.FULLNAME_CHANGE_LASTNAME:
+			{
+				view = targetContent.children().first();
+				if (selector == PopupViewID.FULLNAME_CHANGE_FIRSTNAME) {
+					view = view.children().first().children(selector);
+					return view;
+				}
+
+				if (selector == PopupViewID.FULLNAME_CHANGE_LASTNAME) {
+					view = view.children().last().children(selector);
+					return view;
+				}
+			}
+		case PopupViewID.PASSWORD_CHANGE_PASSWORD_INPUTBOX:
+		case PopupViewID.PASSWORD_CHANGE_NEWPASSWORD_INPUTBOX:
+		case PopupViewID.PASSWORD_CHANGE_CONFIRMPASSWORD_INPUTBOX:
+			{
+				view = targetContent.children().first();
+				if (selector == PopupViewID.PASSWORD_CHANGE_PASSWORD_INPUTBOX) {
+					view = view.children().first().children(selector);
+					return view;
+				}
+
+				if (selector == PopupViewID.PASSWORD_CHANGE_NEWPASSWORD_INPUTBOX) {
+					view = view.children().first().next().children(selector);
+					return view;
+				}
+
+				if (selector == PopupViewID.PASSWORD_CHANGE_CONFIRMPASSWORD_INPUTBOX) {
+					view = view.children().last().children(selector);
+					return view;
+				}
+			}
+		default:
+			
+		}
+	};
+
+	(function() {
+		if(data.requestAgent) {
+			$(PopupBoxUI.BOX2).appendTo('body');
+		} else {
+			if(data.mobile){
+				$(PopupBoxUI.BOX_M).appendTo('body');
+			}else{
+				$(PopupBoxUI.BOX).appendTo('body');
+			}
+
+		}
+	})();
+
+	// **************************************************
+	// Description: constructor parameters
+	// **************************************************
+	var isPopupTreeFolder = false;
+	var index = getPopupMessageBoxCount();
+	var popup = this;
+	var data = data;
+	var popupType = popupType;
+	var confirmCallback = confirmCb;
+	var cancelCallback = cancelCb;
+	var closeCallback = closeCb;
+	var reshareCallback = reshareCb;
+	var buttonType = buttonType;
+	var title = title;
+
+	// **************************************************
+	// Description: UI container boxes
+	// **************************************************
+	var targetViewAlign = findView(PopupViewClass.VIEW_ALIGN);
+	var targetView = findView(PopupViewID.VIEW_BOX);
+	try {
+		if(_chromeCast) {
+			targetView.addClass('chromecast');
+		}
+	} catch(err) {
+		
+	}
+	
+	var targetTitle = findView(PopupViewID.TITLE);
+	var targetForm = null;
+	var targetContent = findView(PopupViewID.CONTENT_BOX);
+	var targetButton = findView(PopupViewID.BUTTON_BOX);
+
+	// **************************************************
+	// Description: UI buttons
+	// **************************************************
+	var confirmButton = null;
+	var cancelButton = null;
+	var closeButton = findView(PopupViewID.CLOSE_BUTTON);
+	var reshareButton = null;
+
+	// **************************************************
+	// Description: PopuMessage API - (Basic)
+	// **************************************************
+	this.create = function() {
+		function adjustZIndex() {
+			if (index > 0) {
+				targetView.css('z-index', 10 + index);
+				targetViewAlign.css('z-index', 10 + index);
+			}
+		}
+
+		PopupManagement.pushPopup(popup);
+		adjustZIndex();
+		appendDimWindow();
+
+		switch (popupType) {
+		case PopupType.NOTICE:
+			this.setTitle(PopupTitleText.NOTICE);
+			appendContentUI(getNoticeUI(data));
+			appendButtonUI(PopupButtonUI.CONFIRM);
+			buttonType = ButtonType.CONFIRM;
+			break;
+		case PopupType.NOTICE2:
+			this.setTitle(PopupTitleText.NOTICE);
+			appendContentUI(getNoticeUI2(data.type, data.messages));
+			appendButtonUI(PopupButtonUI.CONFIRM);
+			buttonType = ButtonType.CONFIRM;
+			break;
+		case PopupType.URL_COPY:
+			this.setTitle(PopupTitleText.URL_COPY);
+			if(data.requestAgent) {
+				appendContentUI(PopupContentUI.URL_COPY2);
+			} else {
+				appendContentUI(PopupContentUI.URL_COPY);
+			}
+			appendButtonUI(PopupButtonUI.COMPLETE_CLOSE);
+
+//			appendButtonUI(PopupButtonUI.CLOSE);
+			buttonType = ButtonType.CONFIRM;
+			break;
+		case PopupType.SYNC:
+			this.setTitle((title != null) ? title : PopupTitleText.SYNC);
+			appendContentUI((data.contentString != null) ? PopupContentUI.getSyncContentUI(data.contentString) : PopupContentUI.SYNC);
+			appendButtonUI(PopupButtonUI.CANCEL);
+			buttonType = ButtonType.CANCEL;
+			break;
+		case PopupType.DEVICE_DISCONNECTION:
+			this.setTitle(PopupTitleText.DEVICE_DISCONNECTION);
+			if (data[PopupDataKey.DISCONNECTION_TYPE] == PopupDataValue.DISCONNECTION_TYPE_WEB)
+				appendContentUI(PopupContentUI.getDeviceDisconnectionWebUI(data[PopupDataKey.DISCONNECTION_DEVICE_NAME]));
+			else if (data[PopupDataKey.DISCONNECTION_TYPE] == PopupDataValue.DISCONNECTION_TYPE_APP)
+				appendContentUI(PopupContentUI.getDeviceDisconnectionAppUI(data[PopupDataKey.DISCONNECTION_DEVICE_NAME]));
+			appendButtonUI(PopupButtonUI.CONFIRM2_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+			break;
+		case PopupType.ACCOUNT_DELETION:
+			this.setTitle(PopupTitleText.PASSWORD_SET);
+			appendContentUI(PopupContentUI.ACCOUNT_DELETION);
+			appendButtonUI(PopupButtonUI.CONFIRM_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+			break;
+		case PopupType.PASSWORD_CONFIRM:
+			this.setTitle(PopupTitleText.ACCOUNT_DELETION);
+			appendContentUI(PopupContentUI.PASSWORD_CONFIRM);
+			appendButtonUI(PopupButtonUI.CONFIRM_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+			break;
+		case PopupType.WRONG_PASSWORD:
+			this.setTitle(PopupTitleText.ACCOUNT_DELETION);
+			appendContentUI(PopupContentUI.WRONG_PASSWORD);
+			appendButtonUI(PopupButtonUI.CONFIRM_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+			break;
+		case PopupType.ACCOUNT_CHANGE:
+			this.setTitle(PopupTitleText.ACCOUNT_CHANGE);
+			appendContentUI(PopupContentUI.ACCOUNT_CHANGE);
+			appendButtonUI(PopupButtonUI.CONFIRM_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+			break;
+		case PopupType.FULLNAME_CHANGE:
+			this.setTitle(PopupTitleText.FULLNAME_CHANGE);
+			appendContentUI(PopupContentUI.FULLNAME_CHANGE);
+			appendButtonUI(PopupButtonUI.CONFIRM_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+			break;
+		case PopupType.PASSWORD_CHANGE:
+			this.setTitle(PopupTitleText.PASSWORD_CHANGE);
+			appendContentUI(PopupContentUI.PASSWORD_CHANGE);
+			appendButtonUI(PopupButtonUI.CONFIRM_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+			break;
+		case PopupType.SET_EMAIL:
+			this.setTitle(PopupTitleText.SET_EMAIL);
+			appendContentUI(PopupContentUI.SET_EMAIL);
+			appendButtonUI(PopupButtonUI.CONFIRM_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+			break;
+		case PopupType.INPUTBOX:
+			this.setTitle((title != null) ? title : PopupTitleText.DEFAULT);
+			appendContentUI(PopupContentUI.INPUTBOX(data.type, data.label, data.value));
+			appendButtonUI(PopupButtonUI.CONFIRM_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+			break;
+		case PopupType.REGIST:
+			this.setTitle(PopupTitleText.NOTICE);
+			appendContentUI(PopupContentUI.DEFAULT);
+			appendButtonUI(PopupButtonUI.REGIST_CANCEL);
+			buttonType = ButtonType.REGIST_CANCEL;
+			break;
+		case PopupType.PASSWORD_REGIST:
+			this.setTitle(PopupTitleText.PASSWORD_SET);
+			appendContentUI(PopupContentUI.PASSWORD_REGIST);
+			appendButtonUI(PopupButtonUI.CONFIRM);
+			buttonType = ButtonType.CONFIRM;
+			break;
+		case PopupType.REGISTNEW:
+			this.setTitle(PopupTitleText.NOTICE);
+			appendContentUI(PopupContentUI.DEFAULT);
+			appendButtonUI(PopupButtonUI.REGISTNEW_CANCEL);
+			buttonType = ButtonType.REGISTNEW_CANCEL;
+			break;
+		case PopupType.RESHARE:
+			this.setTitle((title != null) ? title : PopupTitleText.DEFAULT);
+			appendContentUI(PopupContentUI.DEFAULT);
+			appendButtonUI(PopupButtonUI.RESHARE);
+			buttonType = ButtonType.RESHARE;
+			break;
+		case PopupType.RESTORE:
+			this.setTitle((title != null) ? title : PopupTitleText.DEFAULT);
+			appendContentUI(PopupContentUI.DEFAULT);
+			appendButtonUI(PopupButtonUI.RESTORE);
+			buttonType = ButtonType.RESTORE;
+			break;
+		case PopupType.ACCOUNT_MERGE:
+			this.setTitle(PopupTitleText.ACCOUNT_MERGE);
+			appendContentUI(PopupContentUI.ACCOUNT_MERGE);
+			appendButtonUI(PopupButtonUI.ACCOUNT_MERGE);
+			buttonType = ButtonType.ACCOUNT_MERGE;
+			break;
+		case PopupType.PROMOTION:
+			this.setTitle((title != null) ? title : PopupTitleText.DEFAULT);
+			appendContentUI(PopupContentUI.PROMOTION);
+			appendButtonUI(PopupButtonUI.CONFIRM);
+			buttonType = ButtonType.CONFIRM;
+			break;
+		default:
+			this.setTitle((title != null) ? title : PopupTitleText.DEFAULT);
+			appendContentUI(PopupContentUI.DEFAULT);
+			if (buttonType != undefined) {
+				var buttonUI = null;
+				if(buttonType == ButtonType.CONFIRM)
+					buttonUI = PopupButtonUI.CONFIRM;
+				else if(buttonType == ButtonType.CANCEL)
+					buttonUI = PopupButtonUI.CANCEL;
+				else if(buttonType == ButtonType.CONFIRM_CANCEL)
+					buttonUI = PopupButtonUI.CONFIRM_CANCEL;
+				else if(buttonType == ButtonType.CONFIRM2)
+					buttonUI = PopupButtonUI.CONFIRM2;
+				else if(buttonType == ButtonType.CONFIRM_VERIFY)
+					buttonUI = PopupButtonUI.CONFIRM_VERIFY;
+				else if(buttonType == ButtonType.DELETE_CANCEL)
+					buttonUI = PopupButtonUI.DELETE_CANCEL;
+				else if(buttonType == ButtonType.CHANGE_CANCEL)
+					buttonUI = PopupButtonUI.CHANGE_CANCEL;
+				else if(buttonType == ButtonType.RESTORE_PREV)
+					buttonUI = PopupButtonUI.RESTORE_PREV;
+				else if(buttonType == ButtonType.CONFIRM_SETINFO)
+					buttonUI = PopupButtonUI.CONFIRM_SETINFO;
+				else if(buttonType == ButtonType.YES_NO)
+					buttonUI = PopupButtonUI.YES_NO;
+				else if(buttonType == ButtonType.CLOSE_CANCEL)
+					buttonUI = PopupButtonUI.CLOSE_CANCEL;
+				else if(buttonType == ButtonType.CONFIRM_CANCEL_AUTH)
+					buttonUI = PopupButtonUI.CONFIRM_CANCEL_AUTH;
+				appendButtonUI(buttonUI);
+			}
+			else
+				appendButtonUI(PopupButtonUI.CONFIRM_CANCEL);
+			buttonType = ButtonType.CONFIRM_CANCEL;
+		}
+		this.complete();
+		if(popupType == PopupType.URL_COPY && !data.requestAgent) {
+			var docfilename = "unknown";
+			docfilename = $("#popup_url_copy_filename").text();
+			if(docfilename.length>0 && ($("#popup_url_copy_filename").children("img")!==undefined) ) {
+				docfilename = docfilename.replace(" ", "");
+			}
+			docfilename = twitterTextLengthCheck(docfilename);
+			if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) { //test for MSIE x.x;
+				 var ieversion=new Number(RegExp.$1); // capture x.x portion and store as a number
+				 if (ieversion<=8) docfilename = (LanguagePack.POLink_DOC_SHARE+"\r\n"+docfilename+"\r\n");
+				 else docfilename = (LanguagePack.POLink_DOC_SHARE+"\r"+docfilename+"\r");
+			} else {
+				docfilename = (LanguagePack.POLink_DOC_SHARE+"\r"+docfilename+"\r");
+			}
+			twitterWinOpen("twitter_start", $("#popup_url_copy_weblink").val(), /*LanguagePack.POLink_DOC_SHARE*/ docfilename);
+		}
+	};
+
+	this.destroy = function() {
+		this.hide();
+		finalize();
+		PopupManagement.removePopup();
+	};
+
+	// **************************************************
+	// Description: PopuMessage API - (Basic)
+	// **************************************************
+	this.removeBtns = function(){
+		$(PopupViewID.BUTTON_BOX).remove();
+		$(PopupViewID.CONTENT_BOX).addClass('nobtn');
+	};
+	this.show = function() {
+		appendDimWindow();
+		targetViewAlign.show();
+		targetView.show();
+		if(!data.requestAgent) {
+			alignCenter();
+		}
+		setFocus();
+		
+		if(typeof this.popupCb == 'function') {
+			this.popupCb.call(this);
+		}
+	};
+
+	this.hide = function() {
+		targetView.hide();
+		targetViewAlign.hide();
+		removeDimWindow();
+	};
+
+	this.changebutton = function(data) {
+		if(data.confirm) {
+			confirmButton = findView(PopupViewID.CONFIRM_BUTTON);
+			confirmButton.text(data.confirm);
+		}
+		if(data.cancel) {
+			cancelButton = findView(PopupViewID.CANCEL_BUTTON);
+			cancelButton.text(data.cancel);
+		}
+	};
+	// **************************************************
+	// Description: PopuMessage API - (Extras)
+	// **************************************************
+	this.setTitle = function(text) {
+		title = text;
+		targetTitle.text(title);
+	};
+
+	// data: { progress: '50%' }
+	this.setProgress = function(data) {
+		function sleep(msecs) {
+	        var start = new Date().getTime();
+	        var currentTime = start;
+	        while (currentTime - start < msecs)
+	        	currentTime = new Date().getTime();
+	    }
+
+		if (popupType == PopupType.SYNC) {
+			findView(PopupViewID.PROGRESSBAR).css('width', data[PopupDataKey.PROGRESS]); // View Code
+			if (data[PopupDataKey.PROGRESS] == '100%') {
+				sleep(500);
+				this.destroy();
+			}
+		}
+	};
+
+	// var bubbleMessage = new Array();
+	// bubbleMessage[0] = '풍선말 1';
+	// bubbleMessage[1] = '풍선말 2';
+	// bubbleMessage[2] = '풍선말 3';
+	// data : {popupBubbleMessage:bubbleMessage}
+	this.setBubbleMessage = function(data) {
+		var bubbleMessage = data[PopupDataKey.POPUP_BUBBLE_MESSAGE];
+		appendBubbleMessageUI(bubbleMessage);
+	};
+
+	this.setBubbleMessage2 = function(data) {
+		appendBubbleMessageUI2(data);
+	};
+
+	// **************************************************
+	// Description: PopuMessage API - (Events)
+	// **************************************************
+	this.addEventConfirm = function(confirmCb) {
+		confirmCallback = confirmCb;
+		confirmButton.bind('click', {param: null}, confirmHandler);
+	};
+
+	this.addEventCancel = function(cancelCb) {
+		cancelCallback = cancelCb;
+		cancelButton.bind('click', {param: null}, cancelHandler);
+	};
+
+	this.addEventClose = function(closeCb) {
+		closeCallback = closeCb;
+		closeButton.bind('click', {param: null}, closeHandler);
+	};
+
+	this.addEventReshare = function(reshareCb) {
+		reshareCallback = reshareCb;
+		reshareButton.bind('click', {param: null}, reshareHandler);
+	};
+
+
+
+	// **************************************************
+	// Description: PopuMessage API - (Must be PRIVATE METHODS)
+	// **************************************************
+	this.complete = function() {
+		this.setButtonEvents();
+
+		if (popupType == PopupType.URL_COPY) {
+			setURLCopyData(data);
+			return;
+		}
+		else if (popupType == PopupType.FULLNAME_CHANGE) {
+			setFullnameData(data);
+			return;
+		}
+	};
+
+	this.setButtonEvents = function() {
+		if (buttonType == null || buttonType == undefined)
+			return;
+
+		if (closeCallback != undefined && closeCallback != null)
+			this.addEventClose(closeCb);
+
+		if (buttonType == ButtonType.CONFIRM || buttonType == ButtonType.CONFIRM2) {
+			confirmButton = findView(PopupViewID.CONFIRM_BUTTON);
+			if (confirmCallback != undefined && confirmCallback != null)
+				this.addEventConfirm(confirmCb);
+
+			return;
+		}
+
+		if (buttonType == ButtonType.CANCEL) {
+			cancelButton = findView(PopupViewID.CANCEL_BUTTON);
+			if (cancelCallback != undefined && cancelCallback != null)
+				this.addEventCancel(cancelCb);
+
+			return;
+		}
+
+		confirmButton = findView(PopupViewID.CONFIRM_BUTTON);
+		cancelButton = findView(PopupViewID.CANCEL_BUTTON);
+		reshareButton = findView(PopupViewID.RESHARE_BUTTON);
+		if (confirmCallback != undefined && confirmCallback != null)
+			this.addEventConfirm(confirmCallback);
+		if (cancelCallback != undefined && cancelCallback != null)
+			this.addEventCancel(cancelCallback);
+		if (reshareCallback != undefined && reshareCallback != null)
+			this.addEventReshare(reshareCallback);
+	};
+
+	// **************************************************
+	// Description: PopuMessage Private API - (Basic)
+	// **************************************************
+
+	var appendContentUI = function(contentUI) {
+		function appendMesage() {
+			var messages = data[PopupDataKey.POPUP_MESSAGE];
+			if(messages.length) {
+				for (var i = 0; i < messages.length; i++) {
+					findView(PopupViewID.MESSAGE).append(messages[i] + '<br />');
+				}
+			} else {
+				findView(PopupViewID.MESSAGE).removeAttr('Class').addClass('txt_0line');
+			}
+		}
+
+		if (popupType == PopupType.SET_EMAIL ||
+			popupType == PopupType.ACCOUNT_DELETION ||
+			popupType == PopupType.ACCOUNT_MERGE ||
+			popupType == PopupType.PASSWORD_CONFIRM ||
+			popupType == PopupType.WRONG_PASSWORD ||
+			popupType == PopupType.ACCOUNT_CHANGE ||
+			popupType == PopupType.FULLNAME_CHANGE ||
+			popupType == PopupType.PASSWORD_CHANGE ||
+			popupType == PopupType.INPUTBOX ||
+			popupType == PopupType.PASSWORD_REGIST) {
+			targetContent.remove();
+			targetButton.remove();
+
+			targetTitle.after(PopupBoxUI.FORM);
+			targetForm = findView(PopupViewID.FORM);
+			targetContent = findView(PopupViewID.CONTENT_BOX);
+			targetButton = findView(PopupViewID.BUTTON_BOX);
+
+			var selector = PopupViewID.ACCOUNT_DELETION_PASSWORD_INPUTBOX + ', ' +
+						   PopupViewID.ACCOUNT_CHANGE_NEWACCOUNT_INPUTBOX + ', ' +
+						   PopupViewID.ACCOUNT_CHANGE_PASSWORD_INPUTBOX + ', ' +
+						   PopupViewID.FULLNAME_CHANGE_FIRSTNAME + ', ' +
+						   PopupViewID.FULLNAME_CHANGE_LASTNAME + ', ' +
+						   PopupViewID.PASSWORD_CHANGE_PASSWORD_INPUTBOX + ', ' +
+						   PopupViewID.PASSWORD_CHANGE_NEWPASSWORD_INPUTBOX + ', ' +
+						   PopupViewID.PASSWORD_CHANGE_CONFIRMPASSWORD_INPUTBOX + ', ' +
+						   PopupViewID.PASSWORD_REGIST_INPUTBOX;
+			targetForm.delegate(selector, 'keypress', keypressHandler);
+			targetForm.delegate(selector, 'keyup', keyupHandler);
+		}
+
+		targetContent.append(contentUI);
+
+		if (popupType == PopupType.DEFAULT ||
+			popupType == PopupType.INPUTBOX ||
+			popupType == PopupType.REGIST ||
+			popupType == PopupType.RESHARE ||
+			popupType == PopupType.RESTORE ||
+			popupType == PopupType.REGISTNEW ||
+			popupType == PopupType.PROMOTION) {
+			appendMesage();
+		}
+	};
+
+	var appendBubbleMessageUI = function(bubbleMessage) {
+		function appendBubbleMessage(className) {
+			var message = null;
+			for (var i = 0; i < bubbleMessage.length; i++) {
+				message = bubbleMessage[i];
+				if (message != undefined && message != null)
+					targetForm.prepend(PopupContentUI.getBubbleMessageUI('txt_' + (i + className), message));	// View Code
+			}
+		}
+
+		// View Code
+		var className = 0;
+		if (popupType == PopupType.ACCOUNT_DELETION ||
+			popupType == PopupType.ACCOUNT_MERGE ||
+			popupType == PopupType.PASSWORD_CONFIRM ||
+			popupType == PopupType.PASSWORD_REGIST)
+			className = 1;
+		else if (popupType == PopupType.ACCOUNT_CHANGE ||
+				 popupType == PopupType.FULLNAME_CHANGE)
+			className = 2;
+		else if (popupType == PopupType.PASSWORD_CHANGE)
+			className = 4;
+		else if (popupType == PopupType.INPUTBOX) {
+			className = 5;
+		}
+		if (className > 0) {
+			appendBubbleMessage(className);
+			setFocus();
+		}
+	};
+	var appendBubbleMessageUI2 = function(data) {
+		function appendBubbleMessage2(data) {
+			var message = null;
+			var data2;
+			targetForm.children('p.txt').remove();
+			for (var i = 0; i < data.length; i++) {
+				data2 = data[i];
+				targetForm.prepend(PopupContentUI.getBubbleMessageUI2(data2.message, data2.top, data2.left));
+			}
+		}
+		appendBubbleMessage2(data);
+		setFocus();
+		// View Code
+	};
+	var showLabelUI = function(slector, show) {
+		if (show) {
+			slector.removeClass("off");
+		} else {
+			slector.addClass("off");
+		}
+	};
+
+	var removeBubbleMessageUI = function() {
+		if (targetForm != null) {
+			targetForm.children('.txt').remove();
+		}
+	};
+
+	var appendButtonUI = function(buttonUI) {
+		targetButton.append(buttonUI);
+	};
+
+	var setFocus = function() {
+		function onFocus(selector) {
+			if (typeof selector == 'string') {
+				$(selector).focus();
+				return;
+			}
+			selector.focus();
+		}
+
+		var selector = null;
+		// focus on input box
+		switch (popupType) {
+		case PopupType.URL_COPY:
+			selector = PopupViewID.URL_COPY_WEBLINK;
+			var weblinkURL = $(selector).val();
+			$(selector).val(weblinkURL).select();
+			return;
+		case PopupType.ACCOUNT_DELETION:
+			selector = PopupViewID.ACCOUNT_DELETION_PASSWORD_INPUTBOX;
+			break;
+		case PopupType.ACCOUNT_CHANGE:
+			selector = PopupViewID.ACCOUNT_CHANGE_NEWACCOUNT_INPUTBOX;
+			break;
+		case PopupType.FULLNAME_CHANGE:
+			selector = PopupViewID.FULLNAME_CHANGE_FIRSTNAME;
+			var firstname = $(selector).val();
+			$(selector).val(firstname).select();
+			return;
+		case PopupType.PASSWORD_CHANGE:
+			selector = PopupViewID.PASSWORD_CHANGE_PASSWORD_INPUTBOX;
+			break;
+		case PopupType.INPUTBOX:
+			selector = PopupViewID.ACCOUNT_DELETION_PASSWORD_INPUTBOX;
+			break;
+		case PopupType.PASSWORD_REGIST:
+			selector = PopupViewID.PASSWORD_REGIST_INPUTBOX;
+			break;
+		case PopupType.ACCOUNT_MERGE:
+			selector = PopupViewID.ACCOUNT_DELETION_PASSWORD_INPUTBOX;
+			break;
+		default:
+		
+		}
+
+		if (selector != null) {
+			onFocus(selector);
+			return;
+		}
+
+		// focus on button
+		switch (buttonType) {
+		case ButtonType.CONFIRM:
+			selector = confirmButton;
+			break;
+		case ButtonType.CONFIRM2:
+			selector = confirmButton;
+			break;
+		case ButtonType.CANCEL:
+			selector = cancelButton;
+			break;
+		default:
+			selector = confirmButton;
+		}
+		onFocus(selector);
+	};
+
+	var finalize = function() {
+		// finalize properties
+		(function() {
+			index = undefined;
+			popup = null;
+			data = null;
+			popupType = null;
+			confirmCallback = null;
+			cancelCallback = null;
+			closeCallback = null;
+			reshareCallback = null;
+			buttonType = null;
+			title = null;
+		})();
+
+		// finalize view
+		targetViewAlign.remove();
+		targetForm = null;
+
+		// finalize events
+		if (confirmButton != null) {
+			confirmButton.unbind();
+			confirmButton = null;
+		}
+		if (cancelButton != null) {
+			cancelButton.unbind();
+			cancelButton = null;
+		}
+		if (closeButton != null) {
+			closeButton.unbind();
+			closeButton = null;
+		}
+
+	};
+
+	// **************************************************
+	// Description: PopuMessage Private API - (Process after complete)
+	// **************************************************
+	/*data: {
+				thumbnail: '/api/i/weblink/{weblinkId}/getThumbnail',
+				thumbnailType:PopupDataValue.PHOTO_PORTRAIT,
+				//thumbnailType:PopupDataValue.THUMBNAIL_LANDSCAPE,
+				filename:'파일명',
+				type:'문서타입',
+				weblink:'http://localhost:8080/view/weblink/{weblinkId}'
+			}*/
+	var setURLCopyData = function(data) {
+		if (popupType == PopupType.URL_COPY) {
+			targetView.css('width', '420px');	// View Code
+
+			var thumbnailType = data[PopupDataKey.THUMBNAIL_TYPE];
+			if (thumbnailType == PopupDataValue.THUMBNAIL_LANDSCAPE) {
+				// View Code
+				// DOM Traverse
+				targetContent.children('div.bx_url').children().first().removeClass('photo_portrait').addClass('photo');
+			}
+
+			findView(PopupViewID.URL_COPY_THUMBNAIL).attr('src', data[PopupDataKey.THUMBNAIL]).load(function(){
+
+		    }).error(function(){
+		    	if(findView(PopupViewID.URL_COPY_THUMBNAIL).attr('src') == CF_PATH + "/resources/image/Polaris/loading_thumb.gif")
+		    		setTimeout(function(){
+		    			data[PopupDataKey] += new Date().getTime();
+		    			findView(PopupViewID.URL_COPY_THUMBNAIL).attr('src', data[PopupDataKey.THUMBNAIL]);
+
+		    		},3000);
+		    	else{
+		    		findView(PopupViewID.URL_COPY_THUMBNAIL).attr('src', CF_PATH + "/resources/image/Polaris/loading_thumb.gif");
+		    		setTimeout(function(){
+		    			data[PopupDataKey.THUMBNAIL] += new Date().getTime();
+		    			findView(PopupViewID.URL_COPY_THUMBNAIL).attr('src', data[PopupDataKey.THUMBNAIL]);
+		    			},3000);
+		    	}
+
+
+		    });
+			findView(PopupViewID.URL_COPY_FILENAME).text(' ' + data[PopupDataKey.FILENAME]+"."+data[PopupDataKey.FILE_TYPE]);
+			findView(PopupViewID.URL_COPY_FILENAME).prepend(PopupContentUI.getDocumentIcon(data[PopupDataKey.FILE_TYPE]));
+			findView(PopupViewID.URL_COPY_WEBLINK).val(data[PopupDataKey.WEBLINK]);
+		}
+	};
+
+	var setFullnameData = function(data) {
+		if (popupType == PopupType.FULLNAME_CHANGE) {
+			findView(PopupViewID.FULLNAME_CHANGE_FIRSTNAME).val(data[PopupDataKey.FIRSTNAME]);
+			findView(PopupViewID.FULLNAME_CHANGE_LASTNAME).val(data[PopupDataKey.LASTNAME]);
+		}
+	};
+
+	// var noticeType = PopupDataValue.NOTICE_STYLE_SUBTITLE_ITEM_NOT_ABLE_TO_UPLOAD | PopupDataValue.NOTICE_STYLE_CONTENT_EXCESSIVE_CAPACITY | PopupDataValue.NOTICE_STYLE_CONTENT_FILE_EXTENTION_NOT_SUPPORTED | PopupDataValue.NOTICE_STYLE_CONTENT_EXCESSIVE_FILE_NAME_LENGTH;
+	// data: {noticeType: noticeType, noticeData: 40, userData: '사용자 데이터'}
+	var getNoticeUI = function(data) {
+		var type = (data[PopupDataKey.NOTICE_STYLE] & PopupDataValue.NOTICE_STYLE_SUBTITLE_MASK) >> 16;
+		var subtitle = null;
+		if (type == 1)
+			subtitle = LanguagePack.POPUP_UPLOADFAILEDSOMEITEMS;
+		else if (type == 2)
+			subtitle = LanguagePack.POPUP_UPLOADFAILEDITEM;
+		else if (type == 3)
+			subtitle = LanguagePack.POPUP_COPYFAILEDSOMEITEMS;
+		else if (type == 4)
+			subtitle = LanguagePack.POPUP_COPYFFAILEDITEM;
+		else if (type == 5)
+			subtitle = LanguagePack.POPUP_MOVEFAILEDSOMEITEMS;
+		else if (type == 6)
+			subtitle = LanguagePack.POPUP_MOVEFFAILEDITEM;
+		else if(type == 7)
+			subtitle = LanguagePack.POPUP_RESTOREFFAILEDITEM;
+		else if(type == 8)
+			subtitle = LanguagePack.POPUP_RESTOREFFAILEDSOMEITEMS;
+
+		type = data[PopupDataKey.NOTICE_STYLE];
+		var messages = new Array();
+		for (var i = 0, j = 0; i < PopupDataValue.NOTICE_STYLE_CONTENT_LENGTH; i++) {
+			if (PopupDataValue.NOTICE_STYLE_CONTENT_MASK & (type  >> i)) {
+				switch(i) {
+				case 0:
+					messages[j++] = LanguagePack.POPUP_CLOUDSTORAGESHORTAGE(gUserLevel);
+					break;
+				case 1:
+					messages[j++] = LanguagePack.POPUP_NOTSUPPORTEDFILEFORMAT;
+					break;
+				case 2:
+					messages[j++] = LanguagePack.POPUP_EXCESSPATHLENGTH_INCLUDINGFOLDERANDFILE(data[PopupDataKey.NOTICE_DATA]);
+					break;
+				case 3:
+					messages[j++] = LanguagePack.POPUP_UPLOADFIALZEROBYTEFILE;
+				default:
+					
+				}
+			}
+		}
+
+		return PopupContentUI.getNoticeUI(subtitle, messages);
+	};
+
+	var getNoticeUI2 = function(type, messages) {
+		var subtitle = null;
+		if(type == 1) {
+			subtitle = LanguagePack.POPUP_UPLOADFAILEDSOMEITEMS;
+		} else if(type == 2) {
+			subtitle = LanguagePack.POPUP_UPLOADFAILEDITEM;
+		} else if(type == 3) {
+			subtitle = LanguagePack.POPUP_COPYFAILEDSOMEITEMS;
+		} else if(type == 4) {
+			subtitle = LanguagePack.POPUP_COPYFFAILEDITEM;
+		} else if(type == 5) {
+			subtitle = LanguagePack.POPUP_MOVEFAILEDSOMEITEMS;
+		} else if(type == 6) {
+			subtitle = LanguagePack.POPUP_MOVEFFAILEDITEM;
+		} else if(type == 7) {
+			subtitle = LanguagePack.POPUP_RESTOREFFAILEDITEM;
+		} else if(type == 8) {
+			subtitle = LanguagePack.POPUP_RESTOREFFAILEDSOMEITEMS;
+		}
+		return PopupContentUI.getNoticeUI(subtitle, messages);
+	};
+	// **************************************************
+	// Description: PopuMessage Private API - (Handler: confirm, cancel, close)
+	// **************************************************
+	var confirmHandler = function(event) {
+		if (popupType == PopupType.DEFAULT ||
+			popupType == PopupType.NOTICE || popupType == PopupType.NOTICE2) {
+			event.data.param = {
+				popup: popup,
+				popupType: popupType,
+				userData: data[PopupDataKey.USER_DATA]
+			};
+			confirmCallback(event);
+			return;
+		}
+
+		if (popupType == PopupType.DEVICE_DISCONNECTION) {
+			event.data.param = {
+				popup: popup,
+				popupType: popupType,
+				disconnectionType: data[PopupDataKey.DISCONNECTION_TYPE],
+				disconnectionDeviceName: data[PopupDataKey.DISCONNECTION_DEVICE_NAME],
+				disconnectionDeviceId: data[PopupDataKey.DISCONNECTION_DEVICE_ID]
+			};
+			confirmCallback(event);
+			return;
+		}
+
+		if (popupType == PopupType.ACCOUNT_DELETION) {
+			event.data.param = {
+				popup: popup,
+				popupType: popupType,
+				password: findView(PopupViewID.ACCOUNT_DELETION_PASSWORD_INPUTBOX).val()
+			};
+			confirmCallback(event);
+			return;
+		}
+
+		if (popupType == PopupType.ACCOUNT_CHANGE) {
+			event.data.param = {
+				popup: popup,
+				popupType: popupType,
+				newAccount: findView(PopupViewID.ACCOUNT_CHANGE_NEWACCOUNT_INPUTBOX).val(),
+				password: findView(PopupViewID.ACCOUNT_CHANGE_PASSWORD_INPUTBOX).val(),
+			};
+			confirmCallback(event);
+			return;
+		}
+
+		if (popupType == PopupType.FULLNAME_CHANGE) {
+			event.data.param = {
+				popup: popup,
+				popupType: popupType,
+				firstname: findView(PopupViewID.FULLNAME_CHANGE_FIRSTNAME).val(),
+				lastname: findView(PopupViewID.FULLNAME_CHANGE_LASTNAME).val(),
+			};
+			confirmCallback(event);
+			return;
+		}
+
+		if (popupType == PopupType.PASSWORD_CHANGE) {
+			event.data.param = {
+				popup: popup,
+				popupType: popupType,
+				password: findView(PopupViewID.PASSWORD_CHANGE_PASSWORD_INPUTBOX).val(),
+				newPassword: findView(PopupViewID.PASSWORD_CHANGE_NEWPASSWORD_INPUTBOX).val(),
+				confirmPassword: findView(PopupViewID.PASSWORD_CHANGE_CONFIRMPASSWORD_INPUTBOX).val()
+			};
+			confirmCallback(event);
+			return;
+		}
+
+		if (popupType == PopupType.INPUTBOX) {
+			event.data.param = {
+				popup: popup,
+				popupType: popupType,
+				val: findView(PopupViewID.ACCOUNT_DELETION_PASSWORD_INPUTBOX).val()
+			};
+			confirmCallback(event);
+			return;
+		}
+
+		if (popupType == PopupType.PASSWORD_REGIST) {
+			event.data.param = {
+				popup: popup,
+				popupType: popupType,
+				password: findView(PopupViewID.PASSWORD_REGIST_INPUTBOX).val()
+			};
+			confirmCallback(event);
+			return;
+		}
+		
+		if (popupType == PopupType.ACCOUNT_MERGE) {
+			event.data.param = {
+				popup: popup,
+				popupType: popupType,
+				password: findView(PopupViewID.ACCOUNT_DELETION_PASSWORD_INPUTBOX).val()
+			};
+			confirmCallback(event);
+			return;
+		}
+
+		event.data.param = {
+			popup: popup,
+			popupType: popupType
+		};
+		confirmCallback(event);
+	};
+
+	var cancelHandler = function(event) {
+		event.data.param = {
+			popup:popup,
+			userData: data[PopupDataKey.USER_DATA]
+		};
+		cancelCallback(event);
+	};
+
+	var closeHandler = function(event) {
+		event.data.param = {
+			popup:popup,
+			userData: data[PopupDataKey.USER_DATA]
+		};
+		closeCallback(event);
+	};
+
+	var reshareHandler = function(event) {
+
+		event.data.param = {
+			popup:popup,
+			userData: data[PopupDataKey.USER_DATA]
+		};
+		reshareCallback(event);
+	};
+
+	var keypressHandler = function(event) {
+		switch (event.which) {
+		case 13: // [enter]
+			return false;
+		}
+		removeBubbleMessageUI();
+
+	};
+
+	var keyupHandler = function(event) {
+		var current = $(this);
+		if (event.preventDefault) event.preventDefault();
+		if (event.stopPropagation) event.stopPropagation();
+		if(current.val().length == 0) {
+			showLabelUI(current.prev(), true);
+		} else {
+			showLabelUI(current.prev(), false);
+		}
+		if(event.keyCode == 13)
+			confirmButton.trigger("click");
+	};
+	// **************************************************
+	// Description: They are common function or method - (Must be in common.js)
+	// **************************************************
+	var appendDimWindow = function() {
+		if (!$('#dim').length) {
+			$('body').append('<div id="dim" class="dim"></div>');
+			return;
+		}
+
+		$('#dim').css('z-index', 9 + index);	// View Code
+	};
+
+	var removeDimWindow = function() {
+		if (index == 0) {
+			$('#dim').remove();
+			return;
+		}
+
+		$('#dim').css('z-index', 9 + index - 1); 	// View Code
+	};
+
+	var alignCenter = function() {
+		var pixel = '-' + targetView.outerHeight(false) / 2 + 'px';
+		targetViewAlign.css('margin-top', pixel);	// View Code
+		targetViewAlign.css('margin-left', '-' + targetView.width()/2 + 'px');
+	};
+};

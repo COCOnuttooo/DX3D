@@ -1,0 +1,116 @@
+function ListItem({ $target, initialState }) {
+    this.$element = document.createElement('div');
+    this.$element.classList.add("list");
+    $target.appendChild(this.$element)
+  
+    this.state = initialState;
+
+
+  
+    this.render = function() {
+      this.$element.innerHTML = this.state
+        .map(item => {
+            const namesplit = item.fileName.split(".");
+            const type = namesplit[namesplit.length - 1].toLowerCase();
+            let fileImg = '';
+            if(item.fileType !== 'DIR') fileImg = `${CF_PATH}/maxage1/common/img/v4/${type}.svg`
+            else if(item.referenceId || item.sharedFolderId) fileImg = `${CF_PATH}/maxage1/common/img/cloud/teamFolder.png`
+            else fileImg = `${CF_PATH}/maxage1/common/img/cloud/folder.svg`
+            return`
+        <a class='file' data-fileFormat='${type}' data-fileType='${item.fileType}' data-referenceId ='${item.referenceId || item.sharedFolderId}' data-id='${item.fileId}'>
+            <span class='img'>            
+                <img src='${fileImg}' alt='${type || 'folder'}' />
+            </span>
+            <div class='subject'>
+                <ul class='tit'>
+                    <li class='name'>${item.fileName}</li>
+                    ${item.shared ? "<li class='share'>share</li>" : ''}
+                    ${item.starred ? "<li class='fav'>favorite</li>" : ''}
+                </ul>
+                ${ item.fullName ? `<div class='location'>${item.fullName}</div>` : ''}
+            </div>
+            <span class="date">${covertunixTime8(item.lastAccessTime)}</span>
+        </a>`})
+        .filter(item => !item.includes("data-fileFormat='zip'"))
+        .join('');
+
+        $('.file').on("click",function(e){
+            e.preventDefault(); 
+            if($(this).attr('data-fileType') !== 'DIR'){
+                window.open(location.protocol + '//' + location.host + '/d/' + $.encodeBase62($(this).attr('data-id').toString()));
+                editFileMenu.closeFileMenu();
+            } else if($(this).attr('data-referenceId') === 'null' || $(this).attr('data-referenceId') === 'undefined') {
+                myDrive.getInnerDirList($(this).attr('data-id'));
+            } else {
+                myDrive.getShareFolderList($(this).attr('data-id'))
+            }
+        })
+
+        // //공유 버튼 이벤트 바인딩
+        // $(".tit li.share").on("click", function(e) {
+        //     e.preventDefault();
+        //     const webdata = {
+        //         fileId: $(this).closest("a").attr("data-id")
+        //     };
+
+        //     popcorn.getFileInfo(webdata, function(res){po_editor.permisstionCheck(res.file)},function(err){
+        //         console.log(err)
+        //     })
+        // });
+
+        //star버튼 이벤트 바인딩
+        // $(".tit li.fav").on("click", function(e) {
+        //     e.preventDefault();
+        //     const webdata = {
+        //         fileId: $(this).closest("a").attr("data-id")
+        //     };
+
+        //     popcorn.getFileInfo(webdata, function(res){
+        //         const {fileId,starred,shared} = res.file;
+        //         const data = {
+        //             'fileId': fileId,
+        //             'star': (starred ? 'RELEASE' : 'SET'),
+        //             'isShared': (shared ? true : false)
+        //         };
+
+        //         const webdata = {
+        //             'updateList': [data]
+        //         };
+
+        //         popcorn.updateFavoriteList(webdata, function (res) {
+        //             //console.log(res)
+        //             if (CheckResult(null, res)) {
+                        
+        //                 if (typeof (res.resultList[0].resultCode) != 'undefined' && (res.resultList[0].resultCode == 0 || res.resultList[0].resultCode == 201)) {
+        //                     console.log(res);
+        //                     // if (data.star == 'SET') {
+        //                     //     $('#webView header dd.favorite a').addClass('on');
+        //                     //     $('#webView header dd.favorite li.favorite').text(LanguagePack.STAR_RELEASE);
+        //                     //     $('#webView header dd.favorite ul.favorite').addClass('on');
+        //                     //     gFavorite = 'true';
+        //                     // } else {
+        //                     //     $('#webView header dd.favorite a').removeClass('on');
+        //                     //     $('#webView header dd.favorite li.favorite').text(LanguagePack.STAR_MARK);
+        //                     //     $('#webView header dd.favorite ul.favorite').removeClass('on');
+        //                     //     gFavorite = 'false';
+        //                     // }
+        //                 }
+        //             }
+        //         }, function (err) {
+            
+        //         });
+            
+        //     },function(err){
+        //         console.log(err)
+        //     })
+        // });
+    }
+  
+    this.setState = function(nextState) {
+      this.state = nextState
+      this.render()
+    }
+  
+    this.render()
+  }
+  

@@ -81,7 +81,8 @@ void Camera::Set()
 
 void Camera::Debug()
 {
-	if (ImGui::TreeNode("CameraOption"))
+	string str = "Camera" + to_string(thisCount) + " Options";
+	if (ImGui::TreeNode(str.c_str()))
 	{
 		ImGui::Text("Pos : %d, %d, %d", (int)translation.x, (int)translation.y, (int)translation.z);
 		ImGui::Text("Rot : %.2f, %.2f, %.2f", rotation.x,rotation.y,rotation.z);

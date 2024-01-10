@@ -1,0 +1,4155 @@
+﻿var regMust2 = /[@`~!\\#$^&*\=+|:;?"<,.>']/;
+var reghangle = /[^ㄱ-힣]/;
+
+var docuemntTitle;
+var isScrollHold = false;
+var agent = typeof gUA != 'undefined' ? gUA.toLowerCase() : navigator.userAgent.toLowerCase();
+var isMobile = (agent.indexOf('iphone') != -1 || agent.indexOf('ipad') != -1 || agent.indexOf('android') != -1 || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+var isPCHOME = (agent.search("PolarisPCOffice") != -1 || agent.indexOf('podialog') != -1);
+
+var displayLaungeheader = false;
+var gAWS = false;
+var searchEngine_new = true;
+var previousSearchText = '';
+var dateFormatType = 0;
+var isKT = location.href.indexOf(LanguagePack.KTDOMAIN) != -1;
+
+if (typeof script_prefix == 'undefined') {
+	var script_prefix = '';
+	var seocheck = false;
+}
+
+if (!Array.prototype.indexOf) {
+	Array.prototype.indexOf = function (elt /*, from*/ ) {
+		var len = this.length >>> 0;
+
+		var from = Number(arguments[1]) || 0;
+		from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+		if (from < 0)
+			from += len;
+
+		for (; from < len; from++) {
+			if (from in this &&
+				this[from] === elt)
+				return from;
+		}
+
+		return -1;
+	};
+}
+
+(function () {
+	if (typeof (gUserId) != 'undefined' && gUserId) {
+		popcorn.getDateFormat(null, function (res) {
+			if (res.resultCode == 0) {
+				dateFormatType = res.type;
+			}
+		}, function (res) {});
+	}
+
+}());
+
+USERINFO = function userinfo() {
+	this.info = {};
+	this.data = {};
+	this.premiumInfo = {};
+
+};
+USERINFO.prototype = {
+	'setData': function (_key, _value) {
+		if (_key == "init") {
+			this.info = {};
+			return;
+		}
+		this.info[_key] = _value;
+	},
+	'getData': function (_key) {
+		return this.info[_key];
+	}
+
+};
+
+$USERINFO = new USERINFO();
+
+
+function LogType() {}
+LogType.tracking = {
+	'app': 'a',
+	'page': 'p',
+	'event': 'e'
+};
+
+
+
+
+LOGMODEL = function logModel() {
+	logdata = {};
+	isUserInfo = false;
+	uLevel = false;
+	userId = false;
+	userStatus = null;
+	viewId = Math.floor(Math.random() * 10000000000000000).toString();
+};
+LOGMODEL.prototype = {
+	'getData': function () {
+		logdata = {};
+		logdata.ti = {
+			'v': '1.1'
+		};
+		logdata.ui = {
+			'ua': navigator.userAgent,
+			'ip': '0.0.0.0',
+			'us': userStatus,
+			'uid': null,
+			'ul': 'none'
+		};
+		logdata.obj = {
+			'dc': viewId
+		};
+		//logdata.cobj = {};
+		logdata.ctx = {
+			'ts': parseInt(new Date().getTime().toString().substring(0, 10))
+		};
+		return logdata;
+	},
+	'sendData': function (data) {
+		//if(typeof gUserId != 'undefined' && gUserId && !isUserInfo){
+		popcorn.getsimpleuserinfo(null, function (res) {
+			if (res.resultCode == 0) {
+				isUserInfo = true;
+				userId = res.userId;
+				uLevel = res.level;
+				userStatus = res.status;
+				$LOGMODEL.sendToServer(data);
+			} else if (res.resultCode == Enum.service.REGULARSERVICE || res.resultCode == Enum.service.EMGERGENSERVICE){
+				location.href = '/' + LanguagePack.CURRENT_LOCALE + '/servercheck';
+				return;
+			} else {
+				$LOGMODEL.sendToServer(data);
+			}
+
+		}, function (res) {
+			console.log("failed");
+		});
+		//}
+		//else
+		//	$LOGMODEL.sendToServer(logdata);
+
+	},
+	'sendToServer': function (data) {
+		if (getCookie('AID'))
+			data.ctx.aid = getCookie('AID');
+		if (getCookie('BID'))
+			data.ctx.bid = getCookie('BID');
+		if (getCookie('SID'))
+			data.ctx.sid = getCookie('SID');
+		if (getCookie('TID'))
+			data.ctx.tid = getCookie('TID');
+		if (isKT) {
+			data.ctx.svc = 'kt';
+		} else {
+			data.ctx.svc = 'global';
+		}
+		data.ctx.nos = true;
+		if (uLevel)
+			data.ui.ul = uLevel.toString();
+		if (userId)
+			data.ui.uid = userId;
+		if (userStatus)
+			data.ui.us = userStatus;
+
+		if(IsProdouctionDomain() != 'prod'){
+			if(typeof data.cobj == 'undefined'){
+				$.extend(data, {
+					'cobj': {'env': 'vf'}
+				});
+			} else {
+				data.cobj.env = 'vf';
+			}
+		}
+		//console.log(JSON.stringify(data));
+		popcorn.logCollector(data, function (res) {
+			//console.log(res);
+		}, function (res) {
+			console.log("failed");
+		});
+
+
+	},
+	'getClientType' : function(){
+		var ua = typeof gUA != 'undefined' ? gUA.toLowerCase() : navigator.userAgent.toLowerCase();
+		var type;
+
+		if (ua.indexOf("polarispcoffice") >= 0  || ua.indexOf('podialog') >= 0){
+			type = "pchome";
+		} else if(ua.indexOf("macdialog") >= 0){
+			type = "machome";
+		} else {
+			type = "web";
+		}
+		return type;
+	}
+};
+$LOGMODEL = new LOGMODEL();
+
+function isEventShow(_interval) {
+	if (!getCookie('PCCBTEVENT')) {
+		var currentTime = new Date().getTime().toString().substring(0, 10);
+		if (currentTime >= 1431388800 && currentTime <= 1434121199) {
+			$('#cbt_popup').show();
+		}
+	}
+}
+var pcOfficeBeta = {
+	'pcofficeUrl': {
+		'prod': LanguagePack.PCOFFICE_PROD_URL,
+		'verify': LanguagePack.PCOFFICE_VERIFY_URL,
+		'other': LanguagePack.PCOFFICE_OTHER_URL,
+		'orange': "https://install.polarisoffice.com/pcoffice/PolarisOfficeSetup_Orange.exe"
+	},
+	'checkExcuteSurvey': function (_redirectUrl, _msg) {
+		var data = {
+			"description": _msg
+		};
+
+		popcorn.checkCBTPollSubmit(data, function (res) {
+			if (res.resultCode == 0) {
+				if (res.submitted) {
+					var popupMessage = new Array();
+					popupMessage[0] = "Your survey has been submitted successfully.<br>(Only one participation per person is allowed.)";
+					var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, 'Notice', {
+						popupMessage: popupMessage
+					}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+					popup.create();
+					popup.changebutton({
+						confirm: 'OK'
+					});
+					popup.show();
+				} else {
+					if (_redirectUrl)
+						location.href = _redirectUrl;
+				}
+			}
+
+		}, function (res) {});
+	},
+	'imediatelyDownload': function (_reUrl) {
+		window.open(this.pcofficeUrl[IsProdouctionDomain()], '_self');
+		setTimeout(function () {
+			location.reload(true);
+		}, 2000);
+	},
+	'download': function (_type, cbtlog) {
+		var agnt = navigator.userAgent.toLowerCase();
+		if (_type == '2017') {
+			if (typeof cbtlog != "undefined") {
+				cbtlog = cbtlog.replace('t:p', 't:e');
+				if (where_type == 'home_dwoffice')
+					cbtlog += "|cobj_action:download|cobj_downloadtype:auto";
+				else
+					cbtlog += "|cobj_action:download|cobj_downloadtype:manual";
+				$.ajax({
+					type: "GET",
+					url: "/api/2/analysis/log/access?var1=" + cbtlog,
+					dataType: "json",
+					contentType: "application/json",
+					success: function (res) {
+
+					}
+				});
+			}
+
+			if (agnt.indexOf('iphone') >= 0 || agnt.indexOf('ipad') >= 0 || agnt.indexOf('android') >= 0) {
+				location.href = '/install';
+			} else if (agnt.search("macintosh") >= 0) {
+				location.href = 'https://itunes.apple.com/kr/app/polaris-office/id1098211970?mt=12';
+			} else {
+				location.href = LanguagePack.PCOFFICE_PROD_URL;
+			}
+		} else {
+			if (agnt.indexOf('iphone') >= 0 || agnt.indexOf('ipad') >= 0 || agnt.indexOf('android') >= 0) {
+				var popupMessage = new Array();
+				popupMessage[0] = LanguagePack.POPUP_BEABLETODOWNLOADONPC;
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, 'Notice', {
+					popupMessage: popupMessage
+				}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.changebutton({
+					confirm: 'OK'
+				});
+				popup.show();
+				return;
+			} else if (agnt.indexOf("macintosh") >= 0) {
+				var popupMessage = new Array();
+				popupMessage[0] = LanguagePack.POPUP_DOWNLOAD_NOTI;
+				var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+					popupMessage: popupMessage
+				}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+				popup.create();
+				popup.show();
+				return;
+			}
+
+			if (typeof _type != "undefined" && _type == "CBT") {
+				if (typeof cbtlog != "undefined") {
+					$.ajax({
+						type: "GET",
+						url: "/api/2/analysis/log/access?var1=t:e|ec:ux|ea:cl|dp:CBT_Download|el:Download|cobj_event:cbt|" + cbtlog,
+						dataType: "json",
+						contentType: "application/json",
+						success: function (res) {
+
+						}
+					});
+				}
+
+			} else if (typeof _type != "undefined" && _type == "OBT") {
+				if (typeof cbtlog != "undefined") {
+					cbtlog = cbtlog.replace('t:p', 't:e');
+					$.ajax({
+						type: "GET",
+						url: "/api/2/analysis/log/access?var1=" + cbtlog + "|cobj_action:download",
+						dataType: "json",
+						contentType: "application/json",
+						success: function (res) {
+
+						}
+					});
+				}
+			} else if (_type == null) {
+				if (typeof cbtlog != "undefined") {
+					$.ajax({
+						type: "GET",
+						url: "/api/2/analysis/log/access?var1=" + cbtlog,
+						dataType: "json",
+						contentType: "application/json",
+						success: function (res) {
+
+						}
+					});
+				}
+			}
+			//location.href = this.pcofficeUrl[IsProdouctionDomain()];
+			downloadTest(this.pcofficeUrl[IsProdouctionDomain()]);
+			/*var agnt = navigator.userAgent.toLowerCase();
+			if(agnt.search('msie') >= 0 || agnt.search('rv:') >=0){
+				location.href = this.pcofficeUrl[IsProdouctionDomain()];
+			}else{
+				location.href = this.pcofficeUrl[IsProdouctionDomain()] + '?' + getTime();
+			}*/
+
+		}
+
+	}
+};
+
+function downloadTest(url) {
+	if (LanguagePack.CURRENT_LAN == 'ko') {
+		try {
+			if (IsProdouctionDomain() == 'orange') {
+				location.href = "https://install.polarisoffice.com/pcoffice/PolarisOfficeSetup_Orange.exe";
+			} else {
+				window.open(url);
+			}
+		} catch (err) {
+			window.open(url);
+		}
+	} else {
+		location.href = url;
+	}
+}
+
+function downLoadPC(_type) {
+	var agnt = navigator.userAgent.toLowerCase();
+	var svcType = IsProdouctionDomain();
+	var osType = checkAgent();
+	var posyncWinUrl = {
+		'prod': LanguagePack.POSYNC_WIN_PROD_URL,
+		'verify': LanguagePack.POSYNC_WIN_VERIFY_URL,
+		'other': LanguagePack.POSYNC_WIN_OTHER_URL
+	};
+
+	if ((typeof _type != 'undefined' && _type == 'mac') || osType == 'macos') {
+		if (ischina == 'true') {
+			posyncWinUrl['prod'] = LanguagePack.MACPOS_PROD_URL;
+			posyncWinUrl['verify'] = LanguagePack.MACPOS_VERIFY_URL;
+			posyncWinUrl['other'] = LanguagePack.MACPOS_OTHER_URL;
+		} else {
+			posyncWinUrl['prod'] = LanguagePack.MACPOS_PROD_URL;
+			posyncWinUrl['verify'] = LanguagePack.MACPOS_VERIFY_URL + '?' + getTime();
+			posyncWinUrl['other'] = LanguagePack.MACPOS_OTHER_URL + '?' + getTime();
+		}
+	}
+
+	if (isKT) {
+		posyncWinUrl['prod'] = LanguagePack.POSYNC_WIN_KTPROD_URL;
+	}
+
+	if (agnt.indexOf('iphone') >= 0 || agnt.indexOf('ipad') >= 0 || agnt.indexOf('android') >= 0) {
+		if (typeof userEmail != 'undefined' && userEmail) {
+			if (ischina == 'true') {
+				popcorn.getuserinfo({
+					'portrait': false,
+					'surveyDescription': null
+				}, function (res) {
+					if (res.status == 'TEMPORARY') {
+						var popupMessage = new Array();
+						popupMessage[0] = LanguagePack.POPUP_DOWNLOADONLYPC;
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+							popupMessage: popupMessage
+						}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+						popup.create();
+						popup.show();
+					} else {
+						sendPCADownMail(typeof _type == 'undefined' ? 'win' : _type);
+					}
+				}, function (err) {});
+			} else {
+				sendPCADownMail(typeof _type == 'undefined' ? 'win' : _type);
+			}
+
+		} else {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.POPUP_DOWNLOADONLYPC;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+		}
+	} else if (osType == 'macos' && typeof _type != "undefined" && _type == 'mac') {
+		location.href = posyncWinUrl[svcType];
+	} else if (osType == 'window' && typeof _type != "undefined" && _type == 'win') {
+		if (agnt.search('msie') >= 0 || agnt.search('rv:') >= 0) {
+			location.href = posyncWinUrl[svcType];
+		} else {
+			location.href = posyncWinUrl[svcType] + '?' + getTime();
+		}
+	} else {
+		var popupMessage = new Array();
+		popupMessage[0] = LanguagePack.POPUP_DOWNLOAD_NOTI;
+		var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+			popupMessage: popupMessage
+		}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+		popup.create();
+		popup.show();
+	}
+}
+
+function IsProdouctionDomain() {
+	var baseUrl = location.href;
+	var domain = null;
+	var protocol = null;
+	var docInfo = [];
+
+	domain = baseUrl.split("://");
+	protocol = domain[0] + "://";
+	domain = domain[1].split("/");
+	domain = domain[0];
+
+	if (typeof gUserLevel != 'undefined' && (gUserLevel == "ORANGEFREE" || gUserLevel == "ORANGEPREMIUM" || gUserLevel == "ORANGEPRO" || gUserLevel == "UCCPREMIUM")) {
+		return 'orange';
+	}
+
+	if (domain == "polarisoffice.com" || domain == "www.polarisoffice.com" || domain == "link.polarisoffice.com" ||
+		domain == "polarisoffice.com.cn" || domain == "www.polarisoffice.com.cn" || domain == "www.polarisoffice.kr" || domain == 'pcofficewebview.polarisoffice.com' ||
+		domain == "preproduction.polarisoffice.com") {
+		return 'prod';
+	} else if (domain.indexOf('verify') > -1 || domain == "vf-ca-cloud.polarisoffice.com" || domain == "vf-ca-pcview.polarisoffice.com") {
+		return 'verify';
+	} else {
+		return 'other';
+	}
+}
+
+function sendPCBetaDownMail() {
+	popcorn.downlloadPCOffice(null, function (res) {
+		if (res.resultCode == 0) {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.SENDPCOFFICEDOWNEMAIL;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+			return false;
+		} else {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.SENDPCOFFICEEMAIL_FAIL;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+			return false;
+		}
+
+	}, function (res) {
+
+	});
+
+}
+(function () {
+	var baseUrl = location.href;
+	var domain = null;
+	var protocol = null;
+	var docInfo = [];
+
+	domain = baseUrl.split("://");
+	protocol = domain[0] + "://";
+	domain = domain[1].split("/");
+	domain = domain[0];
+
+	if (domain == "polarisoffice.com" || domain == "www.polarisoffice.com" || domain == "link.polarisoffice.com" || domain == "polarisoffice.com.cn" || domain == "www.polarisoffice.com.cn") {
+		gAWS = true;
+	} else {
+		gAWS = false;
+	}
+
+})();
+
+function closeEventPopup() {
+	if ($("#no_agign").is(":checked")) {
+		setCookies('PCCBTEVENT', 365);
+	}
+	$('#cbt_popup').remove();
+
+}
+
+function setCookies(_key, _day) {
+	//set cookies
+	var todayDate = new Date();
+	todayDate.setDate(todayDate.getDate() + _day);
+	document.cookie = _key + "=" + gUserId + ";expires=" + todayDate.toGMTString() + ";path=/";
+}
+
+function SetCookieEscape(cookieName, cookieValue) {
+	var today = new Date();
+	var expire = new Date();
+	expire.setTime(today.getTime() + 3600000 * 24);
+	document.cookie = cookieName + "=" + escape(cookieValue) + ";expires=" + expire.toGMTString() + ";path=/";
+}
+
+function deleteCookie(cookieName) {
+	var expireDate = new Date();
+
+	expireDate.setDate(expireDate.getDate() - 1);
+	document.cookie = cookieName + "= " + "; expires=" + expireDate.toGMTString() + "; path=/";
+}
+
+function getTimeZone() {
+	var language = navigator.language ? navigator.language : navigator.userLanguage;
+	var datestr = new Date().toString().replace("UTC", "GMT");
+	var timezone = datestr.substring(new Date().toString().indexOf("GMT"), datestr.indexOf("GMT") + 8) +
+		"(" + language + ")";
+	return timezone;
+}
+
+function createForm() {
+	var form = $("<form/>", {
+		action: LanguagePack.SERVICEANALYTICS_AWS_URL,
+		target: 's3upload',
+		method: 'post',
+		enctype: 'multipart/form-data',
+		style: 'display:none',
+		id: 's3From'
+	});
+	var $hideninput = $("<input/>", {
+		type: 'hidden',
+		name: 'acl',
+		value: 'authenticated-read'
+	});
+	var $input = $("<input/>", {
+		type: 'text',
+		name: 'key',
+		value: ''
+	});
+	var $textarea = $("<textarea/>", {
+		id: 'textvalue',
+		style: 'display:none;',
+		type: 'text',
+		name: 'file',
+		value: 'end data'
+	});
+
+	var $submit = $("<input/>", {
+		type: 'submit',
+		value: 'Upload to Amazon S3'
+	});
+
+	form.append($hideninput).append($input).append($textarea).append($submit);
+
+	var hidden = '<iframe id="s3upload" name="s3upload" style="width: 1px; height: 1px; position: absolute; top: -100px;"></iframe>';
+	$('body').append(hidden);
+	$('body').append(form);
+}
+
+function getTypeDevice() {
+	if (agent.indexOf('iphone') >= 0) {
+		return "iphone";
+	} else if (agent.indexOf('ipad') >= 0) {
+		return "ipad";
+	} else if (agent.indexOf('android') >= 0 && agent.indexOf('mobile') >= 0) {
+		return "android phone";
+	} else if (agent.indexOf('android') >= 0) {
+		return "android tablet";
+	} else {
+		return "PC";
+	}
+}
+
+function getBrowserName() {
+	var browserName = undefined;
+	var userAgent = navigator.userAgent;
+
+	switch (true) {
+		case /Trident|MSIE/.test(userAgent):
+			browserName = 'ie';
+			break;
+
+		case /Edge/.test(userAgent):
+			browserName = 'edge';
+			break;
+
+		case /Chrome/.test(userAgent):
+			browserName = 'chrome';
+			break;
+
+		case /Safari/.test(userAgent):
+			browserName = 'safari';
+			break;
+
+		case /Firefox/.test(userAgent):
+			browserName = 'firefox';
+			break;
+
+		case /Opera/.test(userAgent):
+			browserName = 'opera';
+			break;
+
+		default:
+			browserName = 'unknown';
+	}
+	return browserName;
+}
+
+function createCommonLog(_key) {
+	var commonLog = new Object();
+	commonLog.typeLog = "Common";
+	commonLog.timeAction = parseInt(new Date().getTime().toString().substring(0, 10));
+	commonLog.timeZone = getTimeZone();
+	commonLog.idUser = _key;
+	commonLog.idDevice = getCookie('BID');
+	commonLog.typeClient = "Web";
+	commonLog.typeDevice = getTypeDevice();
+	commonLog.Model = navigator.userAgent;
+	return JSON.stringify(commonLog);
+}
+
+function createLogFileName(_key) {
+	var UUID = "";
+	var timezone = getTimeZone();
+	var hex = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f'];
+	for (var i = 0; i < 32; i++) {
+		UUID = UUID + hex[Math.floor(Math.random() * 16)];
+	}
+	var fileName = parseInt(new Date().getTime().toString().substring(0, 10)) + '!' + timezone + '!' + _key + '!' +
+		getCookie('BID') + '!' + UUID + ".log";
+	return fileName;
+}
+//extract log data
+function uploadS3(_key, _data) {
+	return; //사용자 패턴 사용 안함.
+}
+
+
+$(document).ready(function () {
+	if (!getCookie("LINKID"))
+		document.cookie = "LINKID = 10000";
+
+	var ua = typeof gUA != 'undefined' ? gUA.toLowerCase() : navigator.userAgent.toLowerCase();
+	var isWebview = (ua.search("polarispcoffice") != -1 || ua.indexOf('podialog') != -1 || ua.indexOf('macdialog') != -1);
+	if (location.pathname != '/view/socialresult' && getCookie('socialRegist') && !isWebview) {
+		deleteCookie("socialRegist");
+		//showSendSMSPopup();
+	}
+
+
+	$('.cbt_popup a.btn_survey').bind("click", function (e) {
+		commonPreventEvent(e);
+		location.href = script_prefix + '/office?var1=web_popup';
+	});
+
+	$('li.compare li.sync a').on('click', function (e) {
+		commonPreventEvent(e);
+		var agnt = navigator.userAgent.toLowerCase();
+		var type = null;
+
+		if (!(agnt.search("ipad") >= 0 || agnt.search("iphone") >= 0 || agnt.search("android") >= 0 || agnt.search("ipod") >= 0 || agnt.search("phone") >= 0)) {
+			if (agnt.search("windows") >= 0) {
+				location.href = script_prefix + '/download';
+			} else if (agnt.search("macintosh") >= 0) {
+				location.href = script_prefix + '/products/sync/mac#h.index';
+			}
+		} else {
+			location.href = script_prefix + '/download';
+		}
+	});
+
+	if ($("input.placeholder").val() == "")
+		$("input.placeholder").val("");
+	$("input.placeholder").bind("keyup", keyupPlaceHolderEvent);
+	$("input.placeholder").bind("click", clickPlaceHolderEvent);
+	mozillaForceKeyup("input.placeholder");
+
+	$(".changeLocale a").click(changeLocale);
+	$("header dl.language").bind("click", changeLanguage);
+	$("footer dl.language").bind("click", changeLanguage);
+
+	//	if(!gUserId && getCookie("ORANGEEXPIRE")){
+	//		showOrangeExpirePopup();
+	//	}
+
+	if (typeof gUserLevel != 'undefined' && (gUserLevel == "ORANGEFREE" || gUserLevel == "ORANGEPREMIUM" || gUserLevel == "ORANGEPRO" || gUserLevel == "UCCPREMIUM")) {
+		var webdata = {
+			'email': gUserEmail
+		};
+		if (gUserLevel == "ORANGEPRO" && getCookie('ORANGEPROSTATUSCHECK') == null) {
+
+			popcorn.checkOrangeProStatus(webdata, function (res) {
+				if (res.resultCode == 0) {
+					var date = new Date();
+					date.setTime(date.getTime() + 60 * 60 * 1000); // 60분
+					document.cookie = "ORANGEPROSTATUSCHECK=" + gUserId + ";expires=" + date.toGMTString() + ";path=/";
+
+					return;
+				} else if (res.resultCode >= Enum.orange._200 && res.resultCode <= Enum.orange._500) {
+					var popupMessage = new Array();
+					var error_num;
+					if (res.resultCode >= Enum.orange._200 && res.resultCode <= Enum.orange._209) {
+						error_num = res.resultCode - 1700;
+					} else if (res.resultCode == Enum.orange._400 || res.resultCode == Enum.orange._401) {
+						error_num = res.resultCode - 1500;
+					} else {
+						error_num = res.resultCode - 1400;
+					}
+					popupMessage[0] = 'Vous êtes clients professionnels Orange, recontactez votre vendeur Orange. . (' + error_num + ')';
+					var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_ALERT, {
+						popupMessage: popupMessage
+					}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+					popup.create();
+					popup.show();
+				} else if (res.resultCode >= Enum.orange._1600 && res.resultCode <= Enum.orange._1605) {
+					var popupMessage = new Array();
+					popupMessage[0] = 'Vous êtes clients professionnels Orange, recontactez votre vendeur Orange. . (' + res.resultCode + ')';
+					var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_ALERT, {
+						popupMessage: popupMessage
+					}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+					popup.create();
+					popup.show();
+				} else if (res.resultCode == 1606) {
+					AccountLogOut(function (res) {
+						if (res.resultCode == 0) {
+							location.href = "/view/orangeexpire?email=" + gUserEmail;
+						}
+					}, function (res) {
+						console.log(res.resultMsg);
+					});
+				} else {
+					if (res.redirectUrl) {
+						AccountLogOut(function (res) {
+							window.open(res.redirectUrl, "_self");
+						}, function (res) {
+							console.log(res.resultMsg);
+						});
+					} else {
+
+						var popupMessage = new Array();
+						popupMessage[0] = 'Vous êtes clients professionnels Orange, recontactez votre vendeur Orange. . (' + res.resultCode + ')';
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_ALERT, {
+							popupMessage: popupMessage
+						}, logoutAlertCB, logoutAlertCB, logoutAlertCB);
+						popup.create();
+						popup.show();
+
+						// AccountLogOut(function(res){
+						// 	window.open("/","_self");
+						// },function(res){console.log(res.resultMsg);});
+					}
+				}
+			}, function (res) {});
+		} else {
+			if (getCookie('ORANGESTATUSCHECK') == null) {
+				setCookies('ORANGESTATUSCHECK', 1);
+				popcorn.checkOrangeStatus(webdata, function (res) {
+					if (res.resultCode == 0) {
+						return;
+					} else if (res.resultCode == 1606) {
+						AccountLogOut(function (res) {
+							if (res.resultCode == 0) {
+								location.href = "/view/orangeexpire?email=" + gUserEmail;
+							}
+						}, function (res) {
+							console.log(res.resultMsg);
+						});
+					} else if (res.resultCode == 1613) {
+						setCookies('ORANGESTATUSCHECK', 0);
+						if (res.redirectUrl) {
+							suspend(res.redirectUrl);
+							/*AccountLogOut(function(res){
+								window.open(res.redirectUrl,"_self");
+							},function(res){console.log(res.resultMsg);});*/
+						} else {
+							var Url = "http://www.ocloudpro.com/exceptionreport?errorType=suspend";
+
+							try {
+								if (gUserLevel == "UCCPREMIUM") {
+									Url = 'https://lecloudentreprise.orange.fr/management';
+									if (domain == "inhouse-pcview.polarisoffice.com" || domain == "inhouse.polarisoffice.com" || domain == "vf-ca-cloud.polarisoffice.com" || domain == "vf-ca-pcview.polarisoffice.com") {
+										Url = "https://tb1n.orange.fr/cloudpro-obs/front/management";
+									}
+								}
+							} catch (err) {
+								console.log(err);
+							}
+
+							suspend(Url);
+						}
+					} else {
+						if (res.redirectUrl) {
+							AccountLogOut(function (res) {
+								window.open(res.redirectUrl, "_self");
+							}, function (res) {
+								console.log(res.resultMsg);
+							});
+						} else {
+							AccountLogOut(function (res) {
+								window.open("/", "_self");
+							}, function (res) {
+								console.log(res.resultMsg);
+							});
+						}
+					}
+				}, function (res) {});
+			}
+		}
+	}
+
+});
+
+mozillaForceKeyup = function (target) {
+	var isIntervalRunning, target;
+	if (jQuery.browser.mozilla && !(navigator.appName == 'Netscape' && navigator.userAgent.search('Trident') != -1)) {
+		isIntervalRunning = null;
+		$(target).bind('keydown', function (e) {
+			var forceKeyup = function (e) {
+				return e.currentTarget.trigger('keyup');
+			};
+			if (!isIntervalRunning) {
+				return isIntervalRunning = setInterval(forceKeyup(e), 100);
+			}
+		});
+		return $(target).bind('blur', function (e) {
+			if (isIntervalRunning) {
+				clearInterval(isIntervalRunning);
+				return isIntervalRunning = null;
+			}
+		});
+	}
+};
+
+var inputemailtimer = null;
+
+function getCookie(name) {
+	var cname = name + "=";
+	var dc = document.cookie;
+	if (dc.length > 0) {
+		begin = dc.indexOf(cname);
+		if (begin != -1) {
+			begin += cname.length;
+			end = dc.indexOf(";", begin);
+			if (end == -1)
+				end = dc.length;
+			return unescape(dc.substring(begin, end));
+		}
+	}
+	return null;
+}
+
+function clickPlaceHolderEvent(e) {
+	var current = $(this);
+	if (inputemailtimer == null && !current.val().length) {
+		inputemailtimer = setInterval(function () {
+			var text = current.val();
+			if (text.length != 0) {
+				showLabel(current.prev(), false);
+			}
+			if (!current.is(':focus')) {
+				clearInterval(inputemailtimer);
+				inputemailtimer = null;
+			}
+		}, 200);
+	}
+}
+
+function clickPlaceHolderEvent2(e) {
+	var current = $(this);
+	if (!current.prev().prev().length) {
+		if (inputemailtimer == null && !current.val().length) {
+			inputemailtimer = setInterval(function () {
+				var text = current.val();
+				if (text.length != 0) {
+					showLabel(current.prev(), false);
+				}
+				if (!current.is(':focus')) {
+					clearInterval(inputemailtimer);
+					inputemailtimer = null;
+				}
+			}, 200);
+		}
+	}
+}
+
+function dropPlaceHolderEvent(e) {
+	var current = $(this);
+	if (inputemailtimer == null && !current.val().length) {
+		inputemailtimer = setInterval(function () {
+			var text = current.val();
+			if (text.length != 0) {
+				showLabel(current.prev(), false);
+			}
+			if (!current.is(':focus')) {
+				clearInterval(inputemailtimer);
+				inputemailtimer = null;
+			}
+		}, 200);
+	}
+}
+
+function keyupPlaceHolderEvent(e) {
+	var current = $(this);
+	var text = "" + current.val();
+	if (text.length == 0) {
+		showLabel(current.prev(), true);
+	} else {
+		showLabel(current.prev(), false);
+	}
+}
+
+function keyupPlaceHolderEvent2(e) {
+	var current = $(this);
+	var text = "" + current.val();
+	if (!current.prev().prev().length) {
+		if (text.length == 0) {
+			showLabel(current.prev(), true);
+		} else {
+			showLabel(current.prev(), false);
+		}
+	}
+}
+
+function commonPreventEvent(e) {
+	if (e.preventDefault) {
+		e.preventDefault();
+	} else {
+		e.returnValue = false;
+	}
+}
+
+function commonPreventEvent2(e) {
+	commonPreventEvent(e);
+	$("#popupalert").trigger('click');
+}
+
+function commonStopPropagation(e) {
+	if (e.stopPropagation) {
+		e.stopPropagation();
+	} else {
+		e.cancelBubble = true;
+	}
+}
+
+function getSeletor(e) {
+	return (e.currentTarget) ? $(e.currentTarget) : $(e.srcElement);
+}
+
+function GetLink(id, successCB, failCB) {
+	var linkFormat = [];
+	linkFormat.push({
+		"fileId": id
+	});
+	var EventList = new Array();
+	var webdata = {
+		fileIdList: linkFormat
+	};
+	popcorn.getLink(webdata, successCB, failCB);
+}
+
+function GetFileInfo(id, successCB, failCB) {
+	var webdata = {
+		fileId: id
+	};
+	popcorn.getFileInfo(webdata, successCB, failCB);
+}
+
+function GetFilesInfo(idArray, successCB, failCB) {
+	var webdata = {
+		files: idArray
+	};
+	popcorn.getFilesInfo(webdata, successCB, failCB);
+}
+
+function AccountRegist(Email, Password, firstname, lastname, _linkId, successCB, failCB) {
+	if (_linkId.length == 0) {
+		var webdata = {
+			email: Email,
+			password: Password,
+			firstName: firstname,
+			lastName: lastname
+		};
+		popcorn.accountRegist(webdata, successCB, failCB);
+	} else {
+		var index = _linkId.lastIndexOf('&platform=');
+		if (index != -1) {
+			var platform = _linkId.substring(index + 10);
+			_linkId = _linkId.substring(0, index);
+		}
+		var webdata = {
+			email: Email,
+			password: Password,
+			firstName: firstname,
+			lastName: lastname,
+			linkId: _linkId
+		};
+		popcorn.accountRegist2(webdata, {
+			'platform': platform
+		}, successCB, failCB);
+	}
+}
+
+function AccountLogin(Email, Password, AutoLogin, successCB, failCB) {
+	var webdata = {
+		email: Email,
+		password: Password,
+		autoLogin: AutoLogin
+	};
+	popcorn.login(webdata, successCB, failCB);
+}
+
+function AccountLogOut(successCB, failCB) {
+	if (getCookie('ORANGEPROSTATUSCHECK')) deleteCookie('ORANGEPROSTATUSCHECK');
+	if (typeof isPchome != 'undefined' && isPchome) {
+		sendMessageToNative('pchome_logout', getErrorMsg());
+	} else {
+		popcorn.logout(successCB, failCB);
+	}
+}
+
+function sendFindpwMail(Email, successCB, failCB) {
+	var webdata = {
+		email: Email
+	};
+	popcorn.findpw(webdata, successCB, failCB);
+}
+
+function AccountIsExist(Email, successCB, failCB) {
+	var webdata = {
+		email: Email
+	};
+	popcorn.accountcheck(webdata, successCB, failCB);
+}
+
+function setChangepw(protocol, password, successCB, failCB) {
+	var webdata = {
+		password: password
+	};
+	popcorn.setchangepw(protocol, webdata, successCB, failCB);
+}
+
+function RequestVerifyEmail(Email, successCB, failCB) {
+	var webdata = {};
+	if (Email) {
+		webdata.email = Email;
+	}
+	popcorn.RequestVerifyEmail(webdata, successCB, failCB);
+}
+
+function AccountUserInfo(successCB, failCB, data) {
+	var webdata = {};
+
+	if (typeof data != 'undefined') {
+		webdata = data;
+	}
+
+	popcorn.getuserinfo(webdata, function (res) {
+		if(res.resultCode == 0){
+			if (typeof versionmngr != 'undefined') { // B2B path changed for all user levels
+				versionmngr.fileViewWinOpen = function (fileIdNum, revisionNum) {
+					var encryptData = $.encodeBase62(fileIdNum); //$.base64('encode', fileIdNum);
+					var str = (versionmngr.extType == 'zip') ? '/api/2/drive/download/' : '/view/2/viewer/';
+					var suffixStr = fileIdNum + '/' + revisionNum;
+					if (newShareDoucments == 'true') {
+						// new download api
+						// str = (versionmngr.extType=='zip') ? '/api/1/weblink/downloadweblink/' : '/fileview/';
+						// suffixStr = encryptData + '/' + revisionNum;
+						str = (versionmngr.extType == 'zip') ? '/api/2/drive/download/' : '/d/';
+						suffixStr = ((versionmngr.extType == 'zip') ? fileIdNum : encryptData) + '/' + revisionNum;
+					}
+					str += suffixStr;
+					if (versionmngr.extType == 'zip') {
+						window.open(str, "_self");
+					} else {
+						window.open(str);
+					}
+				};
+			}
+			$USERINFO.setData('pre_teamLevel', false);
+			if(res.level == 1){
+				$USERINFO.setData('myinfo', {
+					'name': res.fullName,
+					'email': res.email,
+					'timePortraitRegist': res.timePortraitRegist,
+					'level': res.level
+				});
+			} else {
+				$USERINFO.setData('myinfo', {
+					'name': res.fullName,
+					'email': res.email,
+					'timePortraitRegist': res.timePortraitRegist,
+					'level': res.level,
+					'gateType' : res.gateType,
+					'productType' : res.productType
+				});
+			}
+	
+			if (typeof res.onlySocialUser != 'undefined' && res.onlySocialUser && !(typeof res.socialProviderList != 'undefined' && res.socialProviderList.indexOf('azure') == 0) && !res.hasPassword)
+				$USERINFO.setData('social_not_pw', true);
+			if (typeof res.status != "undefined" && res.status == "UNVERIFIED" || res.status == "TEMPORARY")
+				$USERINFO.setData('UNVERIFIED', true);
+			else
+				$USERINFO.setData('UNVERIFIED', false);
+			if (typeof res.payDueDate != "undefined") {
+				$USERINFO.setData('PAYDATE', res.payDueDate);
+			}
+	
+			if (res.lastTeamLeaveTime) {
+				if (res.lastPaymentExpiredTime < res.lastTeamLeaveTime) {
+					$USERINFO.setData('pre_teamLevel', true);
+					$USERINFO.setData('PAYDATE', res.lastTeamLeaveTime);
+				}
+	
+			}
+	
+			if (typeof res.status != "undefined")
+				$USERINFO.setData('STATUS', res.status);
+	
+			//가입일 7일 후 무료체험 가능
+			if (typeof res.usedPCOfficeFreetrial != "undefined"){
+				//console.log('### AccountUserInfo');
+				var period = IsProdouctionDomain() == 'prod' ? 7 : 0;
+				if(!res.usedPCOfficeFreetrial){
+					$USERINFO.setData('usedPCOfficeFreetrial', checkUsedFreeTrialUser(res.timeRegist, period));	
+				} else {
+					$USERINFO.setData('usedPCOfficeFreetrial', res.usedPCOfficeFreetrial);
+				}
+			}
+			
+			if(typeof res.paymentstatus != 'undefined'){
+				$USERINFO.setData('paymentstatus', res.paymentstatus);
+			} else {
+				$USERINFO.setData('paymentstatus', '');
+			}
+
+			$USERINFO.setData('userStatus' , 'authed');
+				
+		} else if (res.resultCode == Enum.service.REGULARSERVICE || res.resultCode == Enum.service.EMGERGENSERVICE){
+			location.href = '/' + LanguagePack.CURRENT_LOCALE + '/servercheck';
+		} else {
+			$USERINFO.setData('userStatus' , 'public');
+		}
+		$USERINFO.setData('setComplete', true);
+
+		if (successCB) {
+			successCB(res);
+		}
+
+	}, failCB);
+
+}
+
+function SimpleAccountUserInfo(successCB, failCB) {
+	var webdata = {};
+	popcorn.getsimpleuserinfo(webdata, function (res) {
+		if (typeof res.status != "undefined" && res.status == "UNVERIFIED" || res.status == "TEMPORARY") {
+			$USERINFO.setData('UNVERIFIED', true);
+		} else {
+			$USERINFO.setData('UNVERIFIED', false);
+		}
+		if (typeof res.status != "undefined")
+			$USERINFO.setData('STATUS', res.status);
+
+		//가입일 7일 후 무료체험 가능
+		if (typeof res.usedPCOfficeFreetrial != "undefined"){
+			var period = IsProdouctionDomain() == 'prod' ? 7 : 0;
+			if(!res.usedPCOfficeFreetrial){
+				$USERINFO.setData('usedPCOfficeFreetrial', checkUsedFreeTrialUser(res.timeRegist, period));	
+			} else {
+				$USERINFO.setData('usedPCOfficeFreetrial', res.usedPCOfficeFreetrial);
+			}
+		}
+
+		if (successCB) {
+			successCB(res);
+		}
+	}, failCB);
+
+}
+
+function checkUsedFreeTrialUser(time, period){
+	var today = new Date();
+	today.setHours(0, 0, 0, 0);
+	var registTime = new Date(time * 1000);
+	registTime.setHours(0, 0, 0, 0);
+	var datadiff = Math.ceil((today.getTime() - registTime.getTime()) / 1000 / 60 / 60 / 24);
+	if(datadiff >= period){
+		return false;
+	} else {
+		return true;
+	}
+}
+
+function AddressSync(eventType, friendList, successCB, failCB) {
+	var webdata = {
+		eventType: eventType,
+		friendList: friendList
+	};
+
+	popcorn.addressSync(webdata, successCB, failCB);
+}
+
+function DeleteTrashcan(id, successCB, failCB) {
+	var webdata = {
+		fileId: id
+	};
+	popcorn.deletetrashcan(webdata, successCB, failCB);
+}
+
+function GetDriveList(successCB, failCB) {
+	var webdata = {
+		'isGrouping': true
+	};
+	popcorn.getDriveList(webdata, successCB, failCB);
+}
+
+function GetLastRevision(successCB, failCB) {
+	popcorn.getrevision(successCB, failCB);
+}
+
+function setLocale(locale, successCB, failCB) {
+	var webdata = {
+		locale: locale
+	};
+	popcorn.setlocale(webdata, successCB, failCB);
+}
+
+function setLocaleSuccessCB(lang) {
+	if (seocheck) {
+		var prefix = createPrefix(lang);
+		location.href = location.href.replace(script_prefix, prefix);
+	} else {
+		location.reload(true);
+	}
+}
+
+function changeLanguage(event) {
+	if (event) {
+		commonStopPropagation(event);
+	}
+	if (!displayLaungeheader) {
+		$(".changeLocale").show();
+		displayLaungeheader = true;
+		$("body").one('touchend click', function (e) {
+			if (e.type == 'click') {
+				if (displayLaungeheader) {
+					displayLaungeheader = false;
+					$(".changeLocale").hide();
+				}
+			} else {
+				setTimeout(function () {
+					if (displayLaungeheader) {
+						displayLaungeheader = false;
+						$(".changeLocale").hide();
+					}
+				}, 500);
+			}
+
+		});
+	} else {
+		$(".changeLocale").hide();
+		displayLaungeheader = false;
+	}
+}
+
+function GetServiceState(successCB, failCB) {
+	popcorn.getServiceState(successCB, failCB);
+}
+
+function getServiceStateSuccessCB(event, res) {
+	if (typeof res.resultCode == "undefined") {
+		return 1;
+	}
+	if (res.resultCode == Enum.service.CHECKSCHEDULED) {
+		var currentTime = getTime();
+		var startTime = new Date(res.startTime * 1000);
+		startTime = startTime.getTime();
+		if (currentTime + (1000 * 60 * 60 * 24) > startTime) {
+			return 3;
+		}
+	}
+	return 1;
+}
+
+function getServiceStateFailCB(event, res) {
+	//console.log("getServiceStateSuccessCB fail");
+}
+
+function goHome(e) {
+	if (e) {
+		commonPreventEvent(e);
+	}
+	location.href = location.protocol + '//' + location.host + "/view/home";
+}
+
+function goLoginCB2(e) {
+	if (e) {
+		commonPreventEvent(e);
+	}
+	var url = location.href;
+	var index = url.indexOf("unverified");
+	if (index == -1) {
+		var index = url.indexOf("return=");
+		if (index != -1) {
+			location.href = location.protocol + '//' + location.host + url.substring(index + 7);
+		} else {
+			location.reload(true);
+		}
+	} else {
+		location.href = location.protocol + '//' + location.host + "/view/home";
+	}
+}
+
+function goLoginCB3(e) {
+	if (e) {
+		commonPreventEvent(e);
+	}
+
+	var params = getUrlParam(),
+		returnParam = params['return'] || '',
+		paramArray = [];
+	if (!returnParam) {
+		location.href = location.protocol + '//' + location.host + "/drive";
+	} else {
+		for(var key in params){
+			if(key == 'email' || key == 'return') continue;
+			paramArray.push(key + '=' + params[key]);
+		}
+		if(paramArray.length){
+			location.href = location.protocol + '//' + location.host + returnParam + (returnParam.indexOf('?') > -1 ? '&' : '?') + paramArray.join('&');
+		} else {
+			location.href = location.protocol + '//' + location.host + returnParam;
+		}
+		
+	}
+}
+
+function goHomeCB(e) {
+	if (e.preventDefault) e.preventDefault();
+	var popup = e.data.param[PopupDataKey.POPUP];
+	popup.destroy();
+	location.href = location.protocol + '//' + location.host + "/drive";
+}
+
+function Sync(event, driveId, successCB, failCB) {
+	var EventList = new Array();
+	var webdata;
+	if (event.divide) {
+		var startindex = (event.current - 1) * sendAjaxCount;
+		if (event.total == event.current) {
+			for (var i = 0; i < event.eventList.length - startindex; i++) {
+				EventList.push(syncEvent(event.eventList[startindex + i]));
+			}
+		} else {
+			for (var i = 0; i < sendAjaxCount; i++) {
+				EventList.push(syncEvent(event.eventList[startindex + i]));
+			}
+		}
+	} else {
+		for (var i = 0; i < event.eventList.length; i++) {
+			EventList.push(syncEvent(event.eventList[i]));
+		}
+
+	}
+	webdata = {
+		revision: event.revision,
+		eventList: EventList,
+		driveId: driveId
+	};
+	popcorn.sync(webdata, successCB, failCB);
+}
+
+function SyncTeam(event, successCB, failCB) {
+	var EventList = new Array();
+	var webdata;
+
+	webdata = {
+		folderList: [{
+			folderId: event.id,
+			revision: event.revision
+		}]
+	};
+	popcorn.syncTeam(webdata, successCB, failCB);
+}
+
+function GetList(id, successCB, failCB) {
+	var webdata = {
+		parentId: id,
+		fileStatus: "NORMAL"
+	};
+	popcorn.getlist(webdata, successCB, failCB);
+}
+
+function GetTeamList(id, path, successCB, failCB) {
+	var webdata = {
+		folderList: [{
+			folderId: id,
+			path: path
+		}],
+		fileType: 'ALL',
+		recursive: false,
+		fileStatus: 'NORMAL'
+	};
+	popcorn.getTeamlist(webdata, successCB, failCB);
+}
+
+function GetFolderList(id, successCB, failCB) {
+	var webdata = {
+		parentId: id,
+		fileType: 'DIR',
+		fileStatus: "NORMAL"
+	};
+	popcorn.getlist(webdata, successCB, failCB);
+}
+
+function GetListPath(path, successCB, failCB) {
+	var webdata = {
+		parentId: null,
+		path: path,
+		fileStatus: "NORMAL"
+	};
+	popcorn.getlist(webdata, successCB, failCB);
+}
+
+function GetTrashCanList(id, successCB, failCB) {
+	var webdata = {
+		parentId: id
+	};
+	popcorn.getTrashcanList(webdata, successCB, failCB);
+}
+
+function SendSupportEmail(email, name, type, deviceType, title, content, successCB, failCB) {
+	var webdata = {
+		'email': email,
+		'name': name,
+		'type': type,
+		'subject': title,
+		'environment': deviceType,
+		'content': content
+	};
+
+	popcorn.sendSupportEmail(webdata, successCB, failCB);
+}
+
+function SearchFileName(target, text, parentid, successCB, failCB) {
+	if (searchEngine_new) {
+		var type = '';
+		if (gUserLevel == "FREE" || gUserLevel == "PAID2") {
+			var webdata = {
+				keyword: text,
+				parentId: parentid
+
+			};
+			popcorn.searchfile(webdata, successCB, failCB);
+		} else {
+
+			if ($('#searchMethod').children('.on').index() == 2) {
+				//type = 'filename';
+				$('.contents fieldset.search p').hide();
+				var currentText = searchText;
+				if (target == "file_search") {
+					if (text)
+						currentText = text;
+				}
+
+				var webdata = {
+					keyword: currentText,
+					parentId: parentid
+
+				};
+				popcorn.searchfile(webdata, successCB, failCB);
+				return;
+			} else if ($('#searchMethod').children('.on').index() == 4) {
+				type = 'contents';
+			}
+			$('.contents fieldset.search p').show();
+			if (target == "file_search") {
+				if (text.length)
+					previousSearchText = previousSearchText + " " + text;
+				SearchContents(text, previousSearchText, parentid, successCB, failCB, type);
+			} else {
+				previousSearchText = text;
+				SearchContents(text, '', parentid, successCB, failCB, type);
+			}
+		}
+	} else {
+		var webdata = {
+			keyword: text,
+			parentId: parentid
+
+		};
+		popcorn.searchfile(webdata, successCB, failCB);
+	}
+
+	//logTracking
+	var webData = $LOGMODEL.getData();
+	webData['ti'].t = LogType.tracking.page;
+	webData['obj'].dp = "FileBrowser";
+	webData['obj'].dt = "Search";
+	$LOGMODEL.sendData(webData);
+
+}
+
+function SearchContents(text, addText, parentid, successCB, failCB, type) {
+	$('#toastpop').toastpopup('show', LanguagePack.LOADING);
+	var webdata = {
+		'keyword': text,
+		'typeKeyword': type,
+		'highlight': 1,
+		'resultCount': 1000,
+		'startPage': 0,
+		'contentsLength': 128,
+		'operatorAND': addText
+
+	};
+	popcorn.searchContents(webdata, function (res) {
+		$('#toastpop').toastpopup('hide', LanguagePack.LOADING);
+		successCB(res);
+	}, failCB);
+}
+
+function CancleUpload(id, revision, successCB, failCB) {
+	var webdata = {
+		fileId: id,
+		revision: revision
+	};
+	popcorn.cancleupload(webdata, successCB, failCB);
+}
+
+function DeleteWeblink(id, successCB, failCB) {
+	var webdata = {
+		fileId: id,
+	};
+	popcorn.deleteweblink(webdata, successCB, failCB);
+}
+
+function ModifyUserInfo(data, successCB, failCB) {
+	// type NAME , PASSWORD , EMAILRECEIVE , EMAIL
+	var webdata = {
+		type: data.type,
+		firstName: data.firstName,
+		lastName: data.lastName,
+		oldPassword: data.oldPassword,
+		newPassword: data.newPassword,
+		password: data.password,
+		emailReceive: data.emailReceive,
+		email: data.email,
+		locale: data.locale
+	};
+	popcorn.Modifyuserinfo(webdata, successCB, failCB);
+}
+
+function DisConnectDevice(id, successCB, failCB) {
+	var webdata = {
+		deviceId: id,
+	};
+	popcorn.Disconnectdevice(webdata, successCB, failCB);
+}
+
+function AccountRemove(data, successCB, failCB) {
+
+	popcorn.accountRemove(data, successCB, failCB);
+}
+
+function createShareTask(name, attendanceList, fileList, successCB, failCB, isPublic) {
+	var webdata = {
+		"name": name,
+		"attendanceList": attendanceList,
+		"fileList": fileList,
+		"isPublic": isPublic
+	};
+	popcorn.pCreateShareTask(webdata, successCB, failCB);
+}
+
+function AddAttendance(_id, attendanceList, successCB, failCB) {
+	var webdata = {
+		"id": _id,
+		"attendanceList": attendanceList,
+	};
+	popcorn.AddAttendance(webdata, successCB, failCB);
+
+}
+
+function sendInvitation(_emailList, successCB, failCB) {
+	var array = new Array();
+	for (var i = 0; i < _emailList.length; i++) {
+		array.push(_emailList[i].email);
+	}
+
+	var webdata = {
+		"emailList": array,
+	};
+	popcorn.sendInvitation(webdata, successCB, failCB);
+}
+// etc..
+// new sync object
+function syncEvent(data) {
+	var jsEvent = {
+		"eventId": data.eventId,
+		"eventType": data.eventType,
+		"fileId": data.fileId,
+		"parentId": data.parentId,
+		"name": data.name,
+		"lastRevision": data.lastRevision,
+		"path": data.path,
+		"hide": data.hide,
+		"size": data.size,
+		"pinUp": data.pinup,
+		"pinUpTime": data.pinuptime,
+		"lastModified": data.eventTime,
+		"fileType": data.fileType,
+		"referenceId": data.referenceId
+	};
+	return jsEvent;
+}
+
+// form data 생성
+function insertformData(file, event) {
+	var fd = new FormData();
+	s_name = file.name.split(".");
+	type = s_name[s_name.length - 1];
+	fd.append("eventId", event.eventId);
+	fd.append("multipartFile", file);
+	fd.append("fileId", event.fileId);
+	fd.append("revision", event.lastRevision);
+	return fd;
+}
+
+// response 처리
+function CheckResultList(eventList, response) {
+	if (response.resultList && response.resultList.length) {
+		for (var i = 0; i < response.resultList.length; i++) {
+			if (response.resultList[i].resultCode == Enum.success.OK) {
+				for (var j = 0; j < eventList.length; j++) {
+					if (eventList[j].eventId == response.resultList[i].eventId) {
+						if (response.resultList[i].copiedFileId) {
+							eventList[j].copiedFileId = response.resultList[i].copiedFileId;
+						}
+						eventList[j].fileId = response.resultList[i].fileId;
+						if (response.resultList[i].revision) {
+							eventList[j].lastRevision = response.resultList[i].revision;
+						}
+						if (response.resultList[i].size) {
+							eventList[j].size = response.resultList[i].size;
+						}
+						if (response.resultList[i].lastModified) {
+							eventList[j].eventTime = response.resultList[i].lastModified;
+						}
+						if (response.resultList[i].eventType) {
+							eventList[j].eventType = response.resultList[i].eventType;
+						}
+						if (response.resultList[i].referenceId) {
+							eventList[j].referenceId = response.resultList[i].referenceId;
+						}
+						eventList[j].name = response.resultList[i].targetName;
+						eventList[j].recursive = response.resultList[i].recursive;
+						eventList[j].deletedTime = response.resultList[i].time;
+						eventList[j].fileRevision = response.resultList[i].fileRevision;
+						break;
+					}
+				}
+			} else {
+				for (var j = 0; j < eventList.length; j++) {
+					if (eventList[j].eventId == response.resultList[i].eventId) {
+						eventList.splice(j, 1);
+						break;
+					}
+				}
+			}
+		}
+	}
+	return eventList;
+}
+
+function expireSessionPopup(){
+	var popupMessage = new Array();
+	popupMessage[0] = LanguagePack.POPUP_EXPIRED_SESSION;
+	var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {
+		popupMessage: popupMessage
+	}, logout, logout, logout);
+	popup.create();
+	popup.show();
+}
+
+function CheckResult(event, response, agent) {
+	if (response.resultCode !== Enum.success.OK) {
+		var title;
+		var str = '';
+		var cb;
+		var error = false;
+		if (response.resultCode == Enum.account.UNAUTHENTICATED) {
+			expireSessionPopup();
+			return;
+		} else if (response.resultCode == Enum.account.EMAILNOTEXIST || response.resultCode == Enum.account.LOGOUTBYACCOUNTDELETED) {
+			error = true;
+			str = LanguagePack.POPUP_REMOVE_ACCOUNT;
+			title = LanguagePack.KEYWORD_CONFIRM;
+			cb = logout;
+		} else if (response.resultCode == Enum.account.LOGOUTBYDEVICEDISCONNECT) {
+			error = true;
+			if (typeof agent !== 'undefined' && agent) {
+				str = LanguagePack.LOGOUTBYDEVICEDISCONNECT;
+			} else {
+				str = LanguagePack.POPUP_LOGOUTBYOTHERSESSIONS;
+			}
+			title = LanguagePack.KEYWORD_CONFIRM;
+			cb = logout;
+		} else if (response.resultCode == Enum.account.LOGOUTBYPASSWORDCHANGED) {
+			error = true;
+			str = LanguagePack.POPUP_LOGOUTBYPASSWORDCHANGED;
+			try {
+				if (_chromeCast) {
+					str = LanguagePack.POPUP_LOGOUTBYPASSWORDCHANGED_CHROMECAST;
+				}
+			} catch (err) {
+				console.log(err);
+			}
+			title = LanguagePack.KEYWORD_CONFIRM;
+			cb = logout;
+		} else if (response.resultCode == Enum.account.INVALIDPUSHREGISTPARAM) {
+			error = true;
+			str = LanguagePack.POPUP_LOGOUTBYOTHERSESSIONS;
+			title = LanguagePack.KEYWORD_CONFIRM;
+			cb = logout;
+		} else if (response.resultCode == Enum.account.TOKENEXPIRED) {
+			error = true;
+			str = LanguagePack.POPUP_LOGOUTBYOTHERSESSIONS;
+			title = LanguagePack.EXPIRED_ACCOUNT;
+			cb = goLoginCB;
+		} else if (response.resultCode == Enum.sync.FILEACCESSVIOLATIONBYINVALIDUSER) {
+			error = true;
+			str = LanguagePack.SCREEN_UNAUTHORIZEDACCESS;
+			title = LanguagePack.KEYWORD_CONFIRM;
+			cb = defaultAlertCB;
+		} else if (response.resultCode == Enum.account.INVALIDTOKEN) {
+			error = true;
+			str = LanguagePack.POPUP_LOGOUTBYOTHERSESSIONS;
+			title = LanguagePack.EXPIRED_ACCOUNT;
+			cb = logout;
+		} else if (response.resultCode == Enum.service.OK || response.resultCode == Enum.service.CHECKSCHEDULED || response.resultCode == Enum.service.EXCEPTION) {
+			if (typeof agent == 'undefined' || !agent) {
+				window.location.reload();
+				return;
+			}
+		} else if (response.resultCode == Enum.unknown.SERVERERROR || response.resultCode == Enum.unknown.UNKNOWN || response.resultCode == Enum.unknown.UNKNOWN2 || response.resultCode == Enum.unknown.MEDIATYPEERROR) {
+			error = true;
+			str = LanguagePack.POPUP_TEMPORARYERROR;
+			title = LanguagePack.KEYWORD_ALERT;
+			cb = defaultAlertCB;
+		} else if (response.resultCode == Enum.account.USINGTIMEExPIRED) {
+			if (typeof agent == 'undefined' || !agent) {
+				goVerifyEmail();
+				return;
+			}
+		} else if (response.resultCode == Enum.sync.SAMENAMEEXIST) {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.POPUP_ERRORBYSAMEFOLDERNAME;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_NEWFOLDER, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+			return;
+		} else if (response.resultCode == Enum.payment.ERRORPAYMENTHISTORY) {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.NOPAYMENTINFO;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+			return;
+		} else if (response.resultCode == Enum.service.REGULARSERVICE || response.resultCode == Enum.service.EMGERGENSERVICE){
+			location.href = '/' + LanguagePack.CURRENT_LOCALE + '/servercheck';
+			return;
+		}
+
+		if (error) {
+			if (typeof agent !== 'undefined' && agent) {
+				cb = commonPreventEvent2;
+			}
+			var popupMessage = new Array();
+			popupMessage[0] = str;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, title, {
+				popupMessage: popupMessage
+			}, cb, cb, cb);
+			popup.create();
+			popup.show();
+		}
+		return null;
+	} else if (event != null) {
+		event.fileId = response.result.fileId;
+		event.lastRevision = response.result.revision;
+
+		if (response.result.size) {
+			event.size = response.result.size;
+		}
+		if (response.result.lastModified) {
+			event.eventTime = response.result.lastModified;
+		}
+		event.name = response.result.targetName;
+		event.fileRevision = response.result.fileRevision;
+		return event;
+	}
+	return true;
+}
+
+
+function CheckEventList(eventlist) {
+	for (var i = 0; i < eventlist.length; i++) {
+		/*if (eventlist[i].parentId) {
+			eventlist[i].parentId = eventlist[i].parentId; //.replace(/^\s*|\s*$/g,"");
+		}
+		if (eventlist[i].fileId) {
+			eventlist[i].fileId = eventlist[i].fileId; //.replace(/^\s*|\s*$/g,"");
+		}*/
+		if (eventlist[i].lastModified) {
+			eventlist[i].eventTime = eventlist[i].lastModified;
+		}
+	}
+	return eventlist;
+}
+
+
+// response 에 대한 content 처리
+function changeContent(event, fn, newListId) {
+
+	switch (event.eventType) {
+		case "UPLOAD":
+		case "FILEADD":
+			fn.FileAdd(event, newListId);
+			break;
+		case "DIRADD":
+			fn.DirAdd(event, newListId);
+			break;
+		case "UPDATA":
+			fn.Update(event, newListId);
+			break;
+		case "RENAME":
+			fn.Rename(event, newListId);
+			break;
+		case "DIRMOVEDTO":
+			fn.DIRMOVEDTO(event, newListId);
+			break;
+		case "DIRMOVEDFROM":
+			fn.DIRMOVEDFROM(event, newListId);
+			break;
+		case "DIRMOVE":
+			fn.DirMove(event, newListId);
+			break;
+		case "FILEMOVEDTO":
+			fn.FILEMOVEDTO(event, newListId);
+			break;
+		case "FILEMOVEDFROM":
+			fn.FILEMOVEDFROM(event, newListId);
+			break;
+		case "FILEMOVE":
+			fn.FileMove(event, newListId);
+			break;
+		case "DELETE":
+			fn.Delete(event, newListId);
+			break;
+		case "DELETEHIDDEN":
+			fn.DeleteHidden(event, newListId);
+			break;
+			/*	case "UPLOAD":
+					fn.Upload(event, newListId);
+					break;*/
+		case "UPDATE":
+			fn.Update(event, newListId);
+			break;
+		case "FILECOPY":
+			fn.FileAdd(event, newListId);
+			break;
+		case "SWEEP":
+			fn.Sweep(event, newListId);
+			break;
+		default:
+			//console.log('event type not exist');
+			break;
+	}
+}
+
+// access token
+function getAccessToken() {
+	var dataArray = document.cookie.split(";");
+	var data = null;
+	var index = 0;
+	for (var i = 0; i < dataArray.length; i++) {
+		data = dataArray[i];
+		index = data.indexOf("accessToken=");
+		if (index != -1) {
+			// data = data.substring(12);
+			break;
+		} else {
+			continue;
+		}
+	}
+	return data;
+
+}
+
+/**
+ * ex) getDateFormat(new Date(),"YYYY/DD/MM HH:mm:ss AP")<br><br>
+ * 대소문자 구별함<br>
+ * YY => 2자리 연도<br>
+ * YYYY => 4자리 연도<br>
+ *
+ * M  => 1자리 월<br>
+ * MM => 2자리 월 (1 => 01)<br>
+ *
+ * D  => 1자리 일<br>
+ * DD => 2자리 일 (2 => 01)<br>
+ *
+ * <!-- MMM => 약자로 월 (jan)<br>
+ * MMMM => 단어로 월 (january)<br>
+ *
+ * DDD => 약자로 요일 (mon)<br>
+ * DDDD => 단어로 요일 (monday)<br> -->
+ *
+ * AP => AM/PM<br>
+ *
+ * h  => 1자리로 시간 (12시간 기준)<br>
+ * hh => 2자리로 시간 (12시간 기준)<br>
+ *
+ * H  => 1자리로 시간 (24시간 기준)<br>
+ * HH => 2자리로 시간 (24시간 기준)<br>
+ *
+ * m  => 1자리로 분<br>
+ * mm => 2자리로 분<br>
+ *
+ * s  => 1자리로 초<br>
+ * ss => 2자리로 초<br>
+ **/
+//function getDateFormat(theDate,dateFormatString) {
+//	if (theDate == null) {
+//		return "theDateNull";
+//	}
+//	if (dateFormatString == null) {
+//		dateFormatString = "YYYY/MM/DD hh:mm";
+//	}
+//
+//	var year = theDate.getFullYear();
+//	var shortYear = (''+year).substring(2);
+//
+//	var month = theDate.getMonth() + 1;
+//	var longMonth = ((''+month).length==1)?'0'+month:month;
+//
+//	var date = theDate.getDate();
+//	var longDate = ((''+date).length==1)?'0'+date:date;
+//
+//	var hours = theDate.getHours();
+//	var longHours = ((''+hours).length==1)?'0'+hours:hours;
+//	var twelveHours = hours>12 ? hours-12 : (hours==12 ? 12 : hours);
+//	var longTwelveHours = ((''+twelveHours).length==1)?'0'+twelveHours:twelveHours;
+//
+//	var hoursStr = "";
+//	var dateString = null;
+//	if(hours < 12) {
+//		hoursStr = LanguagePack.DATE_AM;
+//	} else {
+//		hoursStr = LanguagePack.DATE_PM;
+//	}
+//	var minutes = theDate.getMinutes();
+//	var longMinutes = ((''+minutes).length==1)?'0'+minutes:minutes;
+//
+//	var seconds = theDate.getSeconds();
+//	var longSeconds = ((''+seconds).length==1)?'0'+seconds:seconds;
+//
+//
+//	dateFormatString = dateFormatString.replace("YYYY",year);
+//	dateFormatString = dateFormatString.replace("YY",shortYear);
+//	//dateFormatString = dateFormatString.replace("MMMM",);
+//	//dateFormatString = dateFormatString.replace("MMM",);
+//	dateFormatString = dateFormatString.replace("MM",longMonth);
+//	dateFormatString = dateFormatString.replace("M",month);
+//	//dateFormatString = dateFormatString.replace("DDDD",);
+//	//dateFormatString = dateFormatString.replace("DDD",);
+//	dateFormatString = dateFormatString.replace("DD",longDate);
+//	dateFormatString = dateFormatString.replace("D",date);
+//
+//	dateFormatString = dateFormatString.replace("AP",hoursStr);
+//
+//	dateFormatString = dateFormatString.replace("HH",longHours);
+//	dateFormatString = dateFormatString.replace("H",hours);
+//	dateFormatString = dateFormatString.replace("hh",longTwelveHours);
+//	dateFormatString = dateFormatString.replace("h",twelveHours);
+//
+//	dateFormatString = dateFormatString.replace("mm",longMinutes);
+//	dateFormatString = dateFormatString.replace("m",minutes);
+//
+//	dateFormatString = dateFormatString.replace("ss",longSeconds);
+//	dateFormatString = dateFormatString.replace("s",seconds);
+//
+//	return dateFormatString;
+//}
+
+function covertunixTime2(time, feedline) {
+	if (typeof ischina != 'undefined' && ischina == 'true') {
+		return covertunixTimeCN(time);
+	}
+	var theDate = new Date(time * 1000);
+
+	switch (LanguagePack.CURRENT_LAN) {
+		case "en":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "M/D/YYYY h:mm AP");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YYYY h:mm AP");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YYYY h:mm AP");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YYYY h:mm AP");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D h:mm AP");
+				}
+			}
+			break;
+		case "ko":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "YYYY/M/D AP h:mm");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D AP h:mm");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YYYY AP h:mm");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YYYY AP h:mm");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D AP h:mm");
+				}
+			}
+			break;
+		case "jp":
+		case "cn":
+		case "zhTW":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "YYYY/M/D h:mm");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D h:mm");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YYYY h:mm");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YYYY h:mm");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D h:mm");
+				}
+			}
+			break;
+		case "fr":
+		case "pl":
+		case "es":
+		case "id":
+		case "it":
+		case "de":
+		case "ru":
+		case "ptBR":
+		case "ptPT":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "D/M/YYYY h:mm");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YYYY h:mm");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YYYY h:mm");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YYYY h:mm");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D h:mm");
+				}
+			}
+			break;
+		case "ar":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "AP h:mm D/M/YYYY");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "AP h:mm D/M/YYYY");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "AP h:mm M/D/YYYY");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "AP h:mm D/M/YYYY");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "AP h:mm YYYY/M/D");
+				}
+			}
+			break;
+		default:
+			if (feedline) {
+				dateString = poLocal.getDateFormat(theDate, "YYYY. M. D<br>AP h:mm");
+			} else {
+				dateString = poLocal.getDateFormat(theDate, "YYYY. M. D AP h:mm");
+			}
+			break;
+	}
+
+	return dateString;
+}
+
+function covertPaydueDate(time) {
+	var theDate = new Date(time * 1000);
+
+	var month = theDate.getMonth() + 4;
+	var date = theDate.getDate();
+	var hours = theDate.getHours();
+	var hoursStr = "";
+	var dateString = null;
+	var year = theDate.getFullYear();
+	if (hours < 12) {
+		//hours = LanguagePack.DATE_AM + hours;
+		hoursStr = LanguagePack.DATE_AM;
+	} else {
+		hours = hours - 12;
+		if (hours == 0) {
+			hours = 12;
+		}
+		hoursStr = LanguagePack.DATE_PM;
+		//hours = LanguagePack.DATE_PM + hours;
+	}
+	if (month > 12) {
+		month = month - 12;
+		year = year + 1;
+	}
+
+	var minute = theDate.getMinutes();
+	if (("" + minute).length == 1) {
+		minute = "0" + minute;
+	}
+	if (LanguagePack.CURRENT_LAN == "en") {
+		if (isPCHOME) {
+			dateString = month + "/" + date + "/" + year + " ";
+		} else {
+			if (dateFormatType == 0 || dateFormatType == 1) {
+				dateString = month + "/" + date + "/" + year + " ";
+			} else if (dateFormatType == 2) {
+				dateString = date + "/" + month + "/" + year + " ";
+			} else {
+				dateString = year + "/" + month + "/" + date + " ";
+			}
+		}
+	} else if (LanguagePack.CURRENT_LAN == "ko" || LanguagePack.CURRENT_LAN == "jp" || LanguagePack.CURRENT_LAN == "cn") {
+		if (isPCHOME) {
+			dateString = year + "/" + month + "/" + date + " ";
+		} else {
+			if (dateFormatType == 0) {
+				dateString = year + "/" + month + "/" + date + " ";
+			} else if (dateFormatType == 1) {
+				dateString = month + "/" + date + "/" + year + " ";
+			} else if (dateFormatType == 2) {
+				dateString = date + "/" + month + "/" + year + " ";
+			} else {
+				dateString = year + "/" + month + "/" + date + " ";
+			}
+		}
+	} else if (LanguagePack.CURRENT_LAN == "fr" || LanguagePack.CURRENT_LAN == "ar" || LanguagePack.CURRENT_LAN == "es" || LanguagePack.CURRENT_LAN == "pl" ||
+		LanguagePack.CURRENT_LAN == "id" || LanguagePack.CURRENT_LAN == "it" || LanguagePack.CURRENT_LAN == "de" || LanguagePack.CURRENT_LAN == "ru" || LanguagePack.CURRENT_LAN == "zhTW") {
+		if (isPCHOME) {
+			dateString = date + "/" + month + "/" + year + " ";
+		} else {
+			if (dateFormatType == 0) {
+				dateString = date + "/" + month + "/" + year + " ";
+			} else if (dateFormatType == 1) {
+				dateString = month + "/" + date + "/" + year + " ";
+			} else if (dateFormatType == 2) {
+				dateString = date + "/" + month + "/" + year + " ";
+			} else {
+				dateString = year + "/" + month + "/" + date + " ";
+			}
+		}
+	} else {
+		dateString = year + ". " + month + ". " + date + " ";
+	}
+
+	return dateString;
+}
+
+function covertunixTime3(time) {
+	var theDate = new Date(time * 1000);
+
+	var month = theDate.getMonth() + 1;
+	if (("" + month).length == 1) {
+		month = "0" + month;
+	}
+	var date = theDate.getDate();
+	if (("" + date).length == 1) {
+		date = "0" + date;
+	}
+	var hours = theDate.getHours();
+
+	var dateString = theDate.getFullYear() + LanguagePack.DATE_YEAR + month + LanguagePack.DATE_MONTH + date + LanguagePack.DATE_DAY;
+
+	return dateString;
+}
+
+function covertunixTime4(time) {
+	var theDate = new Date(time * 1000);
+
+	switch (LanguagePack.CURRENT_LAN) {
+		case "en":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "M/D/YY");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YY");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YY");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YY");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YY/M/D");
+				}
+			}
+			break;
+		case "ko":
+		case "jp":
+		case "cn":
+		case "zhTW":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "YY/M/D");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "YY/M/D");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YY");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YY");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YY/M/D");
+				}
+			}
+			break;
+		case "fr":
+		case "ar":
+		case "pl":
+		case "es":
+		case "id":
+		case "it":
+		case "de":
+		case "ru":
+		case "ptBR":
+		case "ptPT":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "D/M/YY");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YY");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YY");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YY");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YY/M/D");
+				}
+			}
+			break;
+		default:
+			dateString = poLocal.getDateFormat(theDate, "YY. M.D");
+			break;
+	}
+	return dateString;
+}
+
+function covertunixTime5(time) {
+	if (typeof ischina != 'undefined' && ischina == 'true') {
+		return covertunixTimeCN(time, null, 5);
+	}
+	var theDate = new Date(time * 1000);
+
+	switch (LanguagePack.CURRENT_LAN) {
+		case "en":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "M/D/YYYY");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YYYY");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YYYY");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YYYY");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D");
+				}
+			}
+			break;
+		case "ko":
+		case "jp":
+		case "cn":
+		case "zhTW":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "YYYY/M/D");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YYYY");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YYYY");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D");
+				}
+			}
+			break;
+		case "fr":
+		case "ar":
+		case "pl":
+		case "es":
+		case "id":
+		case "it":
+		case "de":
+		case "ru":
+		case "ptBR":
+		case "ptPT":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "D/M/YYYY");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YYYY");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "M/D/YYYY");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "D/M/YYYY");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/M/D");
+				}
+			}
+			break;
+		default:
+			dateString = poLocal.getDateFormat(theDate, "YYYY. M. D");
+			break;
+	}
+	return dateString;
+}
+
+var dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function covertunixTime6(time) {
+	var theDate = new Date(time * 1000);
+
+	var month = theDate.getMonth();
+	var date = theDate.getDate();
+	var dateString = dayNames[theDate.getDay()] + ',' + theDate.getFullYear() + " " + monthNames[month] + ' ' + date;
+
+	return dateString;
+}
+
+function covertunixTime7(time, multiunit) {
+	var _multi = 1000;
+	if (typeof multiunit != 'undefined') {
+		_multi = multiunit;
+	}
+	if (typeof ischina != 'undefined' && ischina == 'true') {
+		return covertunixTimeCN(time, _multi, 7);
+	}
+	var theDate = new Date(time * _multi);
+	var dateString = null;
+
+	switch (LanguagePack.CURRENT_LAN) {
+		case "en":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY H:mm:ss");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY H:mm:ss");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY H:mm:ss");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY H:mm:ss");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD H:mm:ss");
+				}
+			}
+			break;
+		case "ko":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD H:mm:ss");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD H:mm:ss");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY H:mm:ss");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY H:mm:ss");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD H:mm:ss");
+				}
+			}
+			break;
+		case "jp":
+		case "cn":
+		case "zhTW":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD H:mm:ss");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD H:mm:ss");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY H:mm:ss");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY H:mm:ss");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD H:mm:ss");
+				}
+			}
+			break;
+		case "fr":
+		case "pl":
+		case "es":
+		case "id":
+		case "it":
+		case "de":
+		case "ru":
+		case "ptBR":
+		case "ptPT":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY H:mm:ss");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY H:mm:ss");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY H:mm:ss");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY H:mm:ss");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD H:mm:ss");
+				}
+			}
+			break;
+		case "ar":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "H:mm:ss DD/MM/YYYY");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "H:mm:ss DD/MM/YYYY");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "H:mm:ss MM/DD/YYYY");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "H:mm:ss DD/MM/YYYY");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "H:mm:ss YYYY/MM/DD");
+				}
+			}
+			break;
+		default:
+			dateString = poLocal.getDateFormat(theDate, "MM.DD H:mm:ss");
+			break;
+	}
+	return dateString;
+}
+
+function covertunixTime8(time) {
+	if (typeof ischina != 'undefined' && ischina == 'true') {
+		return covertunixTimeCN(time);
+	}
+	var theDate = new Date(time * 1000);
+	var dateString = null;
+
+	switch (LanguagePack.CURRENT_LAN) {
+		case "en":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY h:mm AP");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY h:mm AP");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY h:mm AP");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY h:mm AP");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD h:mm AP");
+				}
+			}
+			break;
+		case "ko":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD AP h:mm");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD AP h:mm");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY AP h:mm");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY AP h:mm");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD AP h:mm");
+				}
+			}
+			break;
+		case "jp":
+		case "cn":
+		case "zhTW":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD h:mm");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD h:mm");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY h:mm");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY h:mm");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD h:mm");
+				}
+			}
+			break;
+		case "fr":
+		case "pl":
+		case "es":
+		case "id":
+		case "it":
+		case "de":
+		case "ru":
+		case "ptBR":
+		case "ptPT":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY h:mm");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY h:mm");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "MM/DD/YYYY h:mm");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "DD/MM/YYYY h:mm");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD h:mm");
+				}
+			}
+			break;
+		case "ar":
+			if (isPCHOME) {
+				dateString = poLocal.getDateFormat(theDate, "AP h:mm DD/MM/YYYY");
+			} else {
+				if (dateFormatType == 0) {
+					dateString = poLocal.getDateFormat(theDate, "AP h:mm DD/MM/YYYY");
+				} else if (dateFormatType == 1) {
+					dateString = poLocal.getDateFormat(theDate, "AP h:mm MM/DD/YYYY");
+				} else if (dateFormatType == 2) {
+					dateString = poLocal.getDateFormat(theDate, "AP h:mm DD/MM/YYYY");
+				} else {
+					dateString = poLocal.getDateFormat(theDate, "AP h:mm YYYY/MM/DD");
+				}
+			}
+			break;
+		default:
+			dateString = poLocal.getDateFormat(theDate, "YYYY/MM/DD AP h:mm");
+			break;
+	}
+
+	return dateString;
+}
+
+function compareTime(_preTime, _curTime) {
+	var theDate = new Date(_preTime * 1000);
+	var theDate1 = new Date(_curTime * 1000);
+
+	if (theDate.getMonth() != theDate1.getMonth() || theDate.getDate() != theDate1.getDate())
+		return false;
+	return true;
+}
+
+// check byte
+function calculateBytes(szValue) {
+	var tcount = 0;
+	var temp = szValue.length;
+	var onechar;
+	for (var k = 0; k < temp; k++) {
+		onechar = szValue.charAt(k);
+		if (escape(onechar).length > 4) {
+			tcount += 2;
+		} else {
+			tcount += 1;
+		}
+	}
+	return tcount;
+}
+// name check
+function checkName(value) {
+	if (regMust2.test(value)) {
+		return false;
+	} else {
+		for (var j = 0; j < value.length; j++) {
+			var theUnicode = value.charCodeAt(j).toString(16).toLowerCase();
+			if (theUnicode >= 'd800' && theUnicode <= 'd8ff') {
+				return false;
+			}
+		}
+	}
+	return true;
+
+}
+// 공백 체크
+function checkAllwhitespace(value) {
+	for (var i = 0; i < value.length; i++) {
+		var tmp2 = value.charAt(i).charCodeAt();
+		if (tmp2 != "32") {
+			return false;
+		}
+	}
+	return true;
+}
+//한글 체크
+function checkHangle(value) {
+	for (var i = 0; i < value.length; i++) {
+		if (!reghangle.test(value[i]))
+			return true;
+	}
+	return false;
+}
+
+function verifyImageCheck(file) {
+	if (!file) return false;
+	var index = file.name.lastIndexOf(".");
+	var type = file.name.substr(index + 1, file.name.length).toLowerCase();
+	var verify = true;
+	switch (type) {
+		case "jpg":
+		case "png":
+		case "gif":
+			verify = false;
+			break;
+		default:
+			verify = true;
+	}
+	if (verify) {
+		var iNoticeStyle = PopupDataValue.NOTICE_STYLE_SUBTITLE_ITEM_NOT_ABLE_TO_UPLOAD | PopupDataValue.NOTICE_STYLE_CONTENT_FILE_EXTENTION_NOT_SUPPORTED;
+		var popup = new PopupMessage(PopupType.NOTICE, null, null, {
+			noticeStyle: iNoticeStyle,
+			userData: LanguagePack.USERDATA
+		}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+		popup.create();
+		popup.show();
+		return false;
+	}
+	return true;
+}
+
+function toastMessage(text, successCB) {
+	var popup = $("#toastpop");
+	popup.find("span").html(text);
+	popup.fadeIn('fast');
+	setTimeout(function () {
+		popup.fadeOut('slow', function () {
+			if (successCB) {
+				successCB();
+			}
+		});
+	}, 3000);
+}
+
+function toastMessageWithTime(text, time, successCB) {
+	var popup = $("#toastpop");
+	popup.find("span").html(text);
+	popup.fadeIn('fast');
+	setTimeout(function () {
+		popup.fadeOut('slow', function () {
+			if (successCB) {
+				successCB();
+			}
+		});
+	}, time);
+}
+
+var toastMgsObj = {
+	'show': function (_text) {
+		var arg = arguments;
+		var popup = $("#toastpop");
+		popup.find("span").html(_text);
+		popup.fadeIn('fast');
+		this.timer = setInterval(function () {
+			if ($("#toastpop").is(":visible"))
+				$("#toastpop").fadeOut("fast"); // fadeIn();
+			else
+				$("#toastpop").fadeIn("fast"); // fadeOut();
+		}, 1000);
+	},
+	'hide': function () {
+		clearInterval(this.timer);
+		$("#toastpop").hide();
+	}
+};
+
+function toastMessageKeepAlive(obj, text, show) {
+	if (show) {
+		if (obj)
+			obj.attr("disabled", "disabled");
+		toastMgsObj.show(text);
+	} else {
+		if (obj)
+			obj.removeAttr("disabled");
+		toastMgsObj.hide();
+	}
+
+
+}
+
+function CreateDotDot(type, text, isBold, width, other, after) {
+	var Sname;
+	var Ename;
+	var limit = 30;
+
+	if (type == "taskOwnerName" || type == "taskMainFileName") // 이경우는 무조건 체크
+	{
+		limit = 0;
+	} else if (width < 200) {
+		limit = 13;
+	} else if (width > 900) {
+		limit = 60;
+	}
+
+	if (text.length > limit) {
+		$("#dotTest").remove();
+		var dotTestString;
+		if (typeof other == "undefined") {
+			if (isBold) {
+				dotTestString = '<div id="dotTest" style="position: absolute;; top: -999px; left:-999px; font-family:dotum; font-size: 13px; font-weight: bold; line-height:42px; height: 42px; width: ' + width + 'px; white-space:pre;"> </div>';
+			} else {
+				dotTestString = '<div id="dotTest" style="position: absolute;; top: -999px; left:-999px; font-family:dotum; font-size: 13px; line-height:42px; height: 42px; width: ' + width + 'px; white-space:pre;"> </div>';
+			}
+		} else {
+			if (other.fontface) {
+				if (isBold) {
+					dotTestString = '<div id="dotTest" style="position: absolute;; top: -999px; left:-999px; font-family:' + other.fontface + '; font-size: 13px; font-weight: bold; line-height:42px; height: 42px; width: ' + width + 'px; white-space:pre;"> </div>';
+				} else {
+					dotTestString = '<div id="dotTest" style="position: absolute;; top: -999px; left:-999px; font-family:' + other.fontface + '; font-size: 13px; line-height:42px; height: 42px; width: ' + width + 'px; white-space:pre;"> </div>';
+				}
+			}
+		}
+		$("body").append(dotTestString);
+		if (type == "fileName") {
+			var index = text.lastIndexOf(".");
+			if (index == -1) {
+				Sname = text.substr(0, text.length - 8);
+				Ename = text.substr(text.length - 8, text.length);
+			} else {
+				Sname = text.substr(0, index - 8);
+				Ename = text.substr(index - 8, text.length);
+			}
+
+			$("#dotTest").html(Sname + '<span class="subname">' + Ename + '</span>');
+			$("#dotTest").dotdotdot({
+				after: '.subname',
+				wrap: 'letter'
+			});
+			return $("#dotTest").text();
+		} else if (type == "dirName") {
+			Sname = text.substr(0, text.length - 8);
+			Ename = text.substr(text.length - 8, text.length);
+
+			$("#dotTest").html(Sname + '<span class="subname">' + Ename + '</span>');
+			$("#dotTest").dotdotdot({
+				after: '.subname',
+				wrap: 'letter'
+			});
+			return $("#dotTest").text();
+		} else if (type == "path") {
+			Sname = text.substr(0, text.length - 20);
+			Ename = text.substr(text.length - 20, text.length);
+
+			$("#dotTest").html(Sname + '<span class="subname">' + Ename + '</span>');
+			$("#dotTest").dotdotdot({
+				after: '.subname',
+				wrap: 'letter'
+			});
+			return $("#dotTest").text();
+		} else if (type == "taskOwnerName") {
+			Sname = text;
+			Ename = after;
+			$("#dotTest").html(Sname + '<span class="subname">' + Ename + '</span>');
+			$("#dotTest").dotdotdot({
+				after: '.subname',
+				wrap: 'letter'
+			});
+			return $("#dotTest").text();
+		} else if (type == "taskMainFileName") {
+			// 확장자가 없는 이름 + 외 N종
+			if (text.length > 8) {
+				Sname = text.substr(0, text.length - 8);
+				Ename = text.substr(text.length - 8, text.length) + after;
+			} else {
+				Sname = text;
+				Ename = after;
+			}
+
+			$("#dotTest").html(Sname + '<span class="subname">' + Ename + '</span>');
+			$("#dotTest").dotdotdot({
+				after: '.subname',
+				wrap: 'letter'
+			});
+			return $("#dotTest").text();
+		}
+
+		return text;
+	}
+	return text;
+}
+
+function setTitle(name, revert, title) {
+	if (typeof noChangeTitle != 'undefined' && noChangeTitle) {
+		return;
+	}
+	if (name == -1) {
+		document.title = title;
+		isViewer = true;
+		return;
+	}
+	if (revert) {
+		document.title = LanguagePack.KEYWORD_BRANDIDENTITY + " " + name;
+	} else {
+		document.title = name + " " + LanguagePack.KEYWORD_BRANDIDENTITY;
+	}
+	docuemntTitle = document.title;
+}
+
+function changeTitle(isLogin) {
+	//내부, 외부에서 동시게 접근 할 수 잇는 페이지의 경우 로그인 유무에 따라 BI 위치를 변경한다.
+	if (typeof noChangeTitle != 'undefined' && noChangeTitle) {
+		return;
+	}
+	if (!isViewer) {
+		var currentTitle = document.title;
+		var biIndex = currentTitle.indexOf(LanguagePack.KEYWORD_BRANDIDENTITY);
+		if (isLogin) {
+			if (biIndex == 0) {
+				var array_title = currentTitle.split(LanguagePack.KEYWORD_BRANDIDENTITY);
+				document.title = array_title[1] + " " + LanguagePack.KEYWORD_BRANDIDENTITY;
+			}
+		} else {
+			if (biIndex > 0) {
+				var array_title = currentTitle.split(LanguagePack.KEYWORD_BRANDIDENTITY);
+				document.title = LanguagePack.KEYWORD_BRANDIDENTITY + " " + array_title[0];
+			}
+		}
+	}
+	docuemntTitle = document.title;
+}
+
+function getTime() {
+	var d = new Date();
+	return d.getTime();
+}
+
+function defaultAlertCB(e) {
+	if (e.preventDefault) e.preventDefault();
+	if (e.stopPropagation) e.stopPropagation();
+
+	if (!e.data) {
+		return;
+	}
+	var popup = e.data.param[PopupDataKey.POPUP];
+	popup.destroy();
+
+	if (isScrollHold) isScrollHold = false;
+}
+
+function logoutAlertCB(e) {
+	if (e.preventDefault) e.preventDefault();
+	if (e.stopPropagation) e.stopPropagation();
+
+	if (!e.data) {
+		return;
+	}
+	var popup = e.data.param[PopupDataKey.POPUP];
+	popup.destroy();
+
+	if (isScrollHold) isScrollHold = false;
+
+	AccountLogOut(function (res) {
+		window.open("/", "_self");
+	}, function (res) {
+		console.log(res.resultMsg);
+	});
+}
+
+
+function CloseWindowCB() {
+	window.open('', '_self', '');
+	window.close();
+}
+
+function isOnline() {
+	/*if(!navigator.onLine) {
+		$("#toastpop").hide();
+		if(typeof loadingbar !="undefined" && loadingbar.length) {
+			hideLoadingbar();
+		}
+		var popupMessage = new Array();
+		popupMessage[0] = LanguagePack.POPUP_PLEASECHECKOUTNETWORKSTATUS;
+		var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_CONFIRM, {popupMessage:popupMessage}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+		popup.create();
+		popup.show();
+		return false;
+	}*/
+	return true;
+}
+
+//path 정보 길이 체크
+function verfiyStringLength(text) {
+	// PATH://drive/
+	if (text.length + 1 > 1024) {
+		return false;
+	}
+
+	return true;
+}
+
+
+function verifyCheckText(text) {
+	// if(text.indexOf('\') != -1)
+	// return false;
+
+	if (text.indexOf("\\") != -1)
+		return false;
+	if (text.indexOf('/') != -1)
+		return false;
+	if (text.indexOf(':') != -1)
+		return false;
+	if (text.indexOf('*') != -1)
+		return false;
+	if (text.indexOf('?') != -1)
+		return false;
+	if (text.indexOf('"') != -1)
+		return false;
+	if (text.indexOf('<') != -1)
+		return false;
+	if (text.indexOf('>') != -1)
+		return false;
+	if (text.indexOf('|') != -1)
+		return false;
+	return true;
+}
+
+function verifydotText(text) {
+	var dotspace = /^\.|\.$/;
+	if (dotspace.test(text))
+		return false;
+	return true;
+}
+
+/*
+function getPathLength(type, text)
+{
+	// PATH://drive/
+	var name = text.substring(13, text.length);
+	name = name.split("/").join("");
+	var n=0;
+	if(type == "DIR") {
+		if(name.length > 200) {
+			n = name.length - 200;
+		}
+	}
+	else if(type == "FILE") {
+		if(name.length > 220) {
+			n = name.length - 220;
+		}
+	}
+	return n;
+}
+*/
+function showLabel(seletor, show) {
+	if (show) {
+		seletor.removeClass("off");
+	} else {
+		seletor.addClass("off");
+	}
+}
+
+var serviceStatePopup = function (data) {
+	var dstartTime = data.startTime;
+	var dendTime = data.endTime;
+
+	var callback = data.callback;
+
+	week = new Array(LanguagePack.DATE_SUN, LanguagePack.DATE_MON, LanguagePack.DATE_TUE, LanguagePack.DATE_WEN, LanguagePack.DATE_THU, LanguagePack.DATE_FRI, LanguagePack.DATE_SAT);
+
+	function removePopup(e) {
+		commonPreventEvent(e);
+		$('.serverCheck').remove();
+
+		if (dstartTime) {
+			var today = new Date();
+			today.setHours(0, 0, 0, 0);
+			var nextResetTime = new Date(dstartTime * 1000);
+			nextResetTime.setHours(0, 0, 0, 0);
+			var datadiff = Math.ceil((nextResetTime.getTime() - today.getTime()) / 1000 / 60 / 60 / 24);
+			setCookies('SERVICESTATEPERIOD', datadiff);
+		} else {
+			setCookies('SERVICESTATEPERIOD', 1);
+		}
+
+		if (callback != null) {
+			callback(e);
+		}
+	}
+
+	function changeTime() {
+		var startTime = new Date(dstartTime * 1000);
+		var endTime = new Date(dendTime * 1000);
+
+		var firstText = "";
+		var secondText = "";
+		firstText += " " + startTime.getFullYear() + LanguagePack.DATE_YEAR;
+		if (startTime.getFullYear() != endTime.getFullYear()) {
+			secondText += " " + endTime.getFullYear() + LanguagePack.DATE_YEAR;
+		}
+		firstText += " " + ((("" + (startTime.getMonth() + 1)).length == 1) ? "0" + (startTime.getMonth() + 1) : (startTime.getMonth() + 1));
+		firstText += LanguagePack.DATE_MONTH;
+		if (startTime.getMonth() != endTime.getMonth()) {
+			secondText += " " + ((("" + (endTime.getMonth() + 1)).length == 1) ? "0" + (endTime.getMonth() + 1) : (endTime.getMonth() + 1));
+			secondText += LanguagePack.DATE_MONTH;
+		}
+
+		firstText += " " + ((("" + startTime.getDate()).length == 1) ? "0" + startTime.getDate() : startTime.getDate());
+		firstText += LanguagePack.DATE_DAY + week[startTime.getDay()];
+		if (startTime.getDate() != endTime.getDate()) {
+			secondText += " " + ((("" + endTime.getDate()).length == 1) ? "0" + endTime.getDate() : endTime.getDate());
+			secondText += LanguagePack.DATE_DAY + week[endTime.getDay()];
+		}
+
+		firstText += " " + ((("" + startTime.getHours()).length == 1) ? "0" + startTime.getHours() : startTime.getHours());
+		firstText += ":";
+		secondText += " " + ((("" + endTime.getHours()).length == 1) ? "0" + endTime.getHours() : endTime.getHours());
+		secondText += ":";
+
+		firstText += "" + ((("" + startTime.getMinutes()).length == 1) ? "0" + startTime.getMinutes() : startTime.getMinutes());
+		secondText += " " + ((("" + endTime.getMinutes()).length == 1) ? "0" + endTime.getMinutes() : endTime.getMinutes());
+
+		return firstText + "~" + secondText + LanguagePack.CHECK_UPTO_DATE;
+	}
+
+	function createServiceStatePopup() {
+		var subcontents = '';
+		var poppuptype = '';
+		if (dstartTime && dendTime) {
+			subcontents = '<dd class="time">' +
+				'<strong>' + LanguagePack.CHECK_TIME_STR + '</strong>' +
+				changeTime() +
+				'</dd>';
+		}
+		var content = $('<div class="serverCheck popup" style="display:block;">' +
+			'<div class="box">' +
+			'<dl>' +
+			'<dt>' + LanguagePack.CHECK_TITLE + '</dt>' +
+			'<dd class="txt">' +
+			LanguagePack.CHECK_TIME +
+			'</dd>' +
+			subcontents +
+			'</dl>' +
+			'<a href="#" class="btn_close">' + LanguagePack.KEYWORD_CLOSE + '</a>' +
+			'</div></div>');
+
+		content.find('.box a.btn_close').bind("click", removePopup);
+		$("body").append(content);
+		/*content.css('margin-top', '-' + content.height()/2 + 'px');*/
+	}
+
+	createServiceStatePopup();
+};
+
+function changeLocale(e) {
+	//en_US, ko_KR, ja_JP
+	commonPreventEvent(e);
+	var lang = $(this).attr("id");
+	setLocale(lang, function () {
+		setLocaleSuccessCB(lang);
+	}, null);
+}
+
+function getLocale() {
+	return LanguagePack.CURRENT_LAN;
+}
+
+function getUrlParam(str) {
+	var vars = {};
+	if (str) {
+		var parts = str.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+			vars[key] = value;
+		});
+	} else {
+		var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+			vars[key] = value;
+		});
+	}
+
+	return vars;
+}
+
+var checkedLgPlan = -1;
+
+function Appdownload() {
+	var agent = navigator.userAgent.toLowerCase();
+	var scheme = '';
+	var referrerUrl = '';
+	if (location.href.indexOf('&referrer') > -1) {
+		referrerUrl = location.href.substring(location.href.indexOf('&referrer'), location.href.length);
+	}
+	if (agent.search("ipad") >= 0 || agent.search("iphone") >= 0) {
+		scheme = LanguagePack.APPLE_APP_DOWNLOAD_URL;
+	} else {
+		if (ischina == 'true') {
+			if (isMobile) {
+				scheme = "http://openbox.mobilem.360.cn/index/d/sid/2498692";
+			} else {
+				scheme = "http://openbox.mobilem.360.cn/index/d/sid/2498692";
+			}
+		} else {
+			if (isMobile) {
+				var id = getUrlParam()['id'];
+				if (id) {
+					scheme = "market://details?id=" + id;
+				} else {
+					if (checkedLgPlan == -1) {
+						popcorn.checkLgPlan(function (res) {
+							if (res.resultCode == 0) {
+								if (res.model) {
+									checkedLgPlan = true;
+								} else {
+									checkedLgPlan = false;
+								}
+
+								if (checkedLgPlan) {
+									scheme = "market://details?id=com.infraware.office.link.lg";
+								} else {
+									scheme = "market://details?id=com.infraware.office.link";
+								}
+								if (referrerUrl.length) scheme += referrerUrl;
+								window.open(scheme, "_self");
+							}
+						}, null);
+						return;
+					} else {
+						if (checkedLgPlan) {
+							scheme = "market://details?id=com.infraware.office.link.lg";
+						} else {
+							scheme = "market://details?id=com.infraware.office.link";
+						}
+					}
+				}
+			} else {				
+				scheme = "https://play.google.com/store/apps/details?id=com.infraware.office.link";
+			}
+		}
+	}
+	if (referrerUrl.length) scheme += referrerUrl;
+	window.open(scheme, "_self");
+}
+
+(function ($) {
+	var toastpopup = {
+		'show': function (msg) {
+			this.find("span").html(msg);
+			this.show();
+			this.addClass('show');
+		},
+		'hide': function () {
+			if (this.hasClass('show')) {
+				this.hide();
+				this.removeClass('show');
+			}
+		}
+	};
+
+	$.fn.toastpopup = function (method) {
+		if (toastpopup[method]) {
+			return toastpopup[method].apply(this, Array.prototype.slice.call(arguments, 1));
+		} else if (typeof method === 'object' || !method) {
+			return toastpopup.show.apply(this, arguments);
+		} else {
+			$.error('The method ' + method + ' does not exist in $.toastpopup');
+		}
+	};
+})($);
+
+function getSize(type, size) {
+	var value;
+	if (type == 1) {
+		/* use Size */
+		if (!size || size < 0) {
+			value = '0.00';
+			value = poLocal.localizationNumber(value, local);
+			value += 'KB';
+		} else if (size < 1024 * 1023) {
+			/* KB */
+			value = (Math.ceil(size / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'KB';
+		} else if (size < 1024 * 1024 * 1023) {
+			/* MB */
+			value = (Math.ceil(size / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'MB';
+		} else if (size < 1024 * 1024 * 1024 * 1023) {
+			/* GB */
+			value = (Math.ceil(size / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'GB';
+		} else if (size < 1024 * 1024 * 1024 * 1024 * 1023) {
+			/* TB */
+			value = (Math.ceil(size / 1024 / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'TB';
+		} else {
+			/* TB */
+			value = (Math.ceil(size / 1024 / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'TB';
+		}
+	} else if (type == 2) {
+		/* remain Size */
+		if (!size || size <= 0) {
+			value = '0.00';
+			value = poLocal.localizationNumber(value, local);
+			value += 'KB';
+		} else if (size < 11) {
+			value = '0.01';
+			value = poLocal.localizationNumber(value, local);
+			value += 'KB';
+		} else if (size < 1024 * 1023) {
+			/* KB */
+			value = (Math.floor(size / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'KB';
+		} else if (size < 1024 * 1024 * 1023) {
+			/* MB */
+			value = (Math.floor(size / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'MB';
+		} else if (size < 1024 * 1024 * 1024 * 1023) {
+			/* GB */
+			value = (Math.floor(size / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'GB';
+		} else if (size < 1024 * 1024 * 1024 * 1024 * 1023) {
+			/* TB */
+			value = (Math.floor(size / 1024 / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'TB';
+		} else {
+			/* TB */
+			value = (Math.floor(size / 1024 / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'TB';
+		}
+	} else if (type == 3) {
+		/* use Size */
+		if (!size || size < 0) {
+			value = '0.00';
+			value = poLocal.localizationNumber(value, local);
+			value += 'MB';
+		} else if (size < 1024 * 1024 * 1023) {
+			/* MB */
+			value = (Math.ceil(size / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'MB';
+		} else if (size < 1024 * 1024 * 1024 * 1023) {
+			/* GB */
+			value = (Math.ceil(size / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'GB';
+		} else if (size < 1024 * 1024 * 1024 * 1024 * 1023) {
+			/* TB */
+			value = (Math.ceil(size / 1024 / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'TB';
+		} else {
+			/* TB */
+			value = (Math.ceil(size / 1024 / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'TB';
+		}
+	} else if (type == 4) {
+		/* remain Size */
+		if (!size || size < 0) {
+			value = '0.00';
+			value = poLocal.localizationNumber(value, local);
+			value += 'MB';
+		} else if (size < 1024 * 1024 * 1023) {
+			/* MB */
+			value = (Math.floor(size / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'MB';
+		} else if (size < 1024 * 1024 * 1024 * 1023) {
+			/* GB */
+			value = (Math.floor(size / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'GB';
+		} else if (size < 1024 * 1024 * 1024 * 1024 * 1023) {
+			/* TB */
+			value = (Math.floor(size / 1024 / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'TB';
+		} else {
+			/* TB */
+			value = (Math.floor(size / 1024 / 1024 / 1024 / 1024 * 100) / 100).toFixed(2);
+			value = poLocal.localizationNumber(value, local);
+			value += 'TB';
+		}
+	}
+
+	return value;
+}
+
+function createTrSubPath(fullPath) {
+	var totalPath = "";
+	var path = fullPath.substr(7, fullPath.length);
+	var pathArray = path.split('/');
+	for (var i = 0; i < pathArray.length - 2; i++) {
+		if (i == 0 && pathArray[i] == "drive") {
+			totalPath += LanguagePack.KEYWORD_DRIVE(gUserLevel);
+		} else {
+			totalPath += pathArray[i];
+		}
+		totalPath += " > ";
+	}
+	var lastPath = pathArray[pathArray.length - 2];
+	if (pathArray.length == 2 && lastPath == "drive") {
+		lastPath = LanguagePack.KEYWORD_DRIVE(gUserLevel);
+	}
+	totalPath += lastPath;
+	return totalPath; //CreateDotDot("path", totalPath , false, 520);
+}
+
+function checkCBTDown(type) {
+	var accesslog = "";
+	if (type == 0) { //file browser
+		accesslog = makeAccessLog('file_open');
+	} else if (type == 1) { //webview
+		accesslog = makeAccessLog('webview_open');
+	}
+
+	if (checkAgent() == "macos") {
+		window.open(LanguagePack.MACOFFICE_PROD_URL);
+	} else {
+		if (LanguagePack.CURRENT_LAN == 'ko') {
+			downloadTest(LanguagePack.PCOFFICE_PROD_URL);
+		} else {
+			if (accesslog != "") {
+				location.href = script_prefix + "/office?var1=" + accesslog;
+			} else {
+				location.href = script_prefix + "/office";
+			}
+		}
+	}
+}
+
+function covertunixTimeCN(time, multiunit, dateformat) {
+	var _multi = 1000;
+	if (typeof multiunit != 'undefined' && multiunit != null) {
+		_multi = multiunit;
+	}
+	var theDate = new Date(time * _multi);
+
+	var month = theDate.getMonth() + 1;
+	var date = theDate.getDate();
+	var dateString = null;
+	var hours = theDate.getHours();
+	var minute = theDate.getMinutes();
+	var seconds = theDate.getSeconds();
+	var type = 'type2';
+	if (typeof dateformat != 'undefined') {
+		type = 'type' + dateformat;
+	}
+	var formatMaps = {
+		'type2': theDate.getFullYear() + "-" + addZero(month) + "-" + addZero(date) + " " + addZero(hours) + ":" + addZero(minute),
+		'type5': theDate.getFullYear() + "-" + addZero(month) + "-" + addZero(date),
+		'type7': addZero(month) + "-" + addZero(date) + " " + addZero(hours) + ":" + addZero(minute) + ":" + addZero(seconds)
+	};
+	dateString = formatMaps[type];
+
+	function addZero(i) {
+		if (i < 10) {
+			i = "0" + i;
+		}
+		return i;
+	}
+	return dateString;
+}
+
+function checkKTUserLevel(level) {
+	if (level == 1) {
+		var result = function (e) {
+			defaultAlertCB(e);
+			AccountLogOut(function (res) {
+				window.open("/", "_self");
+			}, function (res) {
+				console.log(res.resultMsg);
+			});
+		};
+		var popupMessage = new Array();
+		popupMessage[0] = LanguagePack.KTTEAM_LOGOUT_KT_ONLY;
+		var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+			popupMessage: popupMessage
+		}, result, result, result);
+		popup.create();
+		popup.show();
+
+	}
+}
+
+function suspend(rediUrl) {
+	var popupMessage = new Array();
+	var result = function (e) {
+		defaultAlertCB(e);
+
+		AccountLogOut(function (res) {
+			window.open(rediUrl, "_self");
+		}, function (res) {
+			console.log(res.resultMsg);
+		});
+	};
+
+	closeCB = function (e) {};
+
+	var buttonText = LanguagePack.ORANGE_SUSPENDE_POPUP_BUTTON;
+	popupMessage[0] = LanguagePack.ORANGE_SUSPENDE_POPUP_CONTENT;
+	try {
+		if (gUserLevel == "UCCPREMIUM") {
+			popupMessage[0] = LanguagePack.ORANGEUCC_SUSPENDE_POPUP_CONTENT;
+			buttonText = LanguagePack.ORANGEUCC_SUSPENDE_POPUP_BUTTON;
+		}
+	} catch (err) {
+		console.log(err);
+	}
+
+	var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+		popupMessage: popupMessage,
+		requestAgent: true
+	}, result, closeCB, closeCB);
+	popup.create();
+	$("div.popup_content").attr('style', 'border: 1px solid #a5abb5;');
+	popup.changebutton({
+		confirm: buttonText
+	});
+	$(".popup_message_view_align").attr("style", "position:fixed;height:50%;top:50%;left:50%;display:none;z-index:10");
+	popup.show();
+}
+//var localNum = (function(window, $, undefined) {
+//
+//  if (window.localNum !== undefined) {
+//    console.error("localNum이 이미 선언되어 있습니다.");
+//    return window.localNum;
+//  }
+//
+//  /**
+//   * 숫자 포맷을 변경해주는 Number.prototype의 확장
+//   * var
+//   * @param  {int} digitDecimal     소수 자리 갯수
+//   * @param  {int} digitNature      자연수 자리 갯수
+//   * @param  {str} delimiterSection 자연수 구분자
+//   * @param  {str} delimiterDecimal 소수와 자연수 구분자
+//   */
+//  var _format = function(data, digitDecimal, digitNature,
+//                        delimiterSection, delimiterDecimal) {
+//    var re = '\\d(?=(\\d{' + (digitNature || 3) + '})+' + (digitDecimal > 0 ? '\\D' : '$') + ')';
+//
+//    var num = 0;
+//    if (typeof data === 'string') {
+//            num = Number(data);
+//    }
+//    else {
+//            num = data;
+//    }
+//    num = num.toFixed(Math.max(0, ~~digitDecimal));
+//
+//    return (delimiterDecimal ? num.replace('.', delimiterDecimal) : num).replace(new RegExp(re, 'g'), '$&' + (delimiterSection || ','));
+//  };
+//
+//  var _convert = function(locale, data, type) {
+//          var returnValue = '';
+//
+//          var decimalDigitLength = 0;
+//          if (typeof type !== undefined) {
+//        	  if (type === 'float') {
+//        		  switch(locale){
+//                  	case 'ar_AE':
+//                  		decimalDigitLength = 3;
+//                  		break;
+//                  	default:
+//                  		decimalDigitLength = 2;
+//                  }
+//        	  }
+//          }
+//
+//
+//          switch(locale) {
+//          case 'ar_AE':
+//                  returnValue = _format(data, decimalDigitLength, 3, ',', '.');
+//                  break;
+//          case 'fr_FR':
+//                  returnValue = _format(data, decimalDigitLength, 3, ' ', ',');
+//                  break;
+//          default:
+//                  returnValue = _format(data, decimalDigitLength, 3, ',', '.');
+//          }
+//          return returnValue;
+//  }
+//
+//  var _ctrlLocaleNum = function(data, locale, type) {
+//    return _convert(locale, data, type);
+//  };
+//
+//  return {
+//          localeNum: _ctrlLocaleNum,
+//  }
+//
+//})(window, jQuery);
+
+function isRTL(s) {
+	var ltrChars = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF' + '\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF',
+		rtlChars = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC',
+		rtlDirCheck = new RegExp('^[^' + ltrChars + ']*[' + rtlChars + ']');
+
+	return rtlDirCheck.test(s);
+}
+
+function isMacOffice() {
+	var ua = typeof gUA != 'undefined' ? gUA.toLowerCase() : navigator.userAgent.toLowerCase();
+	if (ua.indexOf("macintosh") >= 0 && ua.indexOf('macdialog') >= 0) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function sendSMS(num, func) {
+	if ($('#sendLink').hasClass('disabled')) {
+		return false;
+	} else if (num.length == 0) {
+		var webData = $LOGMODEL.getData();
+		webData['ti'].t = LogType.tracking.page;
+		webData['obj'].dp = 'CreateAccount';
+		webData['obj'].dt = 'InputPhoneNumber';
+		$LOGMODEL.sendData(webData);
+
+		phoneNumberError();
+	} else {
+		var className = $('#pop_showcountrycode').attr('Class');
+		var arr = className.split('_');
+		var num = $('#phone').val();
+		if (num.length == 0) {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.PHONE_NUMBER_ERROR;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+		} else if (isNaN(num)) {
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.TEAM_BUBBLE_LICENSE_ADD_NUMBER;
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+				popupMessage: popupMessage
+			}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+			popup.create();
+			popup.show();
+		} else {
+			$('#sendLink').addClass("disabled");
+			var sendsms_count = getCookie("SMSSEND");
+
+			if (sendsms_count) {
+				sendsms_count = Number(sendsms_count);
+				if (sendsms_count > 4) {
+					var popupMessage = new Array();
+					popupMessage[0] = LanguagePack.SENDSMS_EXCEED;
+
+					var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_ALERT, {
+						popupMessage: popupMessage
+					}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+					popup.create();
+					popup.show();
+					$('#sendLink').removeClass('disabled')
+					return false;
+				}
+
+				sendsms_count = sendsms_count + 1;
+				document.cookie = "SMSSEND" + "=" + sendsms_count + ";path=/";
+			} else {
+				var todayDate = new Date();
+				todayDate.setDate(todayDate.getDate() + 1);
+				document.cookie = "SMSSEND" + "=1;expires=" + todayDate + ";path=/";
+			}
+
+			var messages = {
+				"messages": [{
+					"source": "java",
+					"to": '+' + arr[2] + num,
+					"body": LanguagePack.SMS_CONTENT
+				}]
+			};
+			popcorn.sendMessage(messages, func);
+		}
+	}
+}
+
+function phoneNumberError(e) {
+	var popupMessage = new Array();
+	//popupMessage[0] = LanguagePack.POPUP_DOWNLOAD_NOTI;
+	popupMessage[0] = LanguagePack.PHONE_NUMBER_ERROR;
+
+	var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+		popupMessage: popupMessage
+	}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+	popup.create();
+	popup.show();
+}
+var countrycode = {
+	'init': function (option) {
+		var arr = LanguagePack.country;
+		var sortArrs = arr.sort(function (a, b) {
+			if (a[1] > b[1]) {
+				return 1;
+			} else {
+				return -1;
+			}
+		});
+		var str = '';
+		for (var i = 0; i < sortArrs.length; i++) {
+			str += this.append(sortArrs[i][0], sortArrs[i][1], sortArrs[i][2]);
+			if (sortArrs[i].length > 3) {
+				for (var j = 4; j < sortArrs[i].length; j++) {
+					str += this.append(sortArrs[i][0], sortArrs[i][1], sortArrs[i][j]);
+				}
+			}
+		}
+		var setting = option;
+		setting.countrycode.append(str);
+
+		setting.countrycode.bind('click', function (e) {
+			if (e.preventDefault) e.preventDefault();
+			var $this = (e.target) ? $(e.target) : $(e.srcElement);
+
+			if ($this.is('a')) {
+				$this = $this.parent();
+			}
+			var className = $this.attr('Class');
+			var arr = className.split('_');
+			setting.showcountrycode.removeAttr('Class').addClass(className).text(arr[1] + '(' + '+' + arr[2] + ')');
+		});
+		setting.showcountrycode.bind('click', function (e) {
+			commonPreventEvent(e);
+			commonStopPropagation(e);
+
+			var $ul = $(this).next('ul');
+			var isshow = true;
+			if ($ul.css('display') != 'none') {
+				$ul.hide();
+				isshow = false;
+			}
+
+			$('body').trigger('click');
+
+			if (!isshow) {
+				return;
+			}
+
+			$('body').one('click', function () {
+				$ul.hide();
+			});
+			$ul.show();
+		});
+		if (typeof setting.phonenum != 'undefined') {
+			setting.phonenum.on('focus', function (e) {
+				if (!gUserId) {
+					openLoginPopupWithMsg(e, LanguagePack.LOGIN_NOW);
+					return;
+				}
+			});
+			setting.phonenum.bind('keydown', function (e) {
+				var keyID = e.keyCode;
+				if ((keyID >= 48) && (keyID <= 57) || (keyID >= 96 && keyID <= 105) || keyID == 8 || keyID == 46 || keyID == 37 || keyID == 39 || keyID == 13) {
+					if (keyID == 13) {
+						if (typeof setting.sendsms != 'undefined') {
+							setting.sendsms.click();
+						}
+					}
+				} else {
+					event.returnValue = false;
+				}
+			});
+		}
+		if (typeof setting.sendsms != 'undefined') {
+			setting.sendsms.bind('click', function (e) {
+				if (e.preventDefault) e.preventDefault();
+				if (!gUserId) {
+					openLoginPopupWithMsg(e, LanguagePack.LOGIN_NOW);
+					return;
+				}
+
+				var className = setting.showcountrycode.attr('Class');
+				if (className && !$(this).hasClass('disabled')) {
+					var arr = className.split('_');
+					var num = setting.phonenum.val();
+					if (num.length == 0) {
+						var popupMessage = new Array();
+						popupMessage[0] = LanguagePack.PHONE_NUMBER_ERROR;
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+							popupMessage: popupMessage
+						}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+						popup.create();
+						popup.show();
+
+						var webData = $LOGMODEL.getData();
+						webData['ti'].t = LogType.tracking.page;
+						webData['obj'].dp = "GetPage";
+						webData['obj'].dt = "InputPhoneNumber";
+						$LOGMODEL.sendData(webData);
+					} else if (isNaN(num)) {
+						var popupMessage = new Array();
+						popupMessage[0] = LanguagePack.TEAM_BUBBLE_LICENSE_ADD_NUMBER;
+						var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, null, {
+							popupMessage: popupMessage
+						}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+						popup.create();
+						popup.show();
+
+						var webData = $LOGMODEL.getData();
+						webData['ti'].t = LogType.tracking.page;
+						webData['obj'].dp = "GetPage";
+						webData['obj'].dt = "InputPhoneNumber";
+						$LOGMODEL.sendData(webData);
+					} else {
+						setting.sendsms.addClass("disabled");
+						var sendsms_count = getCookie("SMSSEND");
+
+						if (sendsms_count) {
+							sendsms_count = Number(sendsms_count);
+							if (sendsms_count > 4) {
+								var popupMessage = new Array();
+								popupMessage[0] = LanguagePack.SENDSMS_EXCEED;
+
+								var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM, LanguagePack.KEYWORD_ALERT, {
+									popupMessage: popupMessage
+								}, defaultAlertCB, defaultAlertCB, defaultAlertCB);
+								popup.create();
+								popup.show();
+								$(this).removeClass('disabled')
+								return false;
+							}
+
+							sendsms_count = sendsms_count + 1;
+							document.cookie = "SMSSEND" + "=" + sendsms_count + ";path=/";
+						} else {
+							var todayDate = new Date();
+							todayDate.setDate(todayDate.getDate() + 1);
+							document.cookie = "SMSSEND" + "=1;expires=" + todayDate + ";path=/";
+						}
+
+						var messages = {
+							"messages": [{
+								"source": "java",
+								"to": '+' + arr[2] + num,
+								"body": LanguagePack.SMS_CONTENT
+							}]
+						};
+						popcorn.sendMessage(messages, setting.cb);
+
+						var webData = $LOGMODEL.getData();
+						webData['ti'].t = LogType.tracking.page;
+						if (typeof pageLogType != 'undefined') {
+							webData['obj'].dp = "GetPage." + pageLogType;
+						} else {
+							return;
+						}
+						webData['obj'].ec = "ux";
+						webData['obj'].ea = "cl";
+						webData['obj'].el = "Send";
+						$.extend(webData, {
+							'cobj': {
+								'countryCode': arr[0]
+							}
+						});
+						$LOGMODEL.sendData(webData);
+					}
+				}
+			});
+		}
+
+		//this.setting.input.bind('keyup', )
+		popcorn.getnationcode(function (res) {
+			if (res.resultCode == 0 && res.locale != null) {
+				var data = null;
+				for (var i = 0; i < LanguagePack.country.length; i++) {
+					if (LanguagePack.country[i][0] == res.locale) {
+						data = LanguagePack.country[i];
+						break;
+					}
+				}
+				if (data) {
+					setting.showcountrycode.addClass(data[0] + '_' + data[1] + '_' + res.nationCode).text(data[1] + '(' + '+' + res.nationCode + ')');
+				} else {
+					data = LanguagePack.currentcountry;
+					setting.showcountrycode.addClass(data[0] + '_' + data[1] + '_' + data[2]).text(data[1] + '(' + '+' + data[2] + ')');
+				}
+			} else {
+				data = LanguagePack.currentcountry;
+				setting.showcountrycode.addClass(data[0] + '_' + data[1] + '_' + data[2]).text(data[1] + '(' + '+' + data[2] + ')');
+			}
+		}, function (res) {
+
+		});
+	},
+	'append': function (code, country, number) {
+		return '<li class="' + code + '_' + country + '_' + number + '"><a href="javascript:void(0);">' + country + '(' + '+' + number + ')' + '</a></li>';
+	}
+};
+
+function showSendSMSPopup() {
+	var html = '<div id="registcontainer" class="bx_input popup other" style="z-index: 10; display: block;"><div class="bx_input"><div class="box">' +
+		'<div class="regist join"><h2>' + LanguagePack.KEYWORD_REGIST + '<a href="#" id="sms_close"><img src="' + CF_PATH + '/resources/image/Polaris/new/main/btn_close03.png" alt="close"></a></h2><ul class="sms_tab">' +
+		'<li id="addAccount">' + LanguagePack.KEYWORD_REGIST + '</li><li id="sendSMS"class="on">' + LanguagePack.SMS_POPUP_SEND_SMS + '</li></ul>' +
+		'<div id="join_02" class="join_box phone" style="/* display:none */">' +
+		'<p class="txt">' + LanguagePack.SMS_POPUP_TITLE + '</p>' +
+		'<fieldset><legend>폰 번호 입력</legend><dl class="country"><dt>' + LanguagePack.SMS_POPUP_COUNTRY + '</dt><dd><a id="pop_showcountrycode" href="#"></a>' +
+		'<ul id="pop_countrycode"></ul></dd></dl>' +
+		'<dl class="number"><dt>' + LanguagePack.SMS_POPUP_PHONE_NUM + '</dt><dd><input type="text" id="pop_phonenum"></dd></dl></fieldset><a href="#"id="pop_sendsms"  class="main_btn"><span>' + LanguagePack.SMS_POPUP_LINK_SEND + '</span></a>' +
+		'<a href="#" class="skip" id="sendLink">' + LanguagePack.SMS_POPUP_LINK_SEND_SKIP + '</a></div></div></div></div></div>';
+
+
+
+	if ($('#registcontainer').length) {
+		$('#registcontainer').remove();
+	}
+
+	$('body').append(html);
+
+	$('#sendLink, #sms_close').click(function () {
+		$('#registcontainer').remove();
+	});
+
+	var data = {
+		'countrycode': $('#pop_countrycode'),
+		'showcountrycode': $('#pop_showcountrycode'),
+		'sendsms': $('#pop_sendsms'),
+		'phonenum': $('#pop_phonenum'),
+		cb: function (res) {
+			var reSend = function (e) {
+				defaultAlertCB(e);
+				var uri = script_prefix + "/mobile";
+				location.href = uri;
+			}
+
+			var result = function (e) {
+				defaultAlertCB(e);
+				$('#dim').remove();
+
+				$('#registcontainer').remove();
+			}
+
+			var popupMessage = new Array();
+			popupMessage[0] = LanguagePack.SMS_SEND_MESSAGE_ALERT($("#pop_phonenum").val());
+
+			var popup = new PopupMessage(PopupType.DEFAULT, ButtonType.CONFIRM_CANCEL, LanguagePack.KEYWORD_ALERT, {
+				popupMessage: popupMessage
+			}, result, reSend, result);
+			popup.create();
+			popup.changebutton({
+				'cancel': LanguagePack.SMS_RESEND
+			});
+			popup.show();
+
+			$('#pop_sendsms').removeClass('disabled');
+		}
+	};
+	countrycode.init(data);
+}
+
+
+popcorn.getnationcode(function (res) {
+	if (res.locale == "AT" || res.locale == "BE" || res.locale == "BG" || res.locale == "HR" || res.locale == "CY" || res.locale == "CZ" || res.locale == "DK" || res.locale == "EE" || res.locale == "FI" || res.locale == "FR" || res.locale == "DE" || res.locale == "HU" || res.locale == "IE" || res.locale == "IT" || res.locale == "LV" || res.locale == "LT" || res.locale == "LU" || res.locale == "MT" || res.locale == "NL" || res.locale == "PL" || res.locale == "PT" || res.locale == "RO" || res.locale == "SK" || res.locale == "SI" || res.locale == "ES" || res.locale == "SE" || res.locale == "GB" || res.locale == "IS" || res.locale == "LI" || res.locale == "NO" || res.locale == "KR") {
+		//console.log(res.locale);
+	} else {
+		$('label#eea').hide()
+	}
+});
+
+function getDayCount(dday) {
+	//var dday =  new Date("September 15, 2018 23:59");
+	var nowday = new Date();
+	var distance = dday.getTime() - nowday.getTime();
+
+	var d = Math.floor(distance / (1000 * 60 * 60 * 24)); //일
+
+	// var h = Math.floor((distance / (1000*60*60)) % 24);		//시간
+	// var m = Math.floor((distance / (1000*60)) % 60);		//분
+	// var s = Math.floor((distance / 1000) % 60);				//초
+
+	return d;
+}
+
+function passwordCheck(pwd) {
+	var errormsg = '';
+
+	if (!pwd.length) {
+		errormsg = LanguagePack.BUBBLE_ENTERPASSWORD;
+		return errormsg;
+	}
+
+	if (local === 'ko' || local === 'ko_KR') {
+		if (pwd.length < 8 || pwd.length > 20) {
+			errormsg = LanguagePack.BUBBLE_USEPROPERFORMATFORPASSWORD("8", "20");
+		} else if (pwd.indexOf(" ") != -1) {
+			errormsg = LanguagePack.POPUP_PASSWORDNOTALLOWED;
+		} else {
+			var num_pw = pwd.search(/[0-9]/g);
+			var eng_pw = pwd.search(/[a-z]/ig);
+			var spe_pw = pwd.search(/[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi);
+
+			if (num_pw < 0 || eng_pw < 0 || spe_pw < 0) {
+				errormsg = LanguagePack.BUBBLE_USEPROPERFORMATFORPASSWORD("8", "20");
+			}
+		}
+	} else {
+		if (pwd.length < 8 || pwd.length > 20) {
+			errormsg = LanguagePack.BUBBLE_USEPROPERFORMATFORPASSWORD_GLOBAL("8", "20");
+		} else if (pwd.indexOf(" ") != -1) {
+			errormsg = LanguagePack.POPUP_PASSWORDNOTALLOWED;
+		} else {
+			var num_pw = pwd.search(/[0-9]/g);
+			var eng_pw = pwd.search(/[a-z]/ig);
+			var spe_pw = pwd.search(/[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi);
+
+			if (eng_pw < 0) {
+				errormsg = LanguagePack.BUBBLE_USEPROPERFORMATFORPASSWORD_GLOBAL("8", "20");
+			} else {
+				var reg_pwd = '';
+				reg_pwd = pwd.replace(/[0-9]/g, '');
+				reg_pwd = reg_pwd.replace(/[a-z]/ig, '');
+				reg_pwd = reg_pwd.replace(/[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi, '');
+				if (reg_pwd.length > 0) {
+					errormsg = LanguagePack.BUBBLE_USEPROPERFORMATFORPASSWORD_CANNOT_USE_GLOBAL(reg_pwd) +
+						'<br>' + LanguagePack.BUBBLE_USEPROPERFORMATFORPASSWORD_GLOBAL("8", "20");
+				}
+			}
+		}
+	}
+
+	return errormsg;
+}
+
+var getPromotionPeriod = function (_producttype, _amount, _period) {
+	var amount = 0;
+	if (_amount == undefined || _period == undefined || _amount == 0 || _amount == '') return '';
+	_producttype = _producttype.toLowerCase();
+	_period = _period.toLowerCase();
+	switch (_producttype) {
+		case 'month':
+			if (_period == 'year') {
+				amount = _amount * 12;
+			} else {
+				amount = _amount;
+			}
+			break;
+		case 'year':
+			if (_period == 'month') {
+				amount = _amount / 12;
+			} else {
+				amount = _amount;
+			}
+			break;
+		default:
+			break;
+	}
+	return amount;
+}
+
+var get_version_of_IE = function () {
+	var word;
+	var agent = navigator.userAgent.toLowerCase();
+
+	// IE old version ( IE 10 or Lower ) 
+	if (navigator.appName == "Microsoft Internet Explorer") word = "msie ";
+	// IE 11 
+	else if (agent.search("trident") > -1) word = "trident/.*rv:";
+	// Microsoft Edge  
+	else if (agent.search("edge/") > -1) word = "edge/";
+	// 그외, IE가 아니라면 ( If it's not IE or Edge )  
+	else return -1;
+
+	var reg = new RegExp(word + "([0-9]{1,})(\\.{0,}[0-9]{0,1})");
+	if (reg.exec(agent) != null) return parseFloat(RegExp.$1 + RegExp.$2);
+
+	return -1;
+}
+
+var getPCOfficeUseState = function(){
+	var webdata = {
+		'type': 'PCOFFICEUSEONLY'
+	};
+	popcorn.getUserActionCheck(webdata,
+		function (res) {
+			return res.isExist;
+		},
+		function (err) {
+			return false;
+		}
+	);
+}
+
+function getLocalStorage(key) {
+	var itemStr = localStorage.getItem(key);
+	if (!itemStr) {
+		return null
+	}
+	var item = JSON.parse(itemStr);
+	var now = new Date().getTime();
+	if (now > item.expiry) {
+		localStorage.removeItem(key);
+		return null;
+	}
+	return item.value;
+}
+
+var loginWithPolarisOffice = function(userId, secretKey, redirectUrl, type){
+		var _key = CryptoJS.enc.Utf8.parse(LanguagePack.PS_Key),
+		_iv = CryptoJS.enc.Utf8.parse('0000000000000000'),
+		encryptedData = function(data){
+		return CryptoJS.AES.encrypt(
+			data, _key, {
+			keySize: 32,
+			iv: _iv,
+			mode: CryptoJS.mode.CBC,
+			padding: CryptoJS.pad.Pkcs7
+		});
+	};
+
+	location.href = "/api/2/polarisshare/token?token=" + secretKey + "&redirectUrl=" + redirectUrl  + "&type=" + type + "&userId=" + encodeURIComponent(encryptedData(userId).toString());
+};
+
+function checkFunctionEnable(version, keyword) {
+	if (typeof version == 'undefined' || typeof keyword == 'undefined') {
+		return false;
+	}
+
+	var convert_version = '';
+	version = version.toString().split('.');
+	depth = (version.length > 3) ? 3 : version.length;
+	for (var i = 0; i < depth; i++) {
+		if (i == 0) {
+			convert_version += version[i];
+		} else {
+			if (version[i].length == 1) {
+				convert_version += ('00' + version[i]);
+			} else if (version[i].length == 2) {
+				convert_version += ('0' + version[i]);
+			} else {
+				convert_version += version[i];
+			}
+		}
+	}
+	convert_version = parseInt(convert_version);
+
+	switch(keyword){
+		case 'hwp':
+			if (isMacOffice()) {
+				if (convert_version >= 8000013) {
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				return true;
+			}
+		case 'notice':
+			if (convert_version > 8001835) {
+				return true;
+			} else {
+				return false;
+			}
+		case 'polarishare':
+			//alert('ver : ' + version + ', convert : ' + convert_version);
+			if (convert_version >= 9103102) { // 9.103.102.45536
+				return true;
+			} else {
+				return false;
+			}
+		case 'hwpx':
+			if (isMacOffice()) {
+				if (convert_version >= 9000031) {
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				if (convert_version > 9103112) { //9.103.112.46022
+					return true;
+				} else {
+					return false;
+				}
+			}
+		case 'credit' :
+			if (isMacOffice()) {
+				if (convert_version >= 9000044) { // 9.0.44
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				if (convert_version >= 9104170) { //9.104.170
+					return true;
+				} else {
+					return false;
+				}
+			}
+		case 'ai' :
+			if (isMacOffice()) {
+				if (convert_version > 9000047) { // 9.0.47
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				if (convert_version > 9104190) { //9.104.190.51131
+					return true;
+				} else {
+					return false;
+				}
+			}
+	}
+
+}
+
+function oninputPhone(target) {
+    target.value = target.value
+        .replace(/[^0-9]/g, '')
+        .replace(/(^02.{0}|^01.{1}|[0-9]{3})([0-9]+)([0-9]{4})/,"$1-$2-$3");
+}

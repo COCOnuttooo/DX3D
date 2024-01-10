@@ -1,0 +1,217 @@
+
+const editFileMenu = (function(){
+    const template = ['word', 'sheet', 'slide'];
+    const aiTemplateId = {
+        'verify': [1265, 1267],
+        'prod': [1105, 1106]
+    };
+
+    const closeFileMenu =function(e){
+        const $fileMenu = $('.whale_panel');
+        $fileMenu.css('display', 'none');
+        onReset(e);
+    };
+
+    const openNewDocument = function(e){
+        commonPreventEvent(e);
+        const $this = $(this),
+            newType = $this.data('id')
+        let openUrl = '';
+        if(gVendorType == 'whale'){
+            openUrl = location.protocol + '//' + location.host + location.pathname.replace(gFileFormat, newType);
+        } else {
+            openUrl = location.protocol + '//' + location.host + '/editor/po/' + newType;
+        }
+        
+        window.open(openUrl, '_blank');
+        closeFileMenu();
+    };
+
+    const onReset = function(e) {
+        if(e) commonPreventEvent(e);
+        $(".file_menu .menu li").children("a").removeClass("on");
+        $("#menu_new").addClass("on");
+        $(".list_document").children(".file_list").each(function(_,item) {
+            $(this).children(".list").remove();
+        });
+        $("#newDoc").css("display","flex");
+        $("#openDoc").hide();
+    }
+
+    const openDocument = function(type){
+        $(".file_tab").css("display","none");
+        if(type === 'new'){
+            $("#menu_new").addClass("on");
+            $("#menu_open").removeClass("on");
+            $("#newDoc").css("display","flex");
+        } else {
+            $("#menu_new").removeClass("on");
+            $("#menu_open").addClass("on");
+            $("#openDoc").css("display","flex");
+            $(".open_type_menu").children('a').removeClass("on");
+            $(".open_type_menu a.recent").addClass("on");
+            $(".open_type_menu .recent").click();
+        }
+    };   
+    const openDocumentLayout = function () {
+        if(gUserId){
+            $(".open_type_menu").children('a').css("display","flex");
+            $(".list_document").show();
+        } else {
+            $(".open_type_menu").children('a').css("display","none");
+            $(".open_type_menu .my_computer").css("display","flex");
+            $(".list_document").hide();
+        }
+    }
+    const downlodDocument = function(e){
+        po_editor.execute(e, 'downloadPopup');
+        closeFileMenu();
+    };
+
+    const saveDocument = function(e){
+        po_editor.execute(e, 'saveToDrive');
+        closeFileMenu();
+    };
+
+
+    const shareDocument = function(e){
+        po_editor.execute(e, 'share');
+        closeFileMenu();
+    };
+
+    const openTemplate = function(e){
+        commonPreventEvent(e);
+        const $this = $(this),
+            tempId = $this.data('id'),
+            tempType = $this.data('type'),
+            tempName = $this.data('name');
+        let openUrl = ''; 
+
+        if(aiTemplateId[IsProdouctionDomain()].indexOf(tempId) > -1){
+            if(!gUserId){
+                po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+                return;
+            }
+        }
+
+        if(gVendorType == 'whale'){
+            openUrl = location.protocol + '//' + location.host + location.pathname.replace(gFileFormat, tempType) + '?templateId=' + tempId + '&templateName=' + encodeURIComponent(tempName); 
+        } else {
+            openUrl = location.protocol + '//' + location.host + '/editor/po/' + tempType + '?templateId=' + tempId + '&templateName=' + encodeURIComponent(tempName); 
+        }
+        
+        window.open(openUrl, '_blank');    
+        closeFileMenu();  
+    };
+
+
+    const eventBinding = function() {
+        const $fileMenu = $('.whale_panel');
+        $('.whale_panel .template_menu a').on('click', function(){
+            var targetTab = $(this).attr('href');
+            $(this).addClass('on').siblings().removeClass('on')
+            $(targetTab).siblings().hide()
+            $(targetTab).css('display', 'flex');
+            return false;
+        });
+
+        $fileMenu.find('.close').on('click', closeFileMenu);
+        $fileMenu.find('.blank').on('click', openNewDocument);
+        $('#menu_new').on('click', function (e) {openDocument('new')});
+        $('#menu_open').on('click', function (e) {openDocument('open')});
+        
+        $('#menu_download').on('click', function(e) {
+            e.preventDefault();
+            const click_log_dp = (gVendorType == 'whale') ? 'whale.click' : 'weboffice.click';
+            sendLogMessage(LogType.tracking.event, click_log_dp, '', 'ux', 'cl', 'download.button');
+            downlodDocument(e)
+        });
+        $('#menu_save').on('click', saveDocument);
+        $('#menu_share').on('click', shareDocument);
+    };
+
+    const setTemplateList = function(res){
+        if(res.resultCode == 0){
+            var templates = res.templates,
+                len = templates.length,
+                listElement = '',
+                type = '';
+
+            if (len == 0) {
+                return;
+            }
+
+            for (var i = 0; i < len; i++) {
+                var data = templates[i];
+                if(gVendorType == 'whale' && (aiTemplateId[IsProdouctionDomain()].indexOf(data.id) > -1)) continue;
+                type = data.type.toLowerCase();
+                listElement += '<dl class="temp" data-id="' + data.id+ '" data-type="' + type + '" data-name="'+ data.name + '">'
+				        + '<dt><img src="/api/2/document/resource/thumbnail/download/' + data.id + '"></dt>'
+				        + '<dd>' + data.name + '</dd>' 
+			        + '</dl>';
+            }
+            $('#' + type + 'List').append(listElement).find('.temp').on('click', openTemplate);
+
+
+
+        } else {
+            console.log(res.resultCode);
+        }
+    }
+
+    const getTemplateList = function(){
+        setTimeout(function getTemplateList() {
+            var type = template.shift().toUpperCase();
+			var data = {
+				'type': type,
+				'language': (LanguagePack.PCHOME_LANG == 'cn' || LanguagePack.PCHOME_LANG == 'cn2' ? 'zhCN' : LanguagePack.PCHOME_LANG)
+			};
+			popcorn.getTemplateList(data, function (res) {
+				setTemplateList(res);
+			}, function (res) {
+                console.log(res.resultCode);
+            });
+            if (template.length > 0) {
+                setTimeout(getTemplateList, 300);
+            }
+        }, 0);
+    };
+
+    const openFileMenu = function() {
+        if($('#fileMenu').hasClass('init')){
+            init();
+            $('#fileMenu').removeClass('init');
+        }
+        $(".ai_panel_frame").hide();
+        const $fileMenu = $('.whale_panel');
+        $fileMenu.css('display', 'flex');
+        $fileMenu.find('.template_menu').find('.' + gFileFormat).click();
+    };
+
+    const init = function(){
+        eventBinding();
+        openDocumentLayout();
+        if(local == 'ko_KR'){
+            template.push('hwp');
+        }
+        getTemplateList();
+    };
+
+    return {
+        init,
+        openFileMenu,
+        closeFileMenu
+    }
+})();
+$(document).ready(function(){
+    $("body").on("click", function (e){
+        console.log('click');
+        console.log($(".short_loc").css("display"));
+        if($(".short_loc").css("display") !== 'none') {
+            $(".short_loc").hide();
+        }
+    })
+})
+// $(function(){    
+//     editFileMenu.init();
+// })

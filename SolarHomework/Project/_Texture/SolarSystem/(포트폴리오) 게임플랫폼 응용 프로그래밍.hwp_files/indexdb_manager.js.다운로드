@@ -1,0 +1,185 @@
+const BROWSER_STORAGE_BASE_NAME = 'PO_EDITOR';
+const CHANGE_FONT_TEMP_FILE_EXT = '.tmp';
+
+class IndexedDBManager {
+    constructor() {
+      this.name = BROWSER_STORAGE_BASE_NAME;
+      this.version = '1';
+      this.storeName = 'TemporaryFile';
+  
+      this.DB = null;
+  
+      this.testName = `TEST_${BROWSER_STORAGE_BASE_NAME}`;
+    }
+  
+    async available() {
+      const createDummyFile = () => {
+        const blob = new Blob(['test'], { type: 'text/plain;charset=utf-8' });
+        const file = new File([blob], 'test.txt', { type: 'text/plain' });
+        return file;
+      };
+      const testFile = createDummyFile();
+  
+      const deleteDB = () => {
+        return new Promise((resolve, reject) => {
+          try {
+            const request = window.indexedDB.deleteDatabase(this.testName);
+            request.onerror = () => {
+              console.log('Error deleting database');
+              reject();
+            };
+            request.onsuccess = () => {
+              resolve(true);
+            };
+          } catch (e) {
+            console.log(`Exception deleting database : ${e}`);
+            reject();
+          }
+        });
+      };
+  
+      try {
+        await this.open(this.testName, this.version);
+        await this.saveFile(testFile);
+        const dummy = await this.getFile(testFile.name);
+        if (!dummy) {
+          return false;
+        }
+        await this.DB.close();
+        this.DB = null;
+        return await deleteDB();
+      } catch (e) {
+        return false;
+      }
+    }
+  
+    open(name = this.name, version = this.version) {
+      return new Promise((resolve, reject) => {
+        const openRequest = window.indexedDB.open(name, version);
+        openRequest.onerror = () => {
+            //console.log('@@@@@@indexedDB open : onerror');
+          reject();
+        };
+        openRequest.onblocked = () => {
+            //console.log('@@@@@@indexedDB open : onblocked');
+        };
+        openRequest.onupgradeneeded = (event) => {
+          this.DB = event.target.result;
+          if (!this.DB) {
+            console.log('@@@@@@DB is null');
+          }
+  
+          try {
+            //console.log('@@@@@@indexedDB open : onupgradeneeded');
+            this.DB.createObjectStore(this.storeName, {
+              keyPath: 'name',
+              autoIncrement: true
+            });
+
+            
+          } catch (err) {
+            //console.log('@@@@@@Error in openDB_onupgradeneeded');
+            reject();
+          }
+        };
+        openRequest.onsuccess = (event) => {
+          //console.log('@@@@@@DB open onseccess');
+          this.DB = event.target.result;
+          resolve();
+        };
+      });
+    }
+  
+    async getFiles() {
+      //console.log('@@@@@@DB getFiles');
+      try {
+        const transaction = this.DB.transaction([this.storeName], 'readwrite');
+        const store = transaction.objectStore(this.storeName);
+        const getFileList = () => {
+          return new Promise((resolve, reject) => {
+            const cursorRequest = store.openCursor();
+            cursorRequest.onerror = () => {
+                console.log('getFileList cursor.onerror');
+              reject();
+            };
+  
+            const fileList = [];
+            cursorRequest.onsuccess = (event) => {
+              const cursor = event.target.result;
+              if (cursor) {
+                fileList.push(cursor.value);
+                cursor.continue();
+              } else {
+                resolve(fileList);
+              }
+            };
+          });
+        };
+        const fileList = await getFileList();
+        return fileList;
+      } catch (err) {
+        console.log(err);
+        console.log('IndexedDBManager getFiles error');
+        return null;
+      }
+    }
+  
+    _delegator(file, operator) {
+      return new Promise((resolve, reject) => {
+        try {
+          const transaction = this.DB.transaction([this.storeName], 'readwrite');
+          const store = transaction.objectStore(this.storeName);
+          const request = operator(store, file);
+          request.onsuccess = () => {
+            resolve();
+          };
+          request.onerror = (event) => {
+            console.log(event);
+            reject();
+          };
+        } catch (exception) {
+            console.log(exception);
+          reject();
+        }
+      });
+    }
+  
+    saveFile(file, name) {
+      return new Promise((resolve, reject) => {
+        this._delegator(file, (store, file) => {
+          let fileInfo = {
+            file,
+            name
+          };
+  
+          return store.put(fileInfo);
+        })
+          .then(resolve)
+          .catch(reject);
+      });
+    }
+  
+    removeFile(name) {
+      return new Promise((resolve, reject) => {
+        return this._delegator(name, (store, fileName) => store.delete(fileName))
+          .then(resolve)
+          .catch(reject);
+      });
+    }
+  
+    getFile(filename) {
+      return new Promise((resolve, reject) => {
+        try {
+          const stransaction = this.DB.transaction(this.storeName, 'readonly');
+          const store = stransaction.objectStore(this.storeName);
+          const request = store.get(filename);
+          request.onsuccess = () => {
+            resolve(request.result);
+          };
+        } catch (err) {
+            console.log('indexedDb getFile Error' + err.message);
+          reject();
+        }
+      });
+    }
+  }

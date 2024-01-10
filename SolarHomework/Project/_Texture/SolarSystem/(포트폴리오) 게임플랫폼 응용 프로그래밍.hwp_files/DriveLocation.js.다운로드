@@ -1,0 +1,87 @@
+function DriveLocation({ initialState }) {
+    this.$element = document.createElement('dl');
+    this.$element.classList.add("locations");
+    const $root = document.querySelector(".my_polaris_list > .drive_loc")
+    $root.appendChild(this.$element);
+    const $loc = document.getElementsByClassName("drive_loc")[0];
+    const $path = document.querySelector(".drive_loc > .locations");
+    const observer = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            this.resize();
+        }
+    })
+
+    observer.observe($loc)
+  
+    this.state = [{fileId: -1, fileName:'My Polaris Drive'} ,...initialState];
+    this.stackState = [];
+
+    this.resize = function() {
+        const percent = $path.offsetWidth / $loc.clientWidth * 100;
+        if(percent >= 60){
+            const arr = this.state;
+            const shift = arr.shift();
+            this.setStackState([...this.stackState, shift]);
+            this.setState(arr);
+        }
+    }
+    //insertAdjacentHTML('beforeend',
+    this.render = function() {
+      this.$element.innerHTML = this.state.map(item => {
+            if(item.fileId === -1) return `<a href='#' id='root-path'>My Polaris Drive</a>`
+            return`<a class='paths' data-referenceId='${item.referenceId}' data-id='${item.fileId}'>${item.fileName}</a>`
+        }).join('');
+
+        if(this.stackState.length > 0 && document.getElementsByClassName("folder_open").length === 0) {
+            //축약할 경로 스택이 있고, 폴더 오픈 아이콘이 없다면 축약 폴더 아이콘 생성
+            const a = document.createElement("a");
+            a.setAttribute('href',"#");
+            a.classList.add("folder_open");
+            a.text = 'path';
+            $path.insertAdjacentElement('beforebegin', a);
+        } else if (this.stackState.length === 0 && document.getElementsByClassName("folder_open").length > 0) {
+            //반대로 스택이 비어있다면 폴더 오픈 아이콘 삭제
+            document.getElementsByClassName("folder_open")[0].remove();
+        }
+
+        $(".paths").on("click", function(e) {
+            e.preventDefault();
+            if($(this).attr('data-referenceId') !== 'null'){
+                myDrive.getShareFolderList($(this).attr('data-id'))
+            } else {
+                myDrive.getInnerDirList($(this).attr('data-id'));
+            }
+
+        });
+
+        $("#root-path").on('click', function(e){
+            e.preventDefault();
+            myDrive.getMyDriveList();
+        })
+
+        $(".folder_open").on("click", function(e){
+            e.preventDefault();
+            e.stopPropagation();
+            $(".short_loc").show();
+        })
+
+        $(".short_loc").remove();
+        const $target = document.getElementsByClassName("drive_loc")[0];
+        new ShortLocation({$target, initialState:this.stackState});
+        this.resize();
+    }
+  
+    this.setState = function(nextState) {
+      this.state = nextState;
+      $(".my_polaris_list .drive_loc .locations a").remove();
+      this.render()
+    }
+
+    this.setStackState = function(nextState) {
+        this.stackState = nextState;
+        this.render()
+      }
+  
+    this.render()
+  }
+  

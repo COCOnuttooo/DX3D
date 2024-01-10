@@ -1,0 +1,150 @@
+let selectedFile = null;
+$(document).ready(function(){
+    const file = $("#styledFile");
+    file.css("cursor","pointer");
+    $('input[type="checkbox"][name="transfer"]').click(function() {
+        if($(this).prop('checked')) {
+           $('input[type="checkbox"][name="transfer"]').prop('checked',false);
+           $(this).prop('checked',true);
+        }
+        if($(this).prop('checked') && (file.get(0).files[0] || selectedFile)) {
+            onStyleTransfer($(this).val(), selectedFile || file.get(0).files[0]);
+        }
+    });
+    file.on("change", function(){
+        selectedFile = null;
+    })
+
+    $("#style_change .upload_image_large").on("dragover", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }).on("drop", function(e){
+        e.preventDefault();
+        const files = e.originalEvent.dataTransfer.files[0];
+        var reader = new FileReader(); 
+		reader.onload = function(e) {
+			$('.upload_image_large.styled .upload_file').hide();
+			$('#previewStyled .thums').attr('style', 'background-image:url('+ e.target.result +')');
+			$('#previewStyled').css('display', 'flex');
+		}
+		reader.readAsDataURL(files);
+        file.prop("files", e.originalEvent.dataTransfer.files);
+    });
+})
+function aiStyleChange() {
+    return $(function(){
+        changeTitle(LanguagePack.AI_TOOLS_STR05);
+        $("#style_change").css("display","block");
+        $("#previewStyled .close").off();
+        $("#previewStyled .close").bind("click",function(e){
+            e.preventDefault();
+            $("#styledFile").val("");
+            $('#style_change .upload_image_large .upload_file').show();
+            $("#previewStyled .thums").removeAttr('style', 'background-image');
+            $("#previewStyled").hide()
+            selectedFile= null;
+        })
+
+        const {objectType, objectCount} = po_editor.getCursoredLocation();
+
+        if(objectType === 5 && objectCount === 1){
+            const imageData = po_editor.getImageInfo();
+            const reader = new FileReader();
+            const myFile = new File([imageData], 'image.png',{
+                type:imageData.type
+            })
+            reader.readAsDataURL(imageData); 
+            reader.onloadend = () => {
+            	const base64data = reader.result;
+                $('.upload_image_large.styled .upload_file').hide();
+            	$('#previewStyled .thums').attr('style', 'background-image:url('+ base64data +')');
+                $('#previewStyled').css('display', 'flex');
+            }
+            selectedFile = myFile;
+            $('input[type="checkbox"][name="transfer"]').each(function (index) {
+                if($(this).is(":checked")==true){
+                    $(this).parent('label').removeClass('select')
+                }
+            });
+            $('input[type="checkbox"][name="transfer"]').prop("checked", false);
+
+        }
+    })
+}
+
+async function getAiStyledChangeImage(type, file) {
+
+    const formData = new FormData();
+    formData.append("multipartFile",file)
+    const data = await fetch(`${AI_STYLE_TRANSFER}/${type}`,{
+        method:"POST",
+        body:formData
+    }).then(res => {
+        const contentType = res.headers.get("content-type");
+        if(contentType.includes("application/json")) {
+            return res.json()
+        } else {
+            getAIUserInfo(function(res){
+                if(res.resultCode === 0) {
+                    aiUserInfo = res;
+                }
+            });	
+            return res.blob()
+        }
+    })
+    
+
+    return data
+}
+
+function onStyleTransfer(type, file){
+
+    const deductCredit = checkDeductCredit('styleChage');
+    const isPay = isPaymentCredit(deductCredit);
+    
+    if(isPay !== 1) {
+        isCheckCreditPaymentAvailability(isPay);
+        return;
+    }
+
+    $("#style_change .applied_image").append(loading);
+    successServiceMessage(`${LanguagePack.AI_TOOLS_STR199}<br/> ${LanguagePack.AI_TOOLS_STR120(deductCredit, aiUserInfo.userinfo.remainCredit === -1 ? LanguagePack.KEYWORD_PRICE_INFINITE : aiUserInfo.userinfo.remainCredit - deductCredit)}`);
+        //
+    $("#previewStyled .close").hide();
+    getAiStyledChangeImage(type,file)
+    .then(res => {
+        //console.log(res);
+        const keysLength = Object.keys(res).length;
+        $("#style_change .applied_image .ai_loading").remove()
+        $("#previewStyled .close").show();
+        if(keysLength === 0) {
+            sendLogMessage(LogType.tracking.event, 'ai.tools.credit', null, 'ux', 'cl', null, {cobj : {type : 'style_conversion', used_credit :  deductCredit}});
+            sendLogMessage(LogType.tracking.event, 'ai.style_conversion', null, 'ux', 'cl', null, null);
+            successServiceMessage(LanguagePack.AI_TOOLS_STR201);
+            toastMessage(LanguagePack.AI_TOOLS_STR201);
+            //console.log(res);
+            let img = URL.createObjectURL(res);
+            $("#style_change .applied_image .thum").css("background-image", `url(${img})`);
+            buttonRemoveDisable($("#style_change .white"));
+            buttonRemoveDisable($("#style_change .primary"));
+            $("#style_change .white").off();
+            $("#style_change .white").on("click", function(e){
+                fileDownload(res)
+            });
+            $("#style_change .primary").off();
+            $("#style_change .primary").on("click", function(e){
+                insertImageToDocument(e, res, LanguagePack.AI_TOOLS_STR183);
+            });
+        } else {
+            if(res.resultCode === 15002){
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR45);
+            } else if (res.resultCode === 15108 || res.resultCode === 15107 || res.resultCode === 15109 || res.resultCode === 15100) {
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR190);
+            } else if(res.resultCode === 100) {
+                po_editor.execute(null,'sessionError');
+            } else {
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR74 + ' ' + LanguagePack.AI_TOOLS_STR75);
+            }
+        }
+    })
+}

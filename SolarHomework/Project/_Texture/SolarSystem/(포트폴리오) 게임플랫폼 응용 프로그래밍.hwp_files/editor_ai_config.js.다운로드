@@ -1,0 +1,99 @@
+let serviceInfo = [];
+
+function checkDeductCredit(domain) {
+    const aiType = {
+        aiWrite:'GPT3',
+        aiTemplate:'CLOVA',
+        textToImage:'DREAM_STUDIO',
+        removeBackground:'PO_BACKGROUND_REMOVE',
+        wordCloud:'PO_WORDCLOUD',
+        wordCloudImg:'PO_WORDCLOUD_IMG',
+        resolution:'PO_RESOLUTION',
+        styleChage:'PO_STYLE_TRANSFER'
+    };
+    const {deductCredit} =  serviceInfo.find(item => item.serviceType === aiType[domain])
+    return deductCredit
+}
+
+//크레딧을 계산해주는 함수
+//보유 크레딧이 0이면 0, 해당 AI 사용 가능하면 1 그렇지 못하면 -1 리턴
+function isPaymentCredit(deductCredit) {
+    const myCredit = aiUserInfo.userinfo.remainCredit;
+    if(myCredit === -1) return 1;
+    if(myCredit === 0) return 0;
+    if(myCredit - deductCredit < 0) return -1
+    return 1
+}
+
+$(document).ready(function(){
+    if(gUserId){
+        popcorn.getAIServiceInfo(function(res){
+            if(res.resultCode === 0){
+                serviceInfo = res.infos;
+            }
+        }, function(err){console.log(err)});
+    }
+})
+
+function aiEventEndPoint(menuName) {
+    if(!window.navigator.onLine){
+        toastMessage(LanguagePack.AI_TOOLS_STR221);
+        return;
+    }
+
+    if(menuName ==='ai_guide') return aiGuide();
+    
+    if(!gUserId) {  
+        po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+        return;
+    }
+
+    $(".ai_panel_frame").hide();
+    //editFileMenu.openFileMenu();
+    if(menuName ==="ai_template") return editFileMenu.openFileMenu();
+    $(".ai_side_panel").css("display","flex");
+    if(menuName ==='ai_write') {
+        $(".ai_side_panel").css("display","none");
+        return webviewAiConfig.init('aiWrite')
+    }
+    if(menuName ==='ai_word_cloud') return aiWordCloud()
+    if(menuName ==='ai_text_to_image') {
+        $(".ai_side_panel").css("display","none");
+        return webviewAiConfig.init('txt2img')
+    }
+    if(menuName ==='ai_remove_background_image') {
+        return aiRemove();
+    }
+    if(menuName ==='ai_resolution_enhancement') {
+        return aiResolutioEnhancement();
+    }
+    if(menuName ==='ai_style_change') {
+        return aiStyleChange();
+    }
+
+}
+function goAiPage(){
+    window.open('/' + LanguagePack.CURRENT_LOCALE + '/ai', '_blank');
+}
+function setAlert(text, confirmBtn, cancelBtn, confirmCb, cancelCb){
+    var alertType = ButtonType.CONFIRM;
+    if(confirmBtn && cancelBtn) alertType = ButtonType.CONFIRM_CANCEL;
+    var popupMessage = new Array();
+    popupMessage[0] = text
+    var popup = new PopupMessage(PopupType.DEFAULT, alertType, null, {
+        popupMessage: popupMessage
+    }, function(e){
+        defaultAlertCB(e);
+        if(confirmCb) confirmCb(e);
+    }, function(e){
+        defaultAlertCB(e);
+        if(cancelCb) cancelCb(e);
+    }, defaultAlertCB);
+    popup.create();
+    popup.changebutton({
+        confirm: confirmBtn,
+        cancel : cancelBtn
+    });
+    popup.show();
+    return false;
+}

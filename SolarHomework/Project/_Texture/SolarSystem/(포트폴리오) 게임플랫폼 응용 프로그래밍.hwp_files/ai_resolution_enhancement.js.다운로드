@@ -1,0 +1,183 @@
+$(document).ready(function(){
+    $("#resolution_enhancement .txt02").text(LanguagePack.AI_TOOLS_STR77);
+    const file = $("#dpiFile");
+    file.css("cursor","pointer");
+    file.on("change", function(){
+        const reader = new FileReader();
+        reader.readAsDataURL(file.get(0).files[0]);
+        reader.onload = (e) => {
+            const image = new Image();
+            image.src = e.target.result;
+            image.onload = () => {
+                const {
+                height,
+                width
+                } = image;
+                if (width > 2048 || height > 2048) {
+                    errorServiceMessage(LanguagePack.AI_TOOLS_STR64 + ' ' + LanguagePack.AI_TOOLS_STR77);
+                return false;
+                }
+                onResolutioEnhancement(file.get(0).files[0])
+                return true;
+            };
+        }
+    });
+
+    $("#resolution_enhancement .upload_image_large").on("dragover", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }).on("drop", function(e){
+        e.preventDefault();
+        const file = e.originalEvent.dataTransfer.files[0];
+        var reader = new FileReader(); 
+		reader.onload = function(e) {
+			$('.upload_image_large.dpi .upload_file').hide();
+			$('#previewDpi .thums').attr('style', 'background-image:url('+ e.target.result +')');
+			$('#previewDpi').css('display', 'flex');
+            onResolutioEnhancement(file);
+		}
+		reader.readAsDataURL(file);
+    });
+
+    //마우스 오버 이벤트
+    $("#resolution_enhancement .applied_image .thum").mouseover(function(){
+        if($(this).css("background-image") !== 'none') {
+            $("#resolution_enhancement .applied_image .thum .zoom").show();
+        }
+    })
+
+    $("#resolution_enhancement .applied_image .thum").mouseout(function(e) {
+        $("#resolution_enhancement .applied_image .thum .zoom").hide();
+    })
+})
+function aiResolutioEnhancement() {
+    return $(function(){
+        changeTitle(LanguagePack.AI_TOOLS_STR04);
+        $("#previewDpi .close").off();
+        $("#previewDpi .close").bind("click",function(e){
+            e.preventDefault();
+            $("#dpiFile").val("");
+            $('#resolution_enhancement .upload_image_large .upload_file').show();
+            $("#previewDpi").removeAttr('style', 'background-image');
+            $("#previewDpi").hide()
+        })
+        $("#resolution_enhancement").css("display","block");
+
+        const {objectType, objectCount} = po_editor.getCursoredLocation();
+
+        if(objectType === 5 && objectCount === 1){
+            const imageData = po_editor.getImageInfo();
+            const reader = new FileReader();
+            const myFile = new File([imageData], 'image.png',{
+                type:imageData.type
+            })
+            reader.readAsDataURL(imageData); 
+            reader.onloadend = () => {
+            	const base64data = reader.result;
+                $('.upload_image_large.dpi .upload_file').hide();
+            	$('#previewDpi .thums').attr('style', 'background-image:url('+ base64data +')');
+                $('#previewDpi').css('display', 'flex');
+                $('#resolution_modal .low img').attr('src',base64data);
+            }
+            onResolutioEnhancement(myFile)
+        }
+    })
+}
+//   tostMessage("내용 생성 중...")
+async function getResolutioEnhancementImage(file) {
+    const formData = new FormData();
+    formData.append("multipartFile", file)
+ 
+    const data = await fetch(AI_RESOLUTION_IMAGE,{
+        method:"POST",
+        body:formData
+    }).then(res => {
+        const contentType = res.headers.get("content-type");
+        if(contentType.includes("application/json")) {
+            return res.json()
+        } else {
+            getAIUserInfo(function(res){
+                if(res.resultCode === 0) {
+                    aiUserInfo = res;
+                }
+            });	
+            return res.blob()
+        }
+    })
+
+    return data
+}
+
+
+async function downLodadEnhancementImage(blob) {
+    const downloadUrl = window.URL.createObjectURL(blob); // 해당 file을 가리키는 url 생성
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.download = 'image.png'; // a tag에 download 속성을 줘서 클릭할 때 다운로드가 일어날 수 있도록 하기
+    anchorElement.href = downloadUrl; // href에 url 달아주기
+    anchorElement.click(); // 코드 상으로 클릭을 해줘서 다운로드를 트리거
+    document.body.removeChild(anchorElement); // cleanup - 쓰임을 다한 a 태그 삭제
+    // fileDownload(blob)
+}
+
+function onResolutioEnhancement(file) {
+
+    const deductCredit = checkDeductCredit('resolution');
+    const isPay = isPaymentCredit(deductCredit);
+    
+    if(isPay !== 1) {
+        isCheckCreditPaymentAvailability(isPay);
+        return;
+    }
+
+    successServiceMessage(`${LanguagePack.AI_TOOLS_STR196}<br/> ${LanguagePack.AI_TOOLS_STR120(deductCredit, aiUserInfo.userinfo.remainCredit === -1 ? LanguagePack.KEYWORD_PRICE_INFINITE : aiUserInfo.userinfo.remainCredit - deductCredit)}`);
+    $("#resolution_enhancement .applied_image").append(loading);
+    $("#previewDpi .close").hide();
+
+    getResolutioEnhancementImage(file).then(res => {
+        const keysLength = Object.keys(res).length;
+
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function (e) {
+            $('#resolution_modal .low img').attr('src',e.target.result);
+        }
+        
+        $("#resolution_enhancement .applied_image .ai_loading").remove()
+        $("#previewDpi .close").show();
+        if(keysLength === 0) {
+            sendLogMessage(LogType.tracking.event, 'ai.tools.credit', null, 'ux', 'cl', null, {cobj : {type : 'improved_resolution', used_credit :  deductCredit}});
+            sendLogMessage(LogType.tracking.event, 'ai.improved_resolution', null, 'ux', 'cl', null, null);
+            successServiceMessage(LanguagePack.AI_TOOLS_STR198);
+            toastMessage(LanguagePack.AI_TOOLS_STR198);
+            //console.log(res);
+            let img = URL.createObjectURL(res);
+            $("#resolution_enhancement .applied_image .thum").css("background-image", `url(${img})`);
+            $('#resolution_modal .high').css("background-image", `url(${img})`);
+            buttonRemoveDisable($("#resolution_enhancement .white"));
+            buttonRemoveDisable($("#resolution_enhancement .primary"));
+            $("#resolution_enhancement .white").off();
+            $("#resolution_enhancement .white").on("click", function(e){
+                downLodadEnhancementImage(res);
+            });
+            $("#resolution_enhancement .primary").off();
+            $("#resolution_enhancement .primary").on("click", function(e){
+                insertImageToDocument(e, res, LanguagePack.AI_TOOLS_STR183)
+            });
+            $("#resolution_enhancement .zoom").on("click",function(e) {
+                e.preventDefault();
+                $("#resolution_modal").css("display","block")
+            })
+        } else {
+            if(res.resultCode === 15002){
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR45);
+            } else if (res.resultCode === 15108 || res.resultCode === 15107 || res.resultCode === 15109 || res.resultCode === 15100) {
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR190);
+            } else if(res.resultCode === 100) {
+                po_editor.execute(null,'sessionError');
+            } else {
+                errorServiceMessage(LanguagePack.AI_TOOLS_STR74 + ' ' + LanguagePack.AI_TOOLS_STR75);
+            }
+        }
+    })
+}

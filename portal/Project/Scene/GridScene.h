@@ -10,8 +10,14 @@ public:
 	void PreRender() override;
 	void Render() override;
 	void PostRender() override;
+
+	// Scene을(를) 통해 상속됨
+	virtual void P1ReRender() override;
+
+	virtual void P2ReRender() override;
 private:
 	Grid* grid;
+
 
 
 };

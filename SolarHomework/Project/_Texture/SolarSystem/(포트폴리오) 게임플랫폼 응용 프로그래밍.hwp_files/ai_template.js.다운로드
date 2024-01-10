@@ -1,0 +1,260 @@
+$(document).ready(function(){
+    const maxExpsField = 3;
+    let expsTextArea = 1;
+    let careersTextArea = 1;
+    const textArea = '<textarea></textarea>'
+
+    $("#exps_btn .plus").click(function (){
+        if(expsTextArea < maxExpsField){
+            expsTextArea++; // 숫자 증가
+            $('#exps .form').append(textArea); // Add field
+            $("#exps .title span").text(`(${$('#exps .form textarea').length}/3)`);
+            if(expsTextArea === maxExpsField) {
+                // $("#exps_btn .plus").attr("disabled",true)
+                $("#exps_btn .plus").hide();
+                $("#exps_btn .minus").show();
+                $("#exps_btn .minus").attr("disabled",false)
+            } else {
+                $("#exps_btn .plus").attr("disabled",false)
+                $("#exps_btn .minus").show();
+                $("#exps_btn .minus").attr("disabled",false)
+            }
+        }
+    })
+    $("#exps_btn .minus").click(function (){
+        $("#exps .form textarea:last-child").remove(); // Remove field
+        $("#exps .title span").text(`(${$('#exps .form textarea').length}/3)`);
+        expsTextArea--; // 카운트 감소
+        if(expsTextArea === 1) {
+            // $("#exps_btn .minus").attr("disabled",true)
+            $("#exps_btn .minus").hide();
+            $("#exps_btn .plus").show();
+            $("#exps_btn .plus").attr("disabled",false)
+        } else {
+            $("#exps_btn .plus").show();
+            $("#exps_btn .minus").attr("disabled",false)
+            $("#exps_btn .plus").attr("disabled",false)
+        }
+        
+    })
+    $("#careers_btn .plus").click(function (){
+        if(careersTextArea < maxExpsField){
+            careersTextArea++; // 숫자 증가
+            $('#careers .form').append(textArea); // Add field
+            $("#careers .title span").text(`(${$('#careers .form textarea').length}/3)`);
+            if(careersTextArea === maxExpsField) {
+                //$("#careers_btn .plus").attr("disabled",true)
+                $("#careers_btn .plus").hide();
+                $("#careers_btn .minus").show();
+                $("#careers_btn .minus").attr("disabled",false)
+            } else {
+                $("#careers_btn .minus").show();
+                $("#careers_btn .plus").attr("disabled",false)
+                $("#careers_btn .minus").attr("disabled",false)
+            }
+        }
+    })
+    $("#careers_btn .minus").click(function (){
+        $("#careers .form textarea:last-child").remove(); // Remove field
+        $("#careers .title span").text(`(${$('#careers .form textarea').length}/3)`);
+        careersTextArea--; // 카운트 감소
+        if(careersTextArea === 1) {
+            //$("#careers_btn .minus").attr("disabled",true)
+            $("#careers_btn .minus").hide();
+            $("#careers_btn .plus").show();
+            $("#careers_btn .plus").attr("disabled",false)
+        } else {
+            $("#careers_btn .plus").show();
+            $("#careers_btn .minus").attr("disabled",false)
+            $("#careers_btn .plus").attr("disabled",false)
+        }
+        
+    })
+    
+    $("#resultcopy").click(function(e){
+        e.preventDefault();
+        coverLetterResultCopy();
+    })
+    $("#create, #restart").click(function(e){
+        e.preventDefault();
+        if(!gUserId){
+            po_editor.execute(null, 'loginPopup', LanguagePack.WEBVIEW_LOGIN + '(' + LanguagePack.WEBVIEW_LOGIN_STR + ')', LanguagePack.KEYWORD_LOGIN);
+            return;
+        }
+        let exps = "";
+        let careers = "";
+        $("#exps .form textarea").each(function(_,item){
+            const data = $(item).val();
+            if(data !== ""){
+                exps += $(item).val();
+                exps += ",";
+            }
+        })
+        $("#careers .form textarea").each(function(_,item){
+            const data = $(item).val();
+            if(data !== ""){
+            careers += data;
+            careers += ",";
+        }
+        })
+        $("#template_modal .outcome .form").append(loading);
+        getAiCoverLetter($("#companyName input").val(), exps, careers, $("#applicationJobDesc .form textarea").val())
+        .then(res =>{
+            $("#template_modal .outcome .form .ai_loading").remove();
+            
+            if(res.resultCode === 0){
+                const params = getUrlParam();
+                const templateType = params["templateName"].replace(/\s|%20/g,'').toLowerCase();   //템플릿 이름 Resume 1 -> resume1변경
+                const { deductCredit } = serviceInfo.find(item=> item.serviceType === 'CLOVA');
+                const textLen = $("#companyName input").val().length + exps.length + careers.length + $("#applicationJobDesc .form textarea").val().length + gFullName.length;
+                const resultLen = lengthCheck(res.result);
+                sendLogMessage(LogType.tracking.event, 'ai.template.credit', 'HWP', 'ux', 'cl', templateType, {cobj : {type : 'ai template', used_credit : deductCredit }});
+                sendLogMessage(LogType.tracking.event, 'ai.template', 'HWP', 'ux', 'cl', templateType, {cobj : {input_number: textLen, output_number: resultLen}});
+                toastMessage(LanguagePack.AI_TOOLS_STR60);
+                successInsertTemplateMessage(LanguagePack.AI_TOOLS_STR60);
+                $("#template_modal .ai_cont_body .outcome .btn_wrap a").removeClass("disabled");
+                $("#template_modal .ai_cont_body .outcome .btn_wrap a").css("pointer-events","auto");
+                const titles = res.result.split("\n");
+                
+                const config = {
+                    title: titles[1],
+                    body: res.result.replace("\n","<br />").replace("<br />", "").replace("###", "")
+                }
+                $(".outcome .template_result").text(resultLen);
+                $("#cover_letter_result").html(res.result.replace("\n","<br />").replace("<br />", ""));
+                $("#exps .form textarea").each(function(idx,item){
+                    const data = $(item).val();
+                    if(data !== ""){
+                        const index = idx + 1;
+                        config["exp"+ index] = data;
+                    }
+                });
+                $("#careers .form textarea").each(function(idx,item){
+                    const data = $(item).val();
+                    if(data !== ""){
+                        const index = idx + 1;
+                        config["career"+ index] = data;
+                    }
+                });
+                $("#create_cover").parent("a").off();
+                $("#create_cover").parent("a").on("click", function(e){
+                    e.preventDefault();
+                    generateCoverLetterDocument(config)
+                    .then(res => {
+                        const keysLength = Object.keys(res).length;
+                    if(keysLength === 0) {
+                        po_editor.execute({event:e, blob:res}, 'openNewCoverLetter')
+                    
+                    }   else {
+                        
+                    }
+                    })
+                })
+
+            } else {
+                if(res.resultCode === 15002){
+                    errorInsertTemplateMessage(LanguagePack.AI_TOOLS_STR45);
+                    errorResultTemplateMessage(LanguagePack.AI_TOOLS_STR45);
+                } else if(res.resultCode === 100) {
+                    po_editor.execute(null,'sessionError');
+                } else {
+                    errorResultTemplateMessage(LanguagePack.AI_TOOLS_STR43);
+                    errorInsertTemplateMessage(LanguagePack.AI_TOOLS_STR43);
+                }
+                
+            }
+        })
+    })
+})
+function aiTemplate() {
+    return $(function(){
+        $("#template_modal").css("display","flex");
+        $("#exps_btn .plus").attr("disabled",false);
+        $("#template_modal .ai_cont_body .outcome .btn_wrap a").addClass("disabled");
+        $("#template_modal .ai_cont_body .outcome .btn_wrap a").css("pointer-events","none");
+        $("#careers_btn .minus").hide();
+        $("#exps_btn .minus").hide();
+        //console.log($("#careers .form textarea"))
+    })
+}
+
+async function getAiCoverLetter(companyName,exps, careers, applicationJobDesc) {
+    if(companyName === "" || applicationJobDesc==="" || exps === "") return errorInsertTemplateMessage(LanguagePack.AI_TOOLS_STR59);
+    let info = {
+        companyName:companyName,
+        applicationJobDesc:applicationJobDesc,
+        careers:careers,
+        exps:exps,
+        name:gFullName
+    };
+    
+    const data = await fetch(AI_TEMPLATE,{
+        method:"POST",
+        body:JSON.stringify({info})
+    }).then(res => {
+        return res.json()
+    })
+
+    return data;
+}
+
+async function generateCoverLetterDocument(config) {
+    const params = getUrlParam();
+    const data = await fetch(AI_GENHWP,{
+        method:"POST",
+        body:JSON.stringify({
+            templateId:params["templateId"],
+            dataset:config
+        })
+    }).then(res => {
+        const contentType = res.headers.get("content-type");
+        //console.log('res');
+        if(contentType.includes("application/json")) {
+            return res.json()
+        } else {
+            return res.blob()
+        }
+    })
+
+    return data
+}
+
+
+function coverLetterResultCopy() {
+    const t = document.createElement("textarea");
+    document.body.appendChild(t);
+    t.value = $("#cover_letter_result").val();
+    t.select()
+    document.execCommand('copy');
+    document.body.removeChild(t);
+    successResultTemplateMessage(LanguagePack.AI_TOOLS_STR50);
+    toastMessage(LanguagePack.AI_TOOLS_STR50);
+}
+
+function lengthCheck(text) {
+    const replaceData = text.replace("\n", "");
+
+    return replaceData.length
+}
+
+function successInsertTemplateMessage(text) {
+    $(".ai_cont_foot .check_text p").removeClass("error");
+    $(".ai_cont_foot .check_text p").addClass("complete");
+    $(".ai_cont_foot .check_text p").html(text)
+}
+function errorInsertTemplateMessage(text) {
+    $(".ai_cont_foot .check_text p").removeClass("complete");
+    $(".ai_cont_foot .check_text p").addClass("error");
+    $(".ai_cont_foot .check_text p").html(text)
+}
+
+function successResultTemplateMessage(text) {
+    $(".ai_cont_foot .result_text p").removeClass("error");
+    $(".ai_cont_foot .result_text p").addClass("complete");
+    $(".ai_cont_foot .result_text p").html(text)
+}
+function errorResultTemplateMessage(text) {
+    $(".ai_cont_foot .result_text p").removeClass("complete");
+    $(".ai_cont_foot .result_text p").addClass("error");
+    $(".ai_cont_foot .result_text p").html(text);
+}

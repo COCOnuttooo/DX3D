@@ -1,0 +1,68 @@
+const webviewAiConfig = (function(){
+
+    const type = [
+        {
+            url:'txt2img',
+            cmd:'openTextToImg',
+        },
+        {
+            url:'aiWrite',
+            cmd:'openAiTools', 
+        }
+    ]
+
+    const init = (id) => {
+        const obj = type.filter(item => item.url === id)[0];
+        const domain = IsProdouctionDomain() == 'prod' ? `https://berlin.polarisoffice.com/${obj.url}?lang=${local}` : `https://vf-berlin.polarisoffice.com/${obj.url}?lang=${local}`;
+        let msg;
+        let flag = false;
+        let stringData = ''
+        const {status, objectType} = po_editor.getCursoredLocation();
+
+        if(status === 'caret_marking') {
+            stringData = po_editor.getMarkedText();
+        } 
+        
+        if(objectType === 1) {
+            //시트 커서 상태
+            const {firstCol, firstRow, lastCol, lastRow} = po_editor.getCellRange();
+            if( lastCol - firstCol === 0 && lastRow - firstRow === 0) {
+                stringData = po_editor.getFormulaBarFieldText()
+            } else {
+                stringData = '';
+            }
+        }
+
+        if(status === 'caret_normal') {
+            stringData = '';
+        }
+
+        msg = {
+            cmd: obj.cmd,
+            body : stringData.replaceAll(/(\v)/g, "\r\n").slice(0, 1001)  //1000자 까지만 끌어오기
+        };
+
+        
+        if ($(`#_polaris_ai_panel_${obj.url}`).attr("src") == '') {
+            $(`#_polaris_ai_panel_${obj.url}`).attr("src", domain);
+            if(status === 'caret_marking' || objectType === 1) {
+                messageQueue.push(msg)
+                flag = true;
+            } 
+        }
+
+        $(".ai_panel_frame").hide();
+        
+        $(`#_polaris_ai_panel_${obj.url}`).css({
+            "display":'flex',
+            'z-index':'200',
+            'background':'#fff'
+        });
+
+        aiPostMessage(msg);
+    }
+
+    return {
+        init
+    }
+})()

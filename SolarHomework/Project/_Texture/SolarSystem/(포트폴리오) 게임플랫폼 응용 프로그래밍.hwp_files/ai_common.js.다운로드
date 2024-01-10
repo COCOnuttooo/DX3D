@@ -1,0 +1,104 @@
+
+function successServiceMessage(text) {
+    $(".ai_side_panel .result_text p").removeClass("error");
+    $(".ai_side_panel .result_text p").addClass("complete");
+    $(".ai_side_panel .result_text p").html(text)
+}
+function errorServiceMessage(text) {
+    $(".ai_side_panel .result_text p").removeClass("complete");
+    $(".ai_side_panel .result_text p").addClass("error");
+    $(".ai_side_panel .result_text p").html(text)
+}
+
+function fileDownload(blob) {
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.style = "display: none";
+    a.href = url
+    a.download = 'image.png'
+    a.click()
+    setTimeout(function () {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url); // 메모리 해제
+    }, 100);
+}
+
+function insertImageToDocument(e,blob,text) {
+    po_editor.execute(
+        {
+            event:e,
+            blob,
+            text
+        },
+    'insertImage')
+}
+function changeTitle(title) {
+    $('.ai_side_panel .head h3').text(title);
+}
+
+const loading = '<div class="ai_loading"><div>loading...</div></div>';
+
+function buttonDisable(elem) {
+    elem.addClass("disabled");
+    elem.css("pointer-events","none");
+}
+function buttonRemoveDisable(elem) {
+    elem.removeClass("disabled");
+    elem.css("pointer-events","auto");
+}
+
+function isCheckCreditPaymentAvailability(isPay) {
+    if(isPay === 0){    
+        errorServiceMessage(`${LanguagePack.AI_TOOLS_STR116}<br/> <span style='cursor:pointer' class='goMyCredit'>${LanguagePack.AI_TOOLS_STR117}</span>`);
+    } else if(isPay === -1) {
+        errorServiceMessage(`${LanguagePack.AI_TOOLS_STR118}<br/> <span style='cursor:pointer' class='goMyCredit'>${LanguagePack.AI_TOOLS_STR117}</span>`);
+    }
+    $(".goMyCredit").on("click", function (e) {
+        window.open("/account#credit", '_blank');
+    })
+}
+
+$(document).ready(function(){
+    //text to image
+    buttonDisable($("#text_to_image .type02 .fix_r a"));
+    
+    //배경 제거 버튼
+    buttonDisable($("#remove_background_image .white"));
+    buttonDisable($("#remove_background_image .primary"));
+
+    //ai write 버튼
+    buttonDisable($("#write_result_box .form .btn_wrap .white"));
+    buttonDisable($("#write_result_box .form .btn_wrap .primary"));
+
+    //해상도 향상 버튼
+    buttonDisable($("#resolution_enhancement .white"));
+    buttonDisable($("#resolution_enhancement .primary"));
+
+    //스타일 변환 버튼
+    buttonDisable($("#style_change .white"));
+    buttonDisable($("#style_change .primary"));
+
+    $(".ai_side_panel .close, .ai_side_panel .panel_dim").on("click", function(e){
+        e.preventDefault();
+        $(".word_cloud").css("display","none");
+        $("#ai_write").css("display","none");
+        $("#text_to_image").css("display","none");
+        $("#style_change").css("display","none");
+        $("#remove_background_image").css("display","none");
+        $("#resolution_enhancement").css("display","none");
+        $(".ai_side_panel").css("display","none");
+    });
+
+    function csLink() {
+        var link = '';
+        if($('body').hasClass('ko')) {
+            link = 'https://polarisofficehelp.zendesk.com/hc/ko/sections/6735266225039'
+        }else {
+            link = 'https://polarisofficehelp.zendesk.com/hc/en-us/sections/6735266225039-Polaris-Office-AI-Usage-policy'
+        }
+        $('.ai_cont_body .info02 a, .ai_side_panel .inner .info_box .info02 a').attr('href', link);
+    }
+    csLink();
+})
+
+
