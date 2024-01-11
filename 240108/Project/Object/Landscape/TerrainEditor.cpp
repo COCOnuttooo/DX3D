@@ -111,7 +111,8 @@ void TerrainEditor::Debug()
 	if (ImGui::TreeNode("Terrain Editor Option"))
 	{
 		ImGui::Text("Picked Pos : %.1f, %.1f, %.1f", pickedPos.x, pickedPos.y, pickedPos.z);
-
+		const char* list[] = { "Height", "Alpha" };
+		ImGui::Combo("Editor Tyep", (int*)&type,list, 2);
 
 		ImGui::DragFloat("Brush Radius", &brushBuffer->data.range, 1.0f, 1.0f, 30.0f);
 
@@ -121,7 +122,8 @@ void TerrainEditor::Debug()
 		LoadHeightMap();
 		material->SelectMap(&alphaMap, "AlphaMap", L"Solid/Red.png");
 		material->SelectMap(&secondDiffuseMap, "SecondDiffuseMap", L"Solid/Red.png");
-
+		SaveAlphaMap();
+		LoadAlphaMap();
 		ImGui::TreePop();
 	}
 	if (DIALOG->Display("AlphaMap", 32, ImVec2(300, 100)) ||
@@ -164,15 +166,26 @@ void TerrainEditor::Update()
 		if (ImGui::GetIO().MouseDelta != ImVec2(0,0))
 			ComputePicking();
 
-		//if (KEY_PRESS(VK_LBUTTON))
-		//	AdjustHeight();
 
-		//if (KEY_UP(VK_LBUTTON))
-		//	UpdateMesh();
-		if (KEY_PRESS(VK_LBUTTON))
+		switch (type)
 		{
-			AdjustAlpha();
+		case HEIGHT:
+			if (KEY_PRESS(VK_LBUTTON))
+				AdjustHeight();
+
+			if (KEY_UP(VK_LBUTTON))
+				UpdateMesh();
+			break;
+		case ALPHA:
+			if (KEY_PRESS(VK_LBUTTON))
+			{
+				AdjustAlpha();
+			}
+			break;
+		default:
+			break;
 		}
+
 	}
 
 }
@@ -305,7 +318,7 @@ void TerrainEditor::AdjustHeight()
 
 			float distance = Vector3(p1 - p2).Length();
 
-			float value = adjustValue;
+			float value = adjustValue * max(0, cos(XM_PIDIV2 * distance/ brushBuffer->data.range));
 
 			if (distance <= brushBuffer->data.range)
 			{
@@ -318,6 +331,8 @@ void TerrainEditor::AdjustHeight()
 			vertex.normal  = Vector3(0,1,0);
 			vertex.tangent = Vector3(1,0,0);
 		}
+		break;
+	case 1:
 		break;
 	default:
 		break;
@@ -337,7 +352,7 @@ void TerrainEditor::AdjustAlpha()
 
 		float distance = Vector3(p1 - p2).Length();
 
-		float value = adjustValue;
+		float value = adjustValue * max(0, cos(XM_PIDIV2 * distance / brushBuffer->data.range));
 
 		if (distance <= brushBuffer->data.range)
 			vertex.alpha.x += value * Time::Delta();
@@ -410,6 +425,86 @@ void TerrainEditor::LoadHeightMap()
 
 			heightMap = Texture::Add(ToWString(file));
 			CreateMesh();
+
+			//mesh->UpdateVertex(vertices.data(), vertices.size());
+			//mesh->UpdateIndex(indices.data(), indices.size());
+
+		}
+
+		DIALOG->Close();
+	}
+}
+
+void TerrainEditor::SaveAlphaMap()
+{
+	if (ImGui::Button("SaveAlphaMap"))
+		DIALOG->OpenDialog("SaveAlphaMap", "SaveAlphaMap", ".png", "_Texture/HeightMap/");
+	if (DIALOG->Display("SaveAlphaMap", 32, ImVec2(300, 100)))
+	{
+		if (DIALOG->IsOk())
+		{
+			string file = DIALOG->GetFilePathName();
+			file = file.substr(projectDir.size() + 1, file.size());
+
+			UINT size = width * height * 4;
+			uint8_t* pixels = new uint8_t[size];
+
+
+			for (UINT i = 0; i < size / 4; i++)
+			{
+
+				pixels[i * 4 + 0] = vertices[i].alpha.z * 255.0f;
+				pixels[i * 4 + 1] = vertices[i].alpha.y * 255.0f;
+				pixels[i * 4 + 2] = vertices[i].alpha.x * 255.0f;
+				pixels[i * 4 + 3] = 255;
+
+			}
+			Image image;
+			image.width = width;
+			image.height = height;
+			image.pixels = pixels;
+			image.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			image.rowPitch = width * 4;
+			image.slicePitch = size;
+			SaveToWICFile
+			(
+				image,
+				WIC_FLAGS_FORCE_RGB,
+				GetWICCodec(WIC_CODEC_PNG),
+				ToWString(file).c_str()
+			);
+			delete[] pixels;
+		}
+
+		DIALOG->Close();
+	}
+}
+
+void TerrainEditor::LoadAlphaMap()
+{
+	if (ImGui::Button("LoadAlphaMap"))
+		DIALOG->OpenDialog("LoadAlphaMap", "LoadAlphaMap", ".png", "_Texture/HeightMap/");
+	if (DIALOG->Display("LoadAlphaMap", 32, ImVec2(300, 100)))
+	{
+		if (DIALOG->IsOk())
+		{
+			string file = DIALOG->GetFilePathName();
+			file = file.substr(projectDir.size() + 1, file.size());
+
+
+			Texture* alphaMap = Texture::Add(ToWString(file));
+			vector<Vector4> pixels = alphaMap->ReadPixels();
+
+			UINT size = min(pixels.size(), vertices.size());
+			for (UINT i = 0; i < size; i++)
+			{
+				vertices[i].alpha.x = pixels[i].x;
+				vertices[i].alpha.y = pixels[i].y;
+				vertices[i].alpha.z = pixels[i].z;
+				vertices[i].alpha.w = pixels[i].w;
+			}
+			mesh->UpdateVertex(vertices.data(), vertices.size());
+			//CreateMesh();
 
 			//mesh->UpdateVertex(vertices.data(), vertices.size());
 			//mesh->UpdateIndex(indices.data(), indices.size());

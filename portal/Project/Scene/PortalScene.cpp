@@ -190,6 +190,5 @@ void PortalScene::P2ReRender()
 {
 
 	portal2->Render();
-	cube->Render();
 
 }

@@ -18,9 +18,11 @@ void Shader::Delete()
 
 VertexShader* Shader::AddVS(wstring file)
 {
+	wstring path = file;
 	wstring key = L"VS" + file;
 
-	file = L"_Shader/" + file + L".hlsl";
+	if (!StartsWith(file, L"_Shader/"))
+		file = L"_Shader/" + file + L".hlsl";
 
 	assert(PathFileExists(file.c_str()));
 
@@ -29,14 +31,19 @@ VertexShader* Shader::AddVS(wstring file)
 
 	shaders.emplace(key, new VertexShader(file));
 
+	shaders[key]->path = path;
+
 	return (VertexShader*)shaders[key];
 }
 
 PixelShader* Shader::AddPS(wstring file)
 {
+	wstring path = file;
+
 	wstring key = L"PS" + file;
 
-	file = L"_Shader/" + file + L".hlsl";
+	if (!StartsWith(file, L"_Shader/"))
+		file = L"_Shader/" + file + L".hlsl";
 
 	assert(PathFileExists(file.c_str()));
 
@@ -45,14 +52,20 @@ PixelShader* Shader::AddPS(wstring file)
 
 	shaders.emplace(key, new PixelShader(file));
 
+	shaders[key]->path = path;
+
+
 	return (PixelShader*)shaders[key];
 }
 
 ComputeShader* Shader::AddCS(wstring file)
 {
+	wstring path = file;
+
 	wstring key = L"CS" + file;
 
-	file = L"_Shader/" + file + L".hlsl";
+	if (!StartsWith(file, L"_Shader/"))
+		file = L"_Shader/" + file + L".hlsl";
 
 	assert(PathFileExists(file.c_str()));
 
@@ -60,6 +73,9 @@ ComputeShader* Shader::AddCS(wstring file)
 		return (ComputeShader*)shaders[key];
 
 	shaders.emplace(key, new ComputeShader(file));
+
+	shaders[key]->path = path;
+
 
 	return (ComputeShader*)shaders[key];
 }

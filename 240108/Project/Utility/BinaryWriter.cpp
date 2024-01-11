@@ -38,14 +38,14 @@ void BinaryWriter::WriteData(float data)
 void BinaryWriter::WriteData(string data)
 {
 	WriteData(data.size());
-	WriteFile(file, &data, sizeof(char) * data.size(), &size, nullptr);
+	WriteFile(file, data.c_str(), sizeof(char) * data.size(), &size, nullptr);
 
 }
 
 void BinaryWriter::WriteData(wstring data)
 {
 	WriteData(data.size());
-	WriteFile(file, &data, sizeof(WCHAR) * data.size(), &size, nullptr);
+	WriteFile(file, data.c_str(), sizeof(WCHAR) * data.size(), &size, nullptr);
 }
 
 void BinaryWriter::WriteData(Vector3 data)

@@ -14,6 +14,8 @@ public:
 	Vector2 GetSize() { return Vector2(image.GetMetadata().width, image.GetMetadata().height); }
 
 	ID3D11ShaderResourceView* GetSRV() { return srv; }
+
+	wstring GetPath() { return path; }
 private:
 	static map<wstring, Texture*> textures;
 
@@ -21,6 +23,7 @@ private:
 
 	ID3D11ShaderResourceView* srv = nullptr;
 
+	wstring path;
 
 };
 

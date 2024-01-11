@@ -40,6 +40,8 @@ void Material::Debug()
 		SelectMap(&diffuseMap, "DiffuseMap", L"Solid/White.png");
 		SelectMap(&specularMap, "SpecularMap", L"Solid/Black.png");
 		SelectMap(&normalMap, "NormalMap", L"Solid/White.png");
+		SaveDialog();
+		LoadDialog();
 		//ImTextureID textureID;
 		//if (diffuseMap != nullptr)
 		//{
@@ -127,6 +129,107 @@ void Material::SelectMap(Texture** texture, string mapType, wstring clearFile)
 	textureID = Texture::Add(L"Miscellaneous/X_Image.png", ToWString(mapType) + L"X_Image")->GetSRV();
 	if (ImGui::ImageButton(textureID,ImVec2(20,20)))
 		*texture = Texture::Add(clearFile, ToWString(mapType) + clearFile);
+}
+
+void Material::Save(wstring file)
+{
+	BinaryWriter data(file);
+
+	data.WriteData(name);
+	if (vertexShader)
+		data.WriteData(vertexShader->GetPath());
+	else
+		data.WriteData("");
+
+	if (pixelShader)
+		data.WriteData(pixelShader->GetPath());
+	else
+		data.WriteData("");
+
+	if (diffuseMap)
+		data.WriteData(diffuseMap->GetPath());
+	else
+		data.WriteData("");
+
+	if (specularMap)
+		data.WriteData(specularMap->GetPath());
+	else
+		data.WriteData("");
+
+	if (normalMap)
+		data.WriteData(normalMap->GetPath());
+	else
+		data.WriteData("");
+}
+
+void Material::Load(wstring file)
+{
+	BinaryReader data(file);
+
+	name = data.ReadString();
+
+	wstring str;
+
+	str = data.ReadWString();
+
+	if (str != L"")
+		vertexShader = Shader::AddVS(str);
+
+	str = data.ReadWString();
+
+	if (str != L"")
+		pixelShader = Shader::AddPS(str);
+
+	str = data.ReadWString();
+
+	if (str != L"")
+		SetDiffuseMap(str);
+
+	str = data.ReadWString();
+
+	if (str != L"")
+		SetSpecularMap(str);
+
+	str = data.ReadWString();
+
+	if (str != L"")
+		SetNormalMap(str);
+}
+
+void Material::SaveDialog()
+{
+	if (ImGui::Button("SaveMaterial"))
+		DIALOG->OpenDialog("SaveMaterial", "SaveMaterial", ".mat", "_TextData/");
+	if (DIALOG->Display("SaveMaterial", 32, ImVec2(300, 100)))
+	{
+		if (DIALOG->IsOk())
+		{
+			string file = DIALOG->GetFilePathName();
+			file = file.substr(projectDir.size() + 1, file.size());
+			Save(ToWString(file));
+
+		}
+
+		DIALOG->Close();
+	}
+}
+
+void Material::LoadDialog()
+{
+	if (ImGui::Button("LoadMaterial"))
+		DIALOG->OpenDialog("LoadMaterial", "LoadMaterial", ".mat", "_TextData/");
+	if (DIALOG->Display("LoadMaterial", 32, ImVec2(300, 100)))
+	{
+		if (DIALOG->IsOk())
+		{
+			string file = DIALOG->GetFilePathName();
+			file = file.substr(projectDir.size() + 1, file.size());
+
+			Load(ToWString(file));
+		}
+
+		DIALOG->Close();
+	}
 }
 
 void Material::Set()

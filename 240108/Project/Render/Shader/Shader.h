@@ -14,10 +14,14 @@ public:
 	static class  PixelShader* AddPS(wstring file);
 	static class ComputeShader* AddCS(wstring file);
 
+	wstring GetPath() { return path; }
+
 protected:
 	ID3DBlob* blob = nullptr;
 
 	static map<wstring, Shader*> shaders;
+
+	wstring path;
 };
 
 

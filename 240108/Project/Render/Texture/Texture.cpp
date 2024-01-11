@@ -16,6 +16,7 @@ Texture::~Texture()
 
 Texture* Texture::Add(wstring file)
 {
+	wstring path = file;
 	if (!StartsWith(file,L"_Texture"))
 		file = L"_Texture/" + file;
 
@@ -44,7 +45,7 @@ Texture* Texture::Add(wstring file)
 	);
 
 	textures.emplace(file, new Texture(tempSRV, tempImage));
-
+	textures[file]->path = path;
 
 
 
@@ -53,6 +54,7 @@ Texture* Texture::Add(wstring file)
 
 Texture* Texture::Add(wstring file, wstring key)
 {
+	wstring path = file;
 	if (!StartsWith(file, L"_Texture"))
 		file = L"_Texture/" + file;
 
@@ -82,7 +84,7 @@ Texture* Texture::Add(wstring file, wstring key)
 
 	textures.emplace(key, new Texture(tempSRV, tempImage));
 
-
+	textures[key]->path = path;
 
 
 	return textures[key];

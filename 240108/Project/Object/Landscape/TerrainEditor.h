@@ -8,6 +8,11 @@ struct VertexTerrain
 	Vector3 tangent = {};
 
 };
+enum EditorType
+{
+	HEIGHT, 
+	ALPHA
+};
 class TerrainEditor : public GameObject<VertexTerrain>
 {
 	typedef VertexTerrain VertexType;
@@ -28,6 +33,9 @@ private:
 
 	void SaveHeightMap();
 	void LoadHeightMap();
+
+	void SaveAlphaMap();
+	void LoadAlphaMap();
 	void CreateCompute();
 	void UpdateMesh();
 private:
@@ -67,5 +75,5 @@ private:
 	Texture* alphaMap;
 	Texture* secondDiffuseMap;
 
-
+	EditorType type = HEIGHT;
 };

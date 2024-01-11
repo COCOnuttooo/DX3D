@@ -59,15 +59,17 @@ string BinaryReader::ReadString()
 wstring BinaryReader::ReadWString()
 {
 	UINT length = ReadUint();
+
 	WCHAR* data = new WCHAR[length + 1];
 
 	assert(ReadFile(file, data, sizeof(WCHAR) * length, &size, nullptr));
 
 	data[length] = '\0';
-	return data;
 
 	wstring temp = data;
+
 	delete[] data;
+
 	return temp;
 }
 

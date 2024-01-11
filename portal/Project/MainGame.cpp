@@ -54,15 +54,16 @@ void MainGame::PreRender()
     Device::GetInstance()->SetP2RTV();
     ENVIRONMENT->SetP2();
     SCENE->PreRender();
-    Device::GetInstance()->SetP1RTV();
-    SCENE->P2ReRender();
-    ENVIRONMENT->SetP1();
-    Device::GetInstance()->SetP2RTV();
-    SCENE->P1ReRender();
-    ENVIRONMENT->SetP2();
+
 
     Device::GetInstance()->SetP1RTV();
+    ENVIRONMENT->SetP1();
     SCENE->P2ReRender();
+    Device::GetInstance()->SetP2RTV();
+    ENVIRONMENT->SetP2();
+    SCENE->P1ReRender();
+
+
 
     for (int i = 0; i < 10; i++)
     {
