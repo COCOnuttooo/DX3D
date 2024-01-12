@@ -258,9 +258,9 @@ void TerrainEditor::CreateMesh()
 		{
 			VertexType vertex;
 
-			vertex.pos = Vector3(x, 0, z);
+			vertex.pos = Vector3(x, 0, height - z - 1);
 			vertex.uv.x = (float)x / (width - 1);
-			vertex.uv.y = 1.0f - (float)z / (height - 1);
+			vertex.uv.y = (float)z / (height - 1);
 
 			UINT index = x + width * z;
 			if (!colors.empty())
@@ -273,13 +273,13 @@ void TerrainEditor::CreateMesh()
 		for (UINT j = 0; j < width - 1; j++)
 		{
 			indices.emplace_back((i + 0) * (width)+(j + 0));
+			indices.emplace_back((i + 0) * (width)+(j + 1));
+			indices.emplace_back((i + 1) * (width)+(j + 0));
+
+
 			indices.emplace_back((i + 1) * (width)+(j + 0));
 			indices.emplace_back((i + 0) * (width)+(j + 1));
-
-
-			indices.emplace_back((i + 1) * (width)+(j + 0));
 			indices.emplace_back((i + 1) * (width)+(j + 1));
-			indices.emplace_back((i + 0) * (width)+(j + 1));
 		}
 	}
 
@@ -453,9 +453,9 @@ void TerrainEditor::SaveAlphaMap()
 			for (UINT i = 0; i < size / 4; i++)
 			{
 
-				pixels[i * 4 + 0] = vertices[i].alpha.z * 255.0f;
-				pixels[i * 4 + 1] = vertices[i].alpha.y * 255.0f;
-				pixels[i * 4 + 2] = vertices[i].alpha.x * 255.0f;
+				pixels[i * 4 + 0] = vertices[i].alpha.x * 255.0f;
+				pixels[i * 4 + 1] = 0;
+				pixels[i * 4 + 2] = 0;
 				pixels[i * 4 + 3] = 255;
 
 			}
@@ -498,9 +498,9 @@ void TerrainEditor::LoadAlphaMap()
 			UINT size = min(pixels.size(), vertices.size());
 			for (UINT i = 0; i < size; i++)
 			{
-				vertices[i].alpha.x = pixels[i].x;
+				vertices[i].alpha.x = pixels[i].z;
 				vertices[i].alpha.y = pixels[i].y;
-				vertices[i].alpha.z = pixels[i].z;
+				vertices[i].alpha.z = pixels[i].x;
 				vertices[i].alpha.w = pixels[i].w;
 			}
 			mesh->UpdateVertex(vertices.data(), vertices.size());

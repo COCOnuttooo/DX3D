@@ -1,10 +1,28 @@
 #include "Framework.h"
 #include "Terrain.h"
 Terrain::Terrain(wstring heightMapFile)
-	:GameObject(L"Test")
+	:GameObject(L"06_Terrain")
 {
 	heightMap = Texture::Add(heightMapFile);
 	CreateMesh();
+}
+
+Terrain::Terrain(wstring heightMapFile, wstring alphaMapFile)
+	:GameObject(L"06_TerrainEditor")
+{
+	heightMap = Texture::Add(heightMapFile);
+	alphaMap = Texture::Add(alphaMapFile);
+	CreateMesh();
+}
+
+void Terrain::Render(D3D11_PRIMITIVE_TOPOLOGY topology)
+{
+	if (alphaMap)
+		alphaMap->PSSetShaderResources(10);
+	if (secondDiffuseMap)
+		secondDiffuseMap->PSSetShaderResources(11);
+	GameObject::Render(topology);
+
 }
 
 Terrain::~Terrain()
@@ -75,9 +93,9 @@ void Terrain::CreateMesh()
 		{
 			VertexType vertex;
 
-			vertex.pos = Vector3(x, 0, z);
+			vertex.pos = Vector3(x, 0, height - z - 1);
 			vertex.uv.x =        (float)x / (width  - 1);
-			vertex.uv.y = 1.0f - (float)z / (height - 1);
+			vertex.uv.y = (float)z / (height - 1);
 
 			UINT index = x + width * z;
 			if (!colors.empty())
@@ -90,13 +108,13 @@ void Terrain::CreateMesh()
 		for (UINT j = 0; j < width - 1; j++)
 		{
 			indices.emplace_back((i + 0) * (width) + (j + 0));
+			indices.emplace_back((i + 0) * (width) + (j + 1));
+			indices.emplace_back((i + 1) * (width) + (j + 0));
+
+
 			indices.emplace_back((i + 1) * (width) + (j + 0));
 			indices.emplace_back((i + 0) * (width) + (j + 1));
-
-
-			indices.emplace_back((i + 1) * (width) + (j + 0));
 			indices.emplace_back((i + 1) * (width) + (j + 1));
-			indices.emplace_back((i + 0) * (width) + (j + 1));
 		}
 	}
 
