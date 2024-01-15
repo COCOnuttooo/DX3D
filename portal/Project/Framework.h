@@ -139,3 +139,5 @@ extern Vector3 mousePos;
 extern string projectDir;
 extern ID3D11Texture2D* p1Texture;
 extern ID3D11Texture2D* p2Texture;
+extern Matrix persP1;
+extern Matrix persP2;

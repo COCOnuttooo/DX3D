@@ -2,23 +2,28 @@
 #include "PortalScene.h"
 PortalScene::PortalScene()
 {
-	portal1 = new PortalQuad(Vector2(10,10));
-	portal2 = new PortalQuad(Vector2(10,10));
+	portal1 = new PortalQuad(Vector2(5,10));
+	portal2 = new PortalQuad(Vector2(5,10));
 	testQuad = new Quad();
 	portal1->GetMaterial()->SetDiffuseMap(&p1Texture, L"Portal1");
 	portal2->GetMaterial()->SetDiffuseMap(&p2Texture, L"Portal2");
 	portal1->SetCamera(P2CAMERA);
 	portal2->SetCamera(P1CAMERA);
 	portal1->SetCameraDiffuse(L"Landscape/Fieldstone_DM.tga");
-	portal1->translation = Vector3(-10, 0, 0);
-	portal2->translation = Vector3(10, 0, 0);
-	portal1->rotation = Vector3(0, -XM_PIDIV2, 0);
+	portal1->translation = Vector3(-10, 5, 0);
+	portal2->translation = Vector3(10, 5, 0);
+	portal1->rotation = Vector3(0, -2*XM_PIDIV4, 0);
 	portal2->rotation = Vector3(0, XM_PIDIV2, 0);
 	Environment::GetInstance()->GetP1Camera()->rotation = Vector3(0, XM_PI, 0);
 	Environment::GetInstance()->GetP2Camera()->rotation = Vector3(0, XM_PI, 0);
-
+	
 	cube = new TextureCube();
+	// cube->translation.y = -5;
 	mainCameraCube = new TextureCube;
+	mainCameraCubeHead = new TextureCube;
+	mainCameraCubeHead->SetParent(mainCameraCube);
+	mainCameraCubeHead->translation = Vector3(0, 0, 0.5);
+	mainCameraCubeHead->scale = Vector3(0.5, 0.5, 0.5);
 	mainCameraCube->SetDiffuseMap(L"Landscape/Wall.png");
 	ENVIRONMENT->GetP1Camera()->SetParent(portal2);
 	ENVIRONMENT->GetP2Camera()->SetParent(portal1);
@@ -28,6 +33,8 @@ PortalScene::PortalScene()
 	terrain->GetMaterial()->SetDiffuseMap(L"Landscape/Dirt2.png");
 	terrain->GetMaterial()->SetSpecularMap(L"Landscape/Wall_specular.png");
 	terrain->GetMaterial()->SetNormalMap(L"Landscape/Wall_normal.png");
+	/*CAMERA->SetParent(mainCameraCube);
+	CAMERA->rotation = Vector3(0, 0, 0);*/
 }
 
 PortalScene::~PortalScene()
@@ -38,35 +45,14 @@ PortalScene::~PortalScene()
 	delete testQuad;
 	delete terrain;
 	delete mainCameraCube;
+	delete mainCameraCubeHead;
 	
 }
 
 void PortalScene::Update()
 {
-	CalculateMirror();
+	//BoxMove();
 
-	//P2CAMERA->SetWorld(p2CamTransform);
-	//// 카메라가 포탈1을 바라볼 때, 포탈2의 뷰를 계산
-	//Matrix p1CamTransform = mainCameraCube->GetWorld() * worldToPortal1;// *portal2ToWorld;
-	//P1CAMERA->SetWorld(p1CamTransform);
-
-	//// 카메라가 포탈2를 바라볼 때, 포탈1의 뷰를 계산
-	//Matrix p2CamTransform = mainCameraCube->GetWorld() * worldToPortal2;// *portal1ToWorld;
-	//P2CAMERA->SetWorld(p2CamTransform);
-	//Matrix p1Transform = CAMERA->GetWorld() * XMMatrixInverse(nullptr, portal1->GetWorld());
-	//Matrix p2Transform = CAMERA->GetWorld() * XMMatrixInverse(nullptr, portal2->GetWorld());
-	//Matrix p1Transform = XMMatrixInverse(nullptr, CAMERA->GetWorld()) * XMMatrixInverse(nullptr, portal1->GetWorld());
-	//Matrix p2Transform = CAMERA->GetWorld() * XMMatrixInverse(nullptr, portal2->GetWorld());
-	//P1CAMERA->SetWorld(p1Transform);
-	//P2CAMERA->SetWorld(p2Transform);
-	//Vector3 rotation1 = CAMERA->rotation - portal2->rotation;
-	//Vector3 rotation2 =  CAMERA->rotation - portal1->rotation;
-	//float distance1 = Vector3(CAMERA->GetGlobalPosition() - portal2->GetGlobalPosition()).Length();
-	//float distance2 = Vector3(CAMERA->GetGlobalPosition() - portal1->GetGlobalPosition()).Length();
-	//P1CAMERA->translation = -rotation1.GetNormalized() * distance1;
-	//P2CAMERA->translation = -rotation2.GetNormalized() * distance2;
-	//P1CAMERA->rotation =  rotation1;
-	//P2CAMERA->rotation =  rotation2;
 	portal1->translation;
 	portal1->Update();
 	portal2->Update();
@@ -74,39 +60,25 @@ void PortalScene::Update()
 	testQuad->Update();
 	terrain->Update();
 	mainCameraCube->Update();
+	mainCameraCubeHead->Update();
+	CalculateMirror();
+	//if (mainCameraCube->translation.x <  portal1->translation.x)
+	//{
+	//	mainCameraCube->translation.x = portal2->translation.x;
+	//}
+	//if (mainCameraCube->translation.x > portal2->translation.x)
+	//{
+	//	mainCameraCube->translation.x = portal1->translation.x;
 
-	//// 포탈1과 포탈2의 월드 변환 행렬을 가져옵니다.
-	//Matrix portal1ToWorld = portal1->GetWorld();
-	//Matrix portal2ToWorld = portal2->GetWorld();
-
-	//// 월드에서 포탈1과 포탈2로의 역변환 행렬을 계산합니다.
-	//Matrix worldToPortal1 = XMMatrixInverse(nullptr, portal1ToWorld);
-	//Matrix worldToPortal2 = XMMatrixInverse(nullptr, portal2ToWorld);
-
-	//// 메인 카메라의 월드 변환 행렬을 가져옵니다.
-	//Matrix mainCameraWorld = mainCameraCube->GetWorld();
-
-	//// 메인 카메라의 쿼터니언 회전을 계산합니다.
-	//XMVECTOR mainCameraRot = XMQuaternionRotationMatrix(mainCameraWorld);
-
-	//// 메인 카메라가 포탈1을 바라볼 때, 포탈2의 뷰를 계산합니다.
-	//Matrix p1CamTransform = mainCameraWorld * worldToPortal1 * portal2ToWorld;
-	//P1CAMERA->SetWorld(p1CamTransform);
-
-	//// 메인 카메라가 포탈2를 바라볼 때, 포탈1의 뷰를 계산합니다.
-	//Matrix p2CamTransform = mainCameraWorld * worldToPortal2 * portal1ToWorld;
-	//P2CAMERA->SetWorld(p2CamTransform);
-
-	//// 쿼터니언을 사용하여 포탈 카메라의 회전을 계산합니다.
-	//XMVECTOR portal1Rot = XMQuaternionRotationMatrix(portal1ToWorld);
-	//XMVECTOR portal2Rot = XMQuaternionRotationMatrix(portal2ToWorld);
-
-	//XMVECTOR p1CameraRot = XMQuaternionMultiply(mainCameraRot, XMQuaternionInverse(portal1Rot));
-	//XMVECTOR p2CameraRot = XMQuaternionMultiply(mainCameraRot, XMQuaternionInverse(portal2Rot));
-
-	//// 쿼터니언 회전을 Matrix 형태로 변환하여 카메라에 적용합니다.
-	//P1CAMERA->SetRotation(XMMatrixRotationQuaternion(p1CameraRot));
-	//P2CAMERA->SetRotation(XMMatrixRotationQuaternion(p2CameraRot));
+	//}
+	if (CAMERA->translation.x < portal1->translation.x)
+	{
+		CAMERA->translation.x = portal2->translation.x;
+	}
+	if (CAMERA->translation.x > portal2->translation.x)
+	{
+		CAMERA->translation.x = portal1->translation.x;
+	}
 }
 
 void PortalScene::PreRender()
@@ -124,6 +96,7 @@ void PortalScene::Render()
 	portal1->Render();
 	portal2->Render();
 	mainCameraCube->Render();
+	mainCameraCubeHead->Render();
 }
 
 void PortalScene::PostRender()
@@ -141,43 +114,68 @@ void PortalScene::CalculateMirror()
 
 	Matrix worldToPortal1 = XMMatrixInverse(nullptr, portal1ToWorld);
 	Matrix worldToPortal2 = XMMatrixInverse(nullptr, portal2ToWorld);
-	Matrix p1CamTransform = mainCameraCube->GetWorld() * worldToPortal1;
-	//Matrix p1CamTransform = CAMERA->GetWorld() * worldToPortal1;
+	//Matrix p1CamTransform = mainCameraCube->GetWorld() * worldToPortal1;
+	//Matrix p2CamTransform = mainCameraCube->GetWorld() * worldToPortal2;
+	Matrix p1CamTransform = CAMERA->GetWorld() * worldToPortal1;
+	Matrix p2CamTransform = CAMERA->GetWorld() * worldToPortal2;
 	XMFLOAT4X4 fWorld1;
 
 	XMStoreFloat4x4(&fWorld1, p1CamTransform);
-	Vector3 p1Translation = Vector3(-fWorld1._41, fWorld1._42, -fWorld1._43);
-	//Vector3 pos1 =     portal2->GetGlobalPosition();
-	//Vector3 forward1 = portal2->GetForwardVector();
-	//float A1 = forward1.x;
-	//float B1 = forward1.y;
-	//float C1 = forward1.z;
-	//float D1 = -(A1 * pos1.x + B1 * pos1.y + C1 * pos1.z);
-	//Vector3 p1FTrans;
-	//p1FTrans.x = p1Translation.x - 2 * (A1 * p1Translation.x + B1 * p1Translation.y + C1 * p1Translation.z + D1) * A1;
-	//p1FTrans.y = p1Translation.y - 2 * (A1 * p1Translation.x + B1 * p1Translation.y + C1 * p1Translation.z + D1) * B1;
-	//p1FTrans.z = p1Translation.z - 2 * (A1 * p1Translation.x + B1 * p1Translation.y + C1 * p1Translation.z + D1) * C1;
-	P1CAMERA->translation = p1Translation;
-	//P1CAMERA->SetWorld(p1CamTransform);
+	Vector3 p1Translation = Vector3(fWorld1._41, fWorld1._42, -fWorld1._43);
 
-	//Matrix p2CamTransform = CAMERA->GetWorld() * worldToPortal2;
-	Matrix p2CamTransform = mainCameraCube->GetWorld() * worldToPortal2;
+	P1CAMERA->translation = p1Translation;
+
 
 	XMFLOAT4X4 fWorld2;
 
 	XMStoreFloat4x4(&fWorld2, p2CamTransform);
-	Vector3 p2Translation = Vector3(-fWorld2._41, fWorld2._42, -fWorld2._43);
-	//Vector3 pos2 =     portal1->GetGlobalPosition();
-	//Vector3 forward2 = portal1->GetForwardVector();
-	//float A2 = forward2.x;
-	//float B2 = forward2.y;
-	//float C2 = forward2.z;
-	//float D2 = -(A2 * pos2.x + B2 * pos2.y + C2 * pos2.z);
-	//Vector3 p2FTrans;
-	//p2FTrans.x = p2Translation.x - 2 * (A2 * p2Translation.x + B2 * p2Translation.y + C2 * p2Translation.z + D2) * A2;
-	//p2FTrans.y = p2Translation.y - 2 * (A2 * p2Translation.x + B2 * p2Translation.y + C2 * p2Translation.z + D2) * B2;
-	//p2FTrans.z = p2Translation.z - 2 * (A2 * p2Translation.x + B2 * p2Translation.y + C2 * p2Translation.z + D2) * C2;
+	Vector3 p2Translation = Vector3(fWorld2._41, fWorld2._42, -fWorld2._43);
+
 	P2CAMERA->translation = p2Translation;
+	
+	//Vector3 p1Rotation = mainCameraCube->rotation - portal1->rotation;
+	//Vector3 p2Rotation = mainCameraCube->rotation - portal2->rotation;
+	//P1CAMERA->rotation = Vector3(p1Rotation.x, p1Rotation.y + XM_PI, p1Rotation.z);
+	//P2CAMERA->rotation = Vector3(p2Rotation.x, p2Rotation.y + XM_PI, p2Rotation.z);
+
+	XMVECTOR cameraPosition1 = XMVectorSet(P1CAMERA->translation.x, P1CAMERA->translation.y, P1CAMERA->translation.z, 0); // 카메라 위치
+	XMVECTOR cameraPosition2 = XMVectorSet(P2CAMERA->translation.x, P2CAMERA->translation.y, P2CAMERA->translation.z, 0); // 카메라 위치
+	XMVECTOR portalPosition1 = XMVectorSet(0, 0, 0, 0); // 포탈 위치
+	XMVECTOR portalPosition2 = XMVectorSet(0, 0, 0, 0); // 포탈 위치
+	
+	XMVECTOR upDirection1 = portal2->GetUpVector();
+	XMVECTOR upDirection2 = portal1->GetUpVector();
+
+	//XMVECTOR upDirection1 = P1CAMERA->GetUpVector();
+	//XMVECTOR upDirection2 = P2CAMERA->GetUpVector();
+	 //'Look At' 뷰 행렬 생성
+	XMMATRIX viewMatrix1;
+	XMMATRIX viewMatrix2;
+	float distanceP1 = P1CAMERA->translation.Length();
+	float distanceP2 = P2CAMERA->translation.Length();
+	if (P1CAMERA->translation.Length() != 0)
+	{
+		viewMatrix1 = XMMatrixLookAtLH(cameraPosition1, portalPosition1, upDirection1);
+		viewMatrix1 = XMMatrixLookToLH(cameraPosition1, -cameraPosition1, upDirection1);
+		P1CAMERA->SetFixViewMatrix(viewMatrix1);
+		persP1 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP1, 1000);
+
+	}
+	else { P1CAMERA->SetFixViewMatrix(XMMatrixIdentity()); }
+	if (P2CAMERA->translation.Length()!= 0)
+	{
+		viewMatrix2 = XMMatrixLookAtLH(cameraPosition2, portalPosition2, upDirection2);
+		viewMatrix2 = XMMatrixLookToLH(cameraPosition2, -cameraPosition2, upDirection1);
+
+		P2CAMERA->SetFixViewMatrix(viewMatrix2);
+		persP2 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP2, 1000);
+
+	}
+	else { P2CAMERA->SetFixViewMatrix(XMMatrixIdentity()); }
+
+	//P1CAMERA->SetFixViewMatrix(XMMatrixIdentity());
+	//P2CAMERA->SetFixViewMatrix(XMMatrixIdentity());
+
 }
 
 void PortalScene::P1ReRender()
@@ -191,4 +189,71 @@ void PortalScene::P2ReRender()
 
 	portal2->Render();
 
+}
+
+XMFLOAT3 PortalScene::ExtractEulerAnglesFromMatrix(const XMMATRIX& mat)
+{
+
+	XMFLOAT4X4 fMat;
+	XMStoreFloat4x4(&fMat, mat);  // XMMATRIX를 XMFLOAT4X4로 변환
+
+	XMFLOAT3 angles;
+
+	// 피치 각도
+	angles.x = asin(-fMat._32);  // fMat._32는 행렬의 3번째 열, 2번째 행
+
+	// 요 각도
+	if (cos(angles.x) > 0.0001) {
+		angles.y = atan2(fMat._31, fMat._33);  // fMat._31과 fMat._33를 사용하여 계산
+		angles.z = atan2(fMat._12, fMat._22);  // fMat._12와 fMat._22를 사용하여 계산
+	}
+	else {
+		// 짐벌 락 처리
+		angles.y = atan2(-fMat._21, fMat._11);  // fMat._21과 fMat._11를 사용하여 계산
+		angles.z = 0.0f;
+	}
+
+	return angles;
+}
+
+void PortalScene::BoxMove()
+{
+	if (KEY_PRESS(VK_RBUTTON))
+	{
+		if (KEY_PRESS('A'))
+		{
+			mainCameraCube->translation += -mainCameraCube->GetRightVector() * moveSpeed * DELTA_TIME;
+		}
+
+		if (KEY_PRESS('D'))
+		{
+			mainCameraCube->translation += +mainCameraCube->GetRightVector() * moveSpeed * DELTA_TIME;
+		}
+
+		if (KEY_PRESS('Q'))
+		{
+			mainCameraCube->translation += -mainCameraCube->GetUpVector() * moveSpeed * DELTA_TIME;
+		}
+
+		if (KEY_PRESS('E'))
+		{
+			mainCameraCube->translation += +mainCameraCube->GetUpVector() * moveSpeed * DELTA_TIME;
+		}
+		if (KEY_PRESS('S'))
+		{
+			mainCameraCube->translation += -mainCameraCube->GetForwardVector() * moveSpeed * DELTA_TIME;
+		}
+
+		if (KEY_PRESS('W'))
+		{
+			mainCameraCube->translation += +mainCameraCube->GetForwardVector() * moveSpeed * DELTA_TIME;
+		}
+		Vector3 delta = mousePos - oldPos;
+
+		mainCameraCube->rotation.y -= delta.x * rotateSpeed;// * DELTA_TIME;
+		mainCameraCube->rotation.x -= delta.y * rotateSpeed;// * DELTA_TIME;
+	}
+
+	
+	oldPos = mousePos;
 }

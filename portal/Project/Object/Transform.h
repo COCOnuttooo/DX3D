@@ -27,7 +27,7 @@ public:
 	void Load();
 
 private:
-	void UpdateWorldMatrix();
+	virtual void UpdateWorldMatrix();
 
 public:
 	Vector3 scale = { 1.0f, 1.0f, 1.0f };
