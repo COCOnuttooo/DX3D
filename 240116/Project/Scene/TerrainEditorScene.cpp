@@ -4,11 +4,13 @@
 TerrainEditorScene::TerrainEditorScene()
 {
 	editor = new TerrainEditor();
+	Assimp::Importer* importer = new Assimp::Importer;
 }
 
 TerrainEditorScene::~TerrainEditorScene()
 {
 	delete editor;
+	
 }
 
 void TerrainEditorScene::Update()

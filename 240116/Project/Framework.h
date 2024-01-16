@@ -37,6 +37,13 @@
 #include <imgui_impl_dx11.h>
 #include "ImGuiFileDialog.h"
 
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
+
+#pragma comment(lib, "assimp.lib")
+
+
 using namespace DirectX;
 using namespace std;
 
@@ -123,6 +130,10 @@ using namespace GameMath;
 
 #include "Object/Landscape/Terrain.h"
 #include "Object/Landscape/TerrainEditor.h"
+
+
+#include "Model/ModelExporter.h"
+////////////////////////////////////////////////////
 
 #include "Scene/Scene.h"
 

@@ -1,0 +1,13 @@
+C:/Users/user/Desktop/PHH/DX3D/CMakeFiles/uninstall.dir
+C:/Users/user/Desktop/PHH/DX3D/CMakeFiles/UpdateAssimpLibsDebugSymbolsAndDLLs.dir
+C:/Users/user/Desktop/PHH/DX3D/CMakeFiles/INSTALL.dir
+C:/Users/user/Desktop/PHH/DX3D/CMakeFiles/ALL_BUILD.dir
+C:/Users/user/Desktop/PHH/DX3D/CMakeFiles/ZERO_CHECK.dir
+C:/Users/user/Desktop/PHH/DX3D/contrib/zlib/CMakeFiles/zlibstatic.dir
+C:/Users/user/Desktop/PHH/DX3D/contrib/zlib/CMakeFiles/INSTALL.dir
+C:/Users/user/Desktop/PHH/DX3D/contrib/zlib/CMakeFiles/ALL_BUILD.dir
+C:/Users/user/Desktop/PHH/DX3D/code/CMakeFiles/assimp.dir
+C:/Users/user/Desktop/PHH/DX3D/code/CMakeFiles/INSTALL.dir
+C:/Users/user/Desktop/PHH/DX3D/test/CMakeFiles/unit.dir
+C:/Users/user/Desktop/PHH/DX3D/test/CMakeFiles/INSTALL.dir
+C:/Users/user/Desktop/PHH/DX3D/test/headercheck/CMakeFiles/INSTALL.dir

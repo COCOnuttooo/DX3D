@@ -1,0 +1,10 @@
+# CMake generation dependency list for this directory.
+C:/Users/user/Downloads/assimp-master/assimp-master/contrib/zlib/CMakeLists.txt
+C:/Users/user/Downloads/assimp-master/assimp-master/contrib/zlib/zconf.h.cmakein
+C:/Users/user/Downloads/assimp-master/assimp-master/contrib/zlib/zlib.pc.cmakein
+C:/Users/user/Downloads/cmake-3.28.1-windows-x86_64/cmake-3.28.1-windows-x86_64/share/cmake-3.28/Modules/CheckCSourceCompiles.cmake
+C:/Users/user/Downloads/cmake-3.28.1-windows-x86_64/cmake-3.28.1-windows-x86_64/share/cmake-3.28/Modules/CheckFunctionExists.cmake
+C:/Users/user/Downloads/cmake-3.28.1-windows-x86_64/cmake-3.28.1-windows-x86_64/share/cmake-3.28/Modules/CheckIncludeFile.cmake
+C:/Users/user/Downloads/cmake-3.28.1-windows-x86_64/cmake-3.28.1-windows-x86_64/share/cmake-3.28/Modules/CheckIncludeFileCXX.cmake
+C:/Users/user/Downloads/cmake-3.28.1-windows-x86_64/cmake-3.28.1-windows-x86_64/share/cmake-3.28/Modules/CheckTypeSize.cmake
+C:/Users/user/Downloads/cmake-3.28.1-windows-x86_64/cmake-3.28.1-windows-x86_64/share/cmake-3.28/Modules/Internal/CheckSourceCompiles.cmake
