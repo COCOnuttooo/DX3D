@@ -17,7 +17,12 @@ public:
 	void LoadData();
 
 	Ray ScreenPointToRay(Vector3 screenPoint);
+	void SetFixViewMatrix(Matrix view) { this->fixViewMatrix = view; }
 private:
+	void UpdateWorldMatrix() override;
+private:
+
+	Matrix fixViewMatrix;
 	int thisCount;
 	static int cameraCount;
 	Matrix        viewMatrix;

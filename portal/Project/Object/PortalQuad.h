@@ -16,6 +16,7 @@ private:
 
 private:
 	TextureCube* cameraBox;
+	TextureCube* cameraHead;
 	Vector2 size;
 	Quad* edge;
 };

@@ -48,11 +48,11 @@ void MainGame::PreRender()
 {
 
     Device::GetInstance()->SetP1RTV();
-    ENVIRONMENT->SetP1();
+    ENVIRONMENT->SetP1(persP1);
     SCENE->PreRender();
 
     Device::GetInstance()->SetP2RTV();
-    ENVIRONMENT->SetP2();
+    ENVIRONMENT->SetP2(persP2);
     SCENE->PreRender();
 
 

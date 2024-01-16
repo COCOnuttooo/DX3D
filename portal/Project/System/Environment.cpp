@@ -31,6 +31,7 @@ void Environment::CreatePerspective()
 	persBuffer = new MatrixBuffer();
 
 	persMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f);
+	//XMMatrixPerspectiveOffCenterLH()
 }
 
 void Environment::Update()
@@ -45,6 +46,7 @@ void Environment::Update()
 void Environment::Set()
 {
 	mainCamera->Set();
+	persMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f);
 
 	persBuffer->SetData(persMatrix);
 	persBuffer->SetVSBuffer(2);
@@ -52,19 +54,20 @@ void Environment::Set()
 	lightBuffer->SetPSBuffer(0);
 }
 
-void Environment::SetP1()
+void Environment::SetP1(Matrix persMat)
 {
 	p1Camera->Set();
-
+	SetPersMatrix(persMat);
 	persBuffer->SetData(persMatrix);
 	persBuffer->SetVSBuffer(2);
 
 	lightBuffer->SetPSBuffer(0);
 }
 
-void Environment::SetP2()
+void Environment::SetP2(Matrix persMat)
 {
 	p2Camera->Set();
+	SetPersMatrix(persMat);
 
 	persBuffer->SetData(persMatrix);
 	persBuffer->SetVSBuffer(2);

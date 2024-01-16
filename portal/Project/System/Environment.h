@@ -12,8 +12,8 @@ public:
 	Camera* GetCamera() { return mainCamera; }
 	void Update();
 	void Set();
-	void SetP1();
-	void SetP2();
+	void SetP1(Matrix persMat = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f));
+	void SetP2(Matrix persMat = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f));
 
 	void Debug();
 
@@ -21,7 +21,7 @@ public:
 	Camera* GetMainCamera() { return mainCamera; }
 	Camera* GetP1Camera() { return p1Camera; }
 	Camera* GetP2Camera() { return p2Camera; }
-
+	void SetPersMatrix(Matrix pers) { this->persMatrix = pers; }
 private:
 	Matrix        persMatrix;
 	MatrixBuffer* persBuffer;

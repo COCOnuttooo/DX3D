@@ -17,6 +17,8 @@ void GridScene::Update()
 
 void GridScene::PreRender()
 {
+	grid->Render(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
 }
 
 void GridScene::Render()

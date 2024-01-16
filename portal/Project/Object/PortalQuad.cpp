@@ -7,6 +7,10 @@ PortalQuad::PortalQuad(Vector2 size)
 	CreateMesh();
 	cameraBox = new TextureCube;
 	cameraBox->SetDiffuseMap(L"Landscape/Bricks.png");
+	cameraHead = new TextureCube; 
+	cameraHead->SetParent(cameraBox);
+	cameraHead->scale = Vector3(0.5, 0.5, 2);
+	cameraHead->translation = Vector3(0, 0, 0.5);
 	edge = new Quad(Vector2(this->size.x* 1.1, this->size.y * 1.1));
 	edge->SetParent(this);
 	//edge->rotation = Vector3(0, XM_PI, 0);
@@ -18,6 +22,7 @@ PortalQuad::PortalQuad(Vector2 size)
 PortalQuad::~PortalQuad()
 {
 	delete cameraBox;
+	delete cameraHead;
 	delete edge;
 }
 
@@ -26,6 +31,7 @@ void PortalQuad::Render()
 	edge->Render();
 	GameObject::Render();
 	cameraBox->Render();
+	cameraHead->Render();
 }
 
 void PortalQuad::Update()
@@ -33,6 +39,7 @@ void PortalQuad::Update()
 	GameObject::Update();
 	cameraBox->Update();
 	edge->Update();
+	cameraHead->Update();
 }
 
 void PortalQuad::SetCamera(Transform* parent)

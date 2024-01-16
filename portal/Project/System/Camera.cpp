@@ -12,6 +12,7 @@ Camera::Camera()
 		LoadData();
 	}
 	thisCount = cameraCount++;
+	fixViewMatrix = XMMatrixIdentity();
 }
 
 Camera::~Camera()
@@ -26,7 +27,8 @@ Camera::~Camera()
 
 void Camera::Update()
 {
-	Transform::Update();
+	UpdateWorldMatrix();
+	//Transform::Update();
 	if (thisCount!= 0)
 	{
 		return;
@@ -145,4 +147,41 @@ Ray Camera::ScreenPointToRay(Vector3 screenPoint)
 	ray.origin = globalPosition;
 	ray.direction = Vector3(point - globalPosition).GetNormalized();
 	return ray;
+}
+
+void Camera::UpdateWorldMatrix()
+{
+	Matrix S = XMMatrixScaling(scale.x, scale.y, scale.z);
+	Matrix R;
+	if (XMMatrixIsIdentity(fixViewMatrix))
+	{
+		R = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+	}
+	else
+		R = fixViewMatrix;
+
+	Matrix T = XMMatrixTranslation(translation.x, translation.y, translation.z);
+
+	Matrix P = XMMatrixTranslation(pivot.x, pivot.y, pivot.z);
+	Matrix IP = XMMatrixInverse(nullptr, P);
+
+	world = IP * S * R * T * P;
+
+	if (parent != nullptr)
+		world *= parent->GetWorld();
+
+	XMFLOAT4X4 fWorld;
+
+	XMStoreFloat4x4(&fWorld, world);
+
+	right = Vector3(fWorld._11, fWorld._12, fWorld._13).GetNormalized();
+	up = Vector3(fWorld._21, fWorld._22, fWorld._23).GetNormalized();
+	forward = Vector3(fWorld._31, fWorld._32, fWorld._33).GetNormalized();
+
+	XMVECTOR outS, outR, outT;
+
+	XMMatrixDecompose(&outS, &outR, &outT, world);
+	globalScale = outS;
+	globalRotation = outR;
+	globalPosition = outT;
 }
