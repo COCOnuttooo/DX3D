@@ -3,15 +3,24 @@
 
 UINT Material::index = 0;
 
+Material::Material()
+{
+	name = "Material_" + to_string(index++);
+	buffer = new MaterialBuffer;
+}
+
 Material::Material(wstring file)
 {
-	CreateShader(file);
-
+	SetShader(file);
 	name = "Material_" + to_string(index++);
+	buffer = new MaterialBuffer;
+
 }
 
 Material::~Material()
 {
+	delete buffer;
+
 }
 
 void Material::Set()
@@ -29,7 +38,7 @@ void Material::Set()
 		 normalMap->PSSetShaderResources(2);
 }
 
-void Material::CreateShader(wstring file)
+void Material::SetShader(wstring file)
 {
 	vertexShader = Shader::AddVS(file);
 	 pixelShader = Shader::AddPS(file);
@@ -38,16 +47,23 @@ void Material::CreateShader(wstring file)
 void Material::SetDiffuseMap(wstring file)
 {
 	diffuseMap = Texture::Add(file);
+
+	buffer->data.hasDiffuseMap = true;
 }
 
 void Material::SetSpecularMap(wstring file)
 {
 	specularMap = Texture::Add(file);
+
+	buffer->data.hasSpecularMap = true;
+
 }
 
 void Material::SetNormalMap(wstring file)
 {
 	normalMap = Texture::Add(file);
+
+	buffer->data.hasNormalMap = true;
 }
 
 void Material::Debug()
@@ -137,6 +153,13 @@ void Material::Save(wstring file)
 		data.WriteData(normalMap->GetPath());
 	else
 		data.WriteData("");
+
+
+	data.WriteData(buffer->data.diffuse);
+	data.WriteData(buffer->data.specular);
+	data.WriteData(buffer->data.ambient);
+	data.WriteData(buffer->data.emissive);
+	data.WriteData(buffer->data.shininess);
 }
 
 void Material::Load(wstring file)
@@ -172,6 +195,12 @@ void Material::Load(wstring file)
 
 	if (str != L"")
 		SetNormalMap(str);
+
+	buffer->data.diffuse   = data.ReadVector4();
+	buffer->data.specular  = data.ReadVector4();
+	buffer->data.ambient   = data.ReadVector4();
+	buffer->data.emissive  = data.ReadVector4();
+	buffer->data.shininess = data.ReadFloat();
 }
 
 void Material::SaveDialog()

@@ -8,7 +8,7 @@ TerrainScene::TerrainScene()
 	terrain->SetSecondDiffuseMap(L"Landscape/Box.png");
 
 	terrain->GetMaterial()->Load(L"_TextData/Homework.mat");
-	terrain->GetMaterial()->CreateShader(L"08_Terrain");
+	terrain->GetMaterial()->SetShader(L"08_Terrain");
 	//terrain->GetMaterial()->SetDiffuseMap(L"Landscape/FieldStone_DM.tga");
 	//terrain->GetMaterial()->SetNormalMap(L"Landscape/FieldStone_NM.tga");
 	//terrain->GetMaterial()->SetSpecularMap(L"Landscape/FieldStone_SM.tga");

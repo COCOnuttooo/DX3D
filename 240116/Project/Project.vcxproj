@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Model\ModelData.h" />
     <ClInclude Include="Model\ModelExporter.h" />
     <ClInclude Include="Scene\ModeExportScene.h" />
     <ClInclude Include="Render\Shader\ComputeShader.h" />

@@ -101,3 +101,32 @@ struct BrushBuffer : public ConstBuffer<BrushData>
 };
 
 
+struct MaterialData
+{
+	Vector4 diffuse = Vector4(1, 1, 1, 1);
+	Vector4 specular = Vector4(0, 0, 0, 1);
+	Vector4 ambient = Vector4(0.1f, 0.1f, 0.1f, 1);
+	Vector4 emissive = Vector4(0, 0, 0, 0);
+
+	float shininess = 24.0f;
+
+	int hasDiffuseMap = false;
+	int hasSpecularMap = false;
+	int hasNormalMap = false;
+};
+
+struct MaterialBuffer : public ConstBuffer<MaterialData>
+{
+	MaterialBuffer()
+		:ConstBuffer(data)
+	{
+
+	}
+
+	void SetData(Matrix view, Matrix invView)
+	{
+
+	}
+
+	MaterialData data;
+};

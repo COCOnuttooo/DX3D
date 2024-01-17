@@ -3,6 +3,8 @@
 ModelExportScene::ModelExportScene()
 {
 	exporter = new ModelExporter("Knight");
+	//exporter->ExportMaterial();
+	exporter->ExportMesh();
 }
 
 ModelExportScene::~ModelExportScene()

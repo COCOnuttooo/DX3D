@@ -9,4 +9,9 @@ namespace Utility
 
 	bool StartsWith( string str,  string start);
 	bool StartsWith(wstring str, wstring start);
+
+	string GetFileName(string file);
+	void CreateFolder(string file);
+
+	vector<string> SplitString(string origin, string token);
 }

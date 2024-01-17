@@ -3,12 +3,13 @@
 class Material
 {
 public:
+	Material();
 	Material(wstring file);
 	~Material();
 
 	void Set();
 
-	void CreateShader(wstring file);
+	void SetShader(wstring file);
 
 	void SetDiffuseMap(wstring file);
 	void SetSpecularMap(wstring file);
@@ -24,6 +25,11 @@ public:
 	void SaveDialog();
 	void LoadDialog();
 
+	void SetName(string name) { this->name = name; }
+
+	MaterialBuffer* GetBuffer() { return buffer; }
+
+	string GetName() { return name; }
 private:
 	VertexShader* vertexShader;
 	 PixelShader*  pixelShader;
@@ -34,4 +40,6 @@ private:
 
 	 string name;
 	 static UINT index;
+
+	 MaterialBuffer* buffer;
 };

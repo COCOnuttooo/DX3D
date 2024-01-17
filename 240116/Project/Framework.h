@@ -131,7 +131,7 @@ using namespace GameMath;
 #include "Object/Landscape/Terrain.h"
 #include "Object/Landscape/TerrainEditor.h"
 
-
+#include "Model/ModelData.h"
 #include "Model/ModelExporter.h"
 ////////////////////////////////////////////////////
 
