@@ -7,6 +7,7 @@
 #include "Scene/TerrainScene.h"
 #include "Scene/TerrainEditorScene.h"
 #include "Scene/ModeExportScene.h"
+#include "Scene/ModelAnimationScene.h"
 MainGame::MainGame()
 {
 	Initialize();
@@ -20,7 +21,8 @@ MainGame::MainGame()
     //SCENE->Create("Start", new TextureScene());
     //SCENE->Create("Start", new TerrainScene());
     //SCENE->Create("Start", new TerrainEditorScene());
-    SCENE->Create("Start", new ModelExportScene());
+    //SCENE->Create("Start", new ModelExportScene());
+    SCENE->Create("Start", new ModelAnimationScene());
 
     SCENE->Add("Grid");
     SCENE->Add("Start");
