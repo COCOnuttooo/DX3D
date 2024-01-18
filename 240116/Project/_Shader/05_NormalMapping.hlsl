@@ -64,16 +64,16 @@ float4 PS(VertexOutput input) : SV_TARGET
     
     float specularIntensity = saturate(dot(-reflection, input.cameraDir));
     
-    float shininess = 32.0f;
+    //float shininess = 32.0f;
     
     specularIntensity = pow(specularIntensity, shininess);
     
-    float4 diffuse = albedo * diffuseIntensity;
+    float4 diffuse = albedo * diffuseIntensity * mDiffuse;
     
-    float4 specular = specularMap.Sample(samp, input.uv) * specularIntensity;
+    float4 specular = specularMap.Sample(samp, input.uv) * specularIntensity * mSpecular;
     
     //Ambient Light
-    float4 ambient = albedo * float4(0.1f, 0.1f, 0.1f, 1.0f);
+    float4 ambient = albedo * mAmbient;
     
-    return diffuse + specular + ambient; //Phong - Shading
+    return diffuse + specular + ambient + mEmissive; //Phong - Shading
 }

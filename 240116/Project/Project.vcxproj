@@ -140,6 +140,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Model\Model.h" />
+    <ClInclude Include="Model\ModelMesh.h" />
     <ClInclude Include="Model\ModelData.h" />
     <ClInclude Include="Model\ModelExporter.h" />
     <ClInclude Include="Scene\ModeExportScene.h" />
@@ -204,6 +206,8 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Model\Model.cpp" />
+    <ClCompile Include="Model\ModelMesh.cpp" />
     <ClCompile Include="Model\ModelExporter.cpp" />
     <ClCompile Include="Scene\ModeExportScene.cpp" />
     <ClCompile Include="Render\Shader\ComputeShader.cpp" />

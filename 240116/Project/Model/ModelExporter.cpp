@@ -173,10 +173,35 @@ void ModelExporter::ReadMesh(aiNode* node)
 void ModelExporter::ExportMesh()
 {
     ReadMesh(scene->mRootNode);
+    WriteMesh();
 }
 
 void ModelExporter::WriteMesh()
 {
+    string path = "_ModelData/Mesh/" + name + ".mesh";
+    
+    CreateFolder(path);
+
+    BinaryWriter data(path);
+    data.WriteData(meshes.size());
+
+    for (MeshData* mesh : meshes)
+    {
+        data.WriteData(mesh->name);
+        data.WriteData(mesh->materialIndex);
+        
+        
+        data.WriteData(mesh->vertices.size());
+        data.WriteData(mesh->vertices.data(), sizeof(ModelVertex) * mesh->vertices.size());
+
+
+        data.WriteData(mesh->indices.size());
+        data.WriteData(mesh->indices.data(), sizeof(UINT) * mesh->indices.size());
+
+        delete mesh;
+
+    }
+    meshes.clear();
 }
 
 wstring ModelExporter::CreateTexture(string file)

@@ -44,9 +44,23 @@ cbuffer Projection : register(b2)
 }
 
 //PS CBuffer
-cbuffer Light : register(b0)
+cbuffer LightBuffer : register(b0)
 {
     float3 lightDirection;
+}
+
+cbuffer MaterialBuffer : register(b1)
+{
+    float4 mDiffuse;
+    float4 mSpecular;
+    float4 mAmbient;
+    float4 mEmissive;
+    
+    float shininess;
+    int   hasDiffuseMap;
+    int   hasSpecularMap;
+    int   hasNormalMap;
+    
 }
 
 

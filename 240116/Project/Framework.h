@@ -133,6 +133,10 @@ using namespace GameMath;
 
 #include "Model/ModelData.h"
 #include "Model/ModelExporter.h"
+
+#include "Model/ModelMesh.h"
+#include "Model/Model.h"
+
 ////////////////////////////////////////////////////
 
 #include "Scene/Scene.h"

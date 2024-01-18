@@ -28,6 +28,8 @@ void Material::Set()
 	vertexShader->SetShader();
 	 pixelShader->SetShader();
 
+	 buffer->SetPSBuffer(1);
+
 	 if (diffuseMap != nullptr)
 		 diffuseMap->PSSetShaderResources(0);
 
@@ -36,6 +38,7 @@ void Material::Set()
 
 	 if (normalMap != nullptr)
 		 normalMap->PSSetShaderResources(2);
+	 return;
 }
 
 void Material::SetShader(wstring file)
@@ -70,6 +73,13 @@ void Material::Debug()
 {
 	if (ImGui::TreeNode(name.c_str()))
 	{
+		ImGui::ColorEdit4("Diffuse", (float*)&buffer->data.diffuse,ImGuiColorEditFlags_PickerHueBar);
+		ImGui::ColorEdit4("Specular", (float*)&buffer->data.specular, ImGuiColorEditFlags_PickerHueWheel);
+		ImGui::ColorEdit4("Ambient", (float*)&buffer->data.ambient,2);
+		ImGui::ColorEdit4("Emissive", (float*)&buffer->data.emissive,3);
+
+		ImGui::SliderFloat("Shininess", &buffer->data.shininess, 1,50);
+
 		SelectMap(&diffuseMap,  "DiffuseMap",  L"Solid/White.png");
 		SelectMap(&specularMap, "SpecularMap", L"Solid/Black.png");
 		SelectMap(&normalMap,   "NormalMap",   L"Solid/White.png");
