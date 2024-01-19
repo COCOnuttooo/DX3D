@@ -5,6 +5,8 @@ Model::Model(string name)
 	this->name = name;
 	ReadMaterial();
 	ReadMesh();
+
+	Transform::Load();
 }
 
 Model::~Model()
@@ -39,6 +41,27 @@ void Model::Debug()
 	Transform::Debug();
 	for (Material* material : materials)
 		material->Debug();
+
+	if (ImGui::Button("Save Model"))
+	{
+		Transform::Save();
+		for (Material* material : materials)
+		{
+			material->Save(L"_ModelData/Material/"  + ToWString(name + "/" +material->GetName()) + L".mat");
+
+		}
+	}
+
+
+	if (ImGui::Button("Load Model"))
+	{
+		Transform::Load();
+		for (Material* material : materials)
+		{
+			material->Load(L"_ModelData/Material/" + ToWString(name + "/" + material->GetName()) + L".mat");
+
+		}
+	}
 }
 
 void Model::ReadMaterial()

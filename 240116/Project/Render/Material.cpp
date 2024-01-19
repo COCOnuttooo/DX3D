@@ -69,7 +69,7 @@ void Material::SetNormalMap(wstring file)
 	buffer->data.hasNormalMap = true;
 }
 
-void Material::Debug()
+void Material::Debug(string baseDir)
 {
 	if (ImGui::TreeNode(name.c_str()))
 	{
@@ -84,8 +84,8 @@ void Material::Debug()
 		SelectMap(&specularMap, "SpecularMap", L"Solid/Black.png");
 		SelectMap(&normalMap,   "NormalMap",   L"Solid/White.png");
 
-		SaveDialog();
-		LoadDialog();
+		SaveDialog(baseDir);
+		LoadDialog(baseDir);
 
 		ImGui::TreePop();
 	}
@@ -213,10 +213,10 @@ void Material::Load(wstring file)
 	buffer->data.shininess = data.ReadFloat();
 }
 
-void Material::SaveDialog()
+void Material::SaveDialog(string baseDir)
 {
 	if (ImGui::Button("SaveMaterial"))
-		DIALOG->OpenDialog("SaveMaterial", "SaveMaterial", ".mat", "_TextData/");
+		DIALOG->OpenDialog("SaveMaterial", "SaveMaterial", ".mat", baseDir);
 
 	if (DIALOG->Display("SaveMaterial", 32, ImVec2(300, 100)))
 	{
@@ -233,10 +233,10 @@ void Material::SaveDialog()
 	}
 }
 
-void Material::LoadDialog()
+void Material::LoadDialog(string baseDir)
 {
 	if (ImGui::Button("LoadMaterial"))
-		DIALOG->OpenDialog("LoadMaterial", "LoadMaterial", ".mat", "_TextData/");
+		DIALOG->OpenDialog("LoadMaterial", "LoadMaterial", ".mat", baseDir);
 
 	if (DIALOG->Display("LoadMaterial", 32, ImVec2(300, 100)))
 	{

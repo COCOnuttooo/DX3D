@@ -15,15 +15,15 @@ public:
 	void SetSpecularMap(wstring file);
 	void SetNormalMap(wstring file);
 
-	void Debug();
+	void Debug(string baseDir = "_TextData/");
 
 	void SelectMap(Texture** texture, string mapType, wstring clearFile);
 
 	void Save(wstring file);
 	void Load(wstring file);
 
-	void SaveDialog();
-	void LoadDialog();
+	void SaveDialog(string baseDir);
+	void LoadDialog(string baseDir);
 
 	void SetName(string name) { this->name = name; }
 

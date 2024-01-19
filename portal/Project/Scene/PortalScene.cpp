@@ -157,7 +157,7 @@ void PortalScene::CalculateMirror()
 	{
 		viewMatrix1 = XMMatrixLookAtLH(cameraPosition1, portalPosition1, upDirection1);
 		viewMatrix1 = XMMatrixLookToLH(cameraPosition1, -cameraPosition1, upDirection1);
-		P1CAMERA->SetFixViewMatrix(viewMatrix1);
+		//P1CAMERA->SetFixViewMatrix(viewMatrix1);
 		persP1 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP1, 1000);
 
 	}
@@ -167,7 +167,7 @@ void PortalScene::CalculateMirror()
 		viewMatrix2 = XMMatrixLookAtLH(cameraPosition2, portalPosition2, upDirection2);
 		viewMatrix2 = XMMatrixLookToLH(cameraPosition2, -cameraPosition2, upDirection1);
 
-		P2CAMERA->SetFixViewMatrix(viewMatrix2);
+		//P2CAMERA->SetFixViewMatrix(viewMatrix2);
 		persP2 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP2, 1000);
 
 	}

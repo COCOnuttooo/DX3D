@@ -2,21 +2,20 @@
 #include "ModeExportScene.h"
 ModelExportScene::ModelExportScene()
 {
-	exporter = new ModelExporter("Knight");
-	exporter->ExportMaterial();
-	exporter->ExportMesh();
-	knight = new Model("Knight");
+	exporter = new ModelExporter("KnightAnimation/Happy Idle");
+	//exporter->ExportMaterial();
+	//exporter->ExportMesh();
+	//knight = new Model("Groot");
 }
 
 ModelExportScene::~ModelExportScene()
 {
 	delete exporter;
-	delete knight;
 }
 
 void ModelExportScene::Update()
 {
-	knight->Update();
+	//knight->Update();
 }
 
 void ModelExportScene::PreRender()
@@ -25,10 +24,10 @@ void ModelExportScene::PreRender()
 
 void ModelExportScene::Render()
 {
-	knight->Render();
+	//knight->Render();
 }
 
 void ModelExportScene::PostRender()
 {
-	knight->Debug();
+	//knight->Debug();
 }

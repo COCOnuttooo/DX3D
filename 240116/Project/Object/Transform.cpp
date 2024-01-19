@@ -61,7 +61,8 @@ void Transform::Save()
 void Transform::Load()
 {
 	BinaryReader data("_TextData/Transform/" + name + ".transform");
-
+	if (!data.Succeeded())
+		return;
 	scale       = data.ReadVector3();
 	rotation    = data.ReadVector3();
 	translation = data.ReadVector3();
