@@ -51,6 +51,9 @@ using namespace std;
 #define WIN_WIDTH  1280.0f
 #define WIN_HEIGHT  720.0f
 
+#define MAX_FRAME 512
+#define MAX_BONE 256
+
 #define DEVICE Device::GetInstance()->GetDevice()
 #define DC     Device::GetInstance()->GetDC()
 
@@ -136,6 +139,9 @@ using namespace GameMath;
 
 #include "Model/ModelMesh.h"
 #include "Model/Model.h"
+
+#include "Model/ModelClip.h"
+#include "Model/ModelAnimator.h"
 
 ////////////////////////////////////////////////////
 

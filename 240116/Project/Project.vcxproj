@@ -140,12 +140,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Model\ModelAnimator.h" />
+    <ClInclude Include="Model\ModelClip.h" />
     <ClInclude Include="Scene\ModelAnimationScene.h" />
     <ClInclude Include="Model\Model.h" />
     <ClInclude Include="Model\ModelMesh.h" />
     <ClInclude Include="Model\ModelData.h" />
     <ClInclude Include="Model\ModelExporter.h" />
-    <ClInclude Include="Scene\ModeExportScene.h" />
+    <ClInclude Include="Scene\ModelExportScene.h" />
     <ClInclude Include="Render\Shader\ComputeShader.h" />
     <ClInclude Include="Object\Landscape\TerrainEditor.h" />
     <ClInclude Include="Scene\TerrainEditorScene.h" />
@@ -207,11 +209,13 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Model\ModelAnimator.cpp" />
+    <ClCompile Include="Model\ModelClip.cpp" />
     <ClCompile Include="Scene\ModelAnimationScene.cpp" />
     <ClCompile Include="Model\Model.cpp" />
     <ClCompile Include="Model\ModelMesh.cpp" />
     <ClCompile Include="Model\ModelExporter.cpp" />
-    <ClCompile Include="Scene\ModeExportScene.cpp" />
+    <ClCompile Include="Scene\ModelExportScene.cpp" />
     <ClCompile Include="Render\Shader\ComputeShader.cpp" />
     <ClCompile Include="Object\Landscape\TerrainEditor.cpp" />
     <ClCompile Include="Scene\TerrainEditorScene.cpp" />

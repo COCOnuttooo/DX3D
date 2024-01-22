@@ -73,20 +73,19 @@ struct VertexTextureNormalTangent
     {
     }
 
-    Vector3 pos     = {};
-    Vector2 uv      = {};
-    Vector3 normal  = {};
-    Vector3 tangent = {};
+    Vector3 pos      = {};
+    Vector2 uv       = {};
+    Vector3 normal   = {};
+    Vector3 tangent  = {};
 };
 
 struct VertexTextureNormalTangentBlend
 {
+    Vector3 pos      = {};
+    Vector2 uv       = {};
+    Vector3 normal   = {};
+    Vector3 tangent  = {};
 
-
-    Vector3 pos = {};
-    Vector2 uv = {};
-    Vector3 normal = {};
-    Vector3 tangent = {};
-    Vector4 indices = {};
-    Vector4 weights = {};
+    int  indices[4]  = {};
+    float weights[4] = {};
 };

@@ -126,6 +126,35 @@ void Model::ReadMesh()
 
 		meshes.push_back(mesh);
 	}
+	size = data.ReadUint();
+
+	for (UINT i = 0; i < size; i++)
+	{
+		NodeData node;
+
+		node.index = data.ReadInt();
+		node.name = data.ReadString();
+		node.parent = data.ReadInt();
+		node.transform = data.ReadMatrix();
+
+		nodes.emplace_back(node);
+	}
+
+	size = data.ReadUint();
+
+	for (UINT i = 0; i < size; i++)
+	{
+		BoneData bone;
+
+		bone.index = data.ReadInt();
+		bone.name = data.ReadString();
+		bone.offset = data.ReadMatrix();
+
+		bones.emplace_back(bone);
+
+		boneMap.emplace(bone.name, bone.index);
+	}
+
 }
 
 void Model::CreateMesh()

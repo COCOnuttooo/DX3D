@@ -192,7 +192,7 @@
     <ClInclude Include="Render\Shader\ComputeShader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Scene\ModeExportScene.h">
+    <ClInclude Include="Scene\ModelExportScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Model\ModelExporter.h">
@@ -208,6 +208,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Scene\ModelAnimationScene.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Model\ModelClip.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Model\ModelAnimator.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -356,7 +362,7 @@
     <ClCompile Include="Render\Shader\ComputeShader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Scene\ModeExportScene.cpp">
+    <ClCompile Include="Scene\ModelExportScene.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Model\ModelExporter.cpp">
@@ -369,6 +375,12 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Scene\ModelAnimationScene.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Model\ModelClip.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Model\ModelAnimator.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -6,7 +6,7 @@
 #include "Scene/GridScene.h"
 #include "Scene/TerrainScene.h"
 #include "Scene/TerrainEditorScene.h"
-#include "Scene/ModeExportScene.h"
+#include "Scene/ModelExportScene.h"
 #include "Scene/ModelAnimationScene.h"
 MainGame::MainGame()
 {
