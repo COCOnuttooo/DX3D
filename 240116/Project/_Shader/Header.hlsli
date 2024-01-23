@@ -26,6 +26,18 @@ struct VertexTextureNormalTangent
     float3 tangent : TANGENT;
 };
 
+struct VertexTextureNormalTangentBlend
+{
+    float4 pos     : POSITION;
+    float2 uv      : UV;
+    float3 normal  : NORMAL;
+    float3 tangent : TANGENT;
+    
+    int4   indices: BLENDINDICES;
+    float4 weights: BLENDWEIGHTS;
+};
+
+
 //VS CBuffer
 cbuffer World : register(b0)
 {

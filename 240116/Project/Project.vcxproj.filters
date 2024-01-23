@@ -407,6 +407,7 @@
     <FxCompile Include="_Shader\06_TerrainEditor.hlsl" />
     <FxCompile Include="_Shader\07_ComputePicking.hlsl" />
     <FxCompile Include="_Shader\08_Terrain.hlsl" />
+    <FxCompile Include="_Shader\09_ModelAnimator.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />

@@ -5,9 +5,9 @@ protected:
 	struct Frame
 	{
 		int clipIndex = 0;
-		UINT curFrame = 0;
+		UINT frameIndex = 0;
 		float time = 0.0f;
-		float speed = 0.0f;
+		float speed = 1.0f;
 
 	};
 	struct Motion
@@ -34,7 +34,26 @@ public:
 	ModelAnimator(string name);
 	~ModelAnimator();
 
+	void Update();
+	void Render();
+
+	void ReadClip(string file, UINT clipIndex = 0);
+
+	void Debug();
+
+	void CreateTexture();
 private:
-	vector<ModelClip> clips;
+	void CreateClipTransform(UINT clipIndex);
+
+private:
+	vector<ModelClip*> clips;
+
+	FrameBuffer* buffer;
+
+	ClipTransform* clipTransforms;
+	ClipTransform* nodeTransforms;
+
+	ID3D11Texture2D* texture;
+	ID3D11ShaderResourceView* srv;
 };
 

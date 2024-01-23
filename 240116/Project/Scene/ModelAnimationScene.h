@@ -15,7 +15,7 @@ public:
 	void PostRender() override;
 private:
 
-
+	ModelAnimator* model;
 
 };
 

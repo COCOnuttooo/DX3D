@@ -64,6 +64,12 @@ void Model::Debug()
 	}
 }
 
+void Model::SetShader(wstring file)
+{
+	for (Material* material : materials)
+		material->SetShader(file);
+}
+
 void Model::ReadMaterial()
 {
 	string path = "_ModelData/Material/" + name + "/MaterialList.list";

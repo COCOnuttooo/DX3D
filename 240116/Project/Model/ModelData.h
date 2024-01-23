@@ -100,5 +100,5 @@ struct Clip
 
 struct ClipTransform
 {
-	Matrix trasnform[MAX_FRAME][MAX_BONE];
+	Matrix transform[MAX_FRAME][MAX_BONE];
 };

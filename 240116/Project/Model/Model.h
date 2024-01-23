@@ -3,9 +3,11 @@ class Model : public Transform
 {
 public:
 	Model(string name);
-	~Model();
+	virtual ~Model();
 	void Render();
 	void Debug();
+
+	void SetShader(wstring file);
 private:
 	void ReadMaterial();
 	void ReadMesh();
@@ -13,7 +15,7 @@ private:
 	void CreateMesh();
 
 
-private:
+protected:
 	//string name;
 
 
