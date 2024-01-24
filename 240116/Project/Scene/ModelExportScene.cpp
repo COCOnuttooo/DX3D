@@ -2,11 +2,11 @@
 #include "ModelExportScene.h"
 ModelExportScene::ModelExportScene()
 {
-	exporter = new ModelExporter("Knight");
+	exporter = new ModelExporter("ChickenBlade");
 	exporter->ExportModel();
-	exporter->ExportAnimation("Hip Hop Dancing");
-	exporter->ExportAnimation("Happy Idle");
-	exporter->ExportAnimation("Run");
+	//exporter->ExportAnimation("Hip Hop Dancing");
+	//exporter->ExportAnimation("Happy Idle");
+	//exporter->ExportAnimation("Run");
 	//exporter->ExportMaterial();
 	//exporter->ExportMesh();
 	//knight = new Model("SpiderMan");

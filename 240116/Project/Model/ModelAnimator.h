@@ -12,12 +12,17 @@ protected:
 	};
 	struct Motion
 	{
+		Motion()
+		{
+			nextFrame.clipIndex = -1;
+		}
 		float takeTime = 0.2f;
 		float tweenTime = 0.0f;
 		float runningTime = 0.0f;
 		float padding;
 
-		Frame curFrame;
+		Frame curFrame, nextFrame;
+		
 	};
 
 	class FrameBuffer : public ConstBuffer<Motion>
@@ -40,11 +45,11 @@ public:
 	void ReadClip(string file, UINT clipIndex = 0);
 
 	void Debug();
-
-	void CreateTexture();
+	void PlayClip(int clipIndex, float speed = 1.0f, float takeTime = 0.2f);
 private:
+	void CreateTexture();
 	void CreateClipTransform(UINT clipIndex);
-
+	void UpdateFrame();
 private:
 	vector<ModelClip*> clips;
 

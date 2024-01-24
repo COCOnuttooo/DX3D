@@ -12,11 +12,15 @@ ModelAnimator::~ModelAnimator()
     for (auto& clip : clips)
         delete clip;
     delete buffer;
+    texture->Release();
+    srv->Release();
 }
 
 void ModelAnimator::Update()
 {
+
     Model::Update();
+    UpdateFrame();
 }
 
 void ModelAnimator::Render()
@@ -68,12 +72,26 @@ void ModelAnimator::ReadClip(string file, UINT clipIndex)
 
 void ModelAnimator::Debug()
 {
-    int& clipIndex = buffer->data.curFrame.clipIndex;
+    static int clipIndex = 0;
 
-    ImGui::SliderInt("ClipIndex", &clipIndex, 0, clips.size() - 1);
+    ImGui::Text("ModelAnimator Option");
+    
+    if (ImGui::SliderInt("ClipIndex", &clipIndex, 0, clips.size() - 1))
+    {
+        PlayClip(clipIndex, 1.f,2.f);
+    }
+
     ImGui::SliderInt("Frame Index", (int*)&buffer->data.curFrame.frameIndex, 0, clips[clipIndex]->frameCount - 1);
-
+    ImGui::SliderFloat("Clip Speed", &buffer->data.curFrame.speed, 0.1f, 10.0f);
     Model::Debug();
+}
+
+void ModelAnimator::PlayClip(int clipIndex, float speed, float takeTime)
+{
+    buffer->data.nextFrame.clipIndex = clipIndex;
+    buffer->data.nextFrame.speed     = speed;
+    buffer->data.takeTime            = takeTime;
+
 }
 
 void ModelAnimator::CreateClipTransform(UINT clipIndex)
@@ -131,6 +149,45 @@ void ModelAnimator::CreateClipTransform(UINT clipIndex)
 
             nodeIndex++;
         }
+    }
+}
+
+void ModelAnimator::UpdateFrame()
+{
+    Motion& motion = buffer->data;
+
+    ModelClip* clip = clips[motion.curFrame.clipIndex];
+    motion.curFrame.time += Time::Delta() * clip->ticksPerSecond * motion.curFrame.speed;
+
+    if (motion.curFrame.time >= 1.0f)
+    {
+        motion.curFrame.frameIndex = (motion.curFrame.frameIndex + 1) % (clip->frameCount -1);
+        motion.curFrame.time = 0.0f;
+    }
+    if (motion.nextFrame.clipIndex == -1)
+        return;
+
+    motion.tweenTime += DELTA_TIME / motion.takeTime;
+
+    clip = clips[motion.nextFrame.clipIndex];
+    if (motion.tweenTime >= 1.0f)
+    {
+        motion.curFrame  = motion.nextFrame;
+        motion.tweenTime = 0.0f;
+        motion.nextFrame.clipIndex = -1;
+        motion.nextFrame.frameIndex = 0;
+        motion.nextFrame.time = 0;
+    }
+    else
+    {
+        motion.nextFrame.time += DELTA_TIME * clip->ticksPerSecond * motion.nextFrame.speed;
+
+        if (motion.nextFrame.time >= 1.0f)
+        {
+            motion.nextFrame.frameIndex = (motion.nextFrame.frameIndex + 1) % (clip->frameCount - 1);
+            motion.nextFrame.time = 0.0f;
+        }
+
     }
 }
 

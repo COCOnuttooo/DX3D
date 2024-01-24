@@ -28,7 +28,7 @@ struct Motion
     float runningTime;
     float padding;
 
-    Frame curFrame;
+    Frame curFrame , nextFrame;
 };
 cbuffer FrameBuffer : register(b3)
 {
@@ -38,25 +38,63 @@ matrix SkinWorld(int4 indices, float4 weights)
 {
     matrix transform;
     matrix curAnim, nextAnim;
-    
-    matrix cur, next;
+    matrix curFrame, nextFrame;
     
     float4 c[4];
+    float4 n[4];
     
     for (int i = 0; i < 4; i++)
     {
-        int clipIndex = motion.curFrame.clipIndex;
-        int frameIndex = motion.curFrame.frameIndex;
+        int clipIndex[2];
+        int frameIndex[2];
+        float time[2];
+        clipIndex[0]  = motion.curFrame.clipIndex;
+        frameIndex[0] = motion.curFrame.frameIndex;
+        time[0]       = motion.curFrame.time;
         
-        c[0] = transformMap.Load(int4(indices[i] * 4 + 0, frameIndex, clipIndex, 0));
-        c[1] = transformMap.Load(int4(indices[i] * 4 + 1, frameIndex, clipIndex, 0));
-        c[2] = transformMap.Load(int4(indices[i] * 4 + 2, frameIndex, clipIndex, 0));
-        c[3] = transformMap.Load(int4(indices[i] * 4 + 3, frameIndex, clipIndex, 0));
+        clipIndex[1]  = motion.nextFrame.clipIndex;
+        frameIndex[1] = motion.nextFrame.frameIndex;
+        time[1]       = motion.nextFrame.time;
+        c[0] = transformMap.Load(int4(indices[i] * 4 + 0, frameIndex[0], clipIndex[0], 0));
+        c[1] = transformMap.Load(int4(indices[i] * 4 + 1, frameIndex[0], clipIndex[0], 0));
+        c[2] = transformMap.Load(int4(indices[i] * 4 + 2, frameIndex[0], clipIndex[0], 0));
+        c[3] = transformMap.Load(int4(indices[i] * 4 + 3, frameIndex[0], clipIndex[0], 0));
         
-        cur = matrix(c[0], c[1], c[2], c[3]);
+        curFrame = matrix(c[0], c[1], c[2], c[3]);
         
         ///
-        curAnim = cur;
+        n[0] = transformMap.Load(int4(indices[i] * 4 + 0, frameIndex[0] + 1, clipIndex[0], 0));
+        n[1] = transformMap.Load(int4(indices[i] * 4 + 1, frameIndex[0] + 1, clipIndex[0], 0));
+        n[2] = transformMap.Load(int4(indices[i] * 4 + 2, frameIndex[0] + 1, clipIndex[0], 0));
+        n[3] = transformMap.Load(int4(indices[i] * 4 + 3, frameIndex[0] + 1, clipIndex[0], 0));
+        
+        nextFrame = matrix(n[0], n[1], n[2], n[3]);
+        ////
+        curAnim = lerp(curFrame, nextFrame, time[0]);
+        
+        if(clipIndex[1] > -1)
+        {
+            c[0] = transformMap.Load(int4(indices[i] * 4 + 0, frameIndex[1], clipIndex[1], 0));
+            c[1] = transformMap.Load(int4(indices[i] * 4 + 1, frameIndex[1], clipIndex[1], 0));
+            c[2] = transformMap.Load(int4(indices[i] * 4 + 2, frameIndex[1], clipIndex[1], 0));
+            c[3] = transformMap.Load(int4(indices[i] * 4 + 3, frameIndex[1], clipIndex[1], 0));
+        
+            curFrame = matrix(c[0], c[1], c[2], c[3]);
+        
+        ///
+            n[0] = transformMap.Load(int4(indices[i] * 4 + 0, frameIndex[1] + 1, clipIndex[1], 0));
+            n[1] = transformMap.Load(int4(indices[i] * 4 + 1, frameIndex[1] + 1, clipIndex[1], 0));
+            n[2] = transformMap.Load(int4(indices[i] * 4 + 2, frameIndex[1] + 1, clipIndex[1], 0));
+            n[3] = transformMap.Load(int4(indices[i] * 4 + 3, frameIndex[1] + 1, clipIndex[1], 0));
+        
+            nextFrame = matrix(n[0], n[1], n[2], n[3]);
+        ////
+            nextAnim = lerp(curFrame, nextFrame, time[1]);
+            curAnim = lerp(curAnim, nextAnim, motion.tweenTime);
+        }
+        
+        
+        
         
         transform += mul(weights[i], curAnim);
     }
