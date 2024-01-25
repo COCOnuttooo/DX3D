@@ -42,18 +42,18 @@ void Model::Debug()
 	for (Material* material : materials)
 		material->Debug();
 
-	if (ImGui::Button("Save Model"))
+	if (ImGui::Button(("Save Model" + name).c_str()))
 	{
 		Transform::Save();
 		for (Material* material : materials)
-		{
+		{	
 			material->Save(L"_ModelData/Material/"  + ToWString(name + "/" +material->GetName()) + L".mat");
 
 		}
 	}
 
 
-	if (ImGui::Button("Load Model"))
+	if (ImGui::Button(("Load Model"+ name).c_str()))
 	{
 		Transform::Load();
 		for (Material* material : materials)
@@ -68,6 +68,28 @@ void Model::SetShader(wstring file)
 {
 	for (Material* material : materials)
 		material->SetShader(file);
+}
+
+void Model::AttachToBone(ModelAnimator* model, string boneName)
+{
+	Transform* socket = new Transform;
+
+	
+	this->SetParent(socket);
+	model->sockets.emplace(boneName, socket);
+	//sockets.emplace(boneName, socket);
+	//model->GetTransformByBone(boneName) * model->GetWorld();
+}
+
+void Model::UpdateSockets()
+{
+	for (pair<string,Transform*> pair : sockets)
+	{
+		Transform* socket = pair.second;
+		ModelAnimator* modelAnimator = dynamic_cast<ModelAnimator*>(this);
+
+		socket->GetWorld() = modelAnimator->GetTransformByBone(pair.first) * this->world;
+	}
 }
 
 void Model::ReadMaterial()

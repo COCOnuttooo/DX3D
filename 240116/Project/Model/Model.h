@@ -8,6 +8,10 @@ public:
 	void Debug();
 
 	void SetShader(wstring file);
+
+	void AttachToBone(class ModelAnimator* model, string boneName);
+protected:
+	void UpdateSockets();
 private:
 	void ReadMaterial();
 	void ReadMesh();
@@ -26,6 +30,6 @@ protected:
 	vector<BoneData> bones;
 
 	map<string, UINT> boneMap;
-
-
+	
+	map<string, Transform*> sockets;
 };

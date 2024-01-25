@@ -16,6 +16,6 @@ public:
 private:
 
 	ModelAnimator* model;
-
+	Model* chicken;
 };
 

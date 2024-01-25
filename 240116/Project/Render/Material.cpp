@@ -71,8 +71,12 @@ void Material::SetNormalMap(wstring file)
 
 void Material::Debug(string baseDir)
 {
+	string diffuseKey  = name + "Diffuse Map";
+	string specularKey = name + "Specular Map";
+	string normalKey   = name + "Normal Map";
 	if (ImGui::TreeNode(name.c_str()))
 	{
+
 		ImGui::ColorEdit4("Diffuse", (float*)&buffer->data.diffuse,ImGuiColorEditFlags_PickerHueBar);
 		ImGui::ColorEdit4("Specular", (float*)&buffer->data.specular, ImGuiColorEditFlags_PickerHueWheel);
 		ImGui::ColorEdit4("Ambient", (float*)&buffer->data.ambient,2);
@@ -80,9 +84,9 @@ void Material::Debug(string baseDir)
 
 		ImGui::SliderFloat("Shininess", &buffer->data.shininess, 1,50);
 
-		SelectMap(&diffuseMap,  "DiffuseMap",  L"Solid/White.png");
-		SelectMap(&specularMap, "SpecularMap", L"Solid/Black.png");
-		SelectMap(&normalMap,   "NormalMap",   L"Solid/White.png");
+		SelectMap(&diffuseMap,  diffuseKey,  L"Solid/White.png");
+		SelectMap(&specularMap, specularKey, L"Solid/Black.png");
+		SelectMap(&normalMap,   normalKey,   L"Solid/White.png");
 
 		SaveDialog(baseDir);
 		LoadDialog(baseDir);
@@ -90,7 +94,7 @@ void Material::Debug(string baseDir)
 		ImGui::TreePop();
 	}
 
-	if (DIALOG->Display("DiffuseMap", 32, ImVec2(300, 100)) || DIALOG->Display("SpecularMap", 32, ImVec2(300, 100)) || DIALOG->Display("NormalMap", 32, ImVec2(300, 100)))
+	if (DIALOG->Display(diffuseKey, 32, ImVec2(300, 100)) || DIALOG->Display(specularKey, 32, ImVec2(300, 100)) || DIALOG->Display( normalKey, 32, ImVec2(300, 100)))
 	{
 		if (DIALOG->IsOk())
 		{
@@ -98,11 +102,11 @@ void Material::Debug(string baseDir)
 
 			path = path.substr(projectDir.length() + 1, path.length());
 
-			if (DIALOG->GetOpenedKey() == "DiffuseMap")
+			if (DIALOG->GetOpenedKey() ==diffuseKey)
 				SetDiffuseMap(ToWString(path));
-			else if (DIALOG->GetOpenedKey() == "SpecularMap")
+			else if (DIALOG->GetOpenedKey() == specularKey)
 				SetSpecularMap(ToWString(path));
-			else if (DIALOG->GetOpenedKey() == "NormalMap")
+			else if (DIALOG->GetOpenedKey() == normalKey)
 				SetNormalMap(ToWString(path));
 		}
 

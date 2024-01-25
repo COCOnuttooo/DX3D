@@ -5,6 +5,12 @@ ModelAnimator::ModelAnimator(string name)
 {
     buffer = new FrameBuffer;
     SetShader(L"09_ModelAnimator");
+    if (texture == nullptr)
+    {
+        CreateTexture();
+    }
+    socketRH = new Transform;
+    //socketRH->SetParent(this);
 }
 
 ModelAnimator::~ModelAnimator()
@@ -14,6 +20,7 @@ ModelAnimator::~ModelAnimator()
     delete buffer;
     texture->Release();
     srv->Release();
+    delete socketRH;
 }
 
 void ModelAnimator::Update()
@@ -21,14 +28,16 @@ void ModelAnimator::Update()
 
     Model::Update();
     UpdateFrame();
+    UpdateSockets();
+    //GetTransformByBone("mixamorig:RightHand");
 }
 
 void ModelAnimator::Render()
 {
     if (texture == nullptr)
-    {
         CreateTexture();
-    }
+
+
     buffer->SetVSBuffer(3);
     DC->VSSetShaderResources(0, 1, &srv);
     Model::Render();
@@ -92,6 +101,25 @@ void ModelAnimator::PlayClip(int clipIndex, float speed, float takeTime)
     buffer->data.nextFrame.speed     = speed;
     buffer->data.takeTime            = takeTime;
 
+}
+
+Matrix ModelAnimator::GetTransformByBone(string boneName)
+{
+    if (texture == nullptr)
+        return XMMatrixIdentity();
+    UINT clipIndex = buffer->data.curFrame.clipIndex;
+    UINT frameIndex = buffer->data.curFrame.frameIndex;
+
+    for (NodeData node : nodes)
+    {
+        if (node.name == boneName)
+        {
+            socketRH->GetWorld() = nodeTransforms[clipIndex].transform[frameIndex][node.index] * this->world;
+            return nodeTransforms[clipIndex].transform[frameIndex][node.index];
+        }
+    }
+
+    return XMMatrixIdentity();
 }
 
 void ModelAnimator::CreateClipTransform(UINT clipIndex)
