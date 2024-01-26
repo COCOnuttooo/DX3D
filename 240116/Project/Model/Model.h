@@ -4,6 +4,7 @@ class Model : public Transform
 public:
 	Model(string name);
 	virtual ~Model();
+	void Update();
 	void Render();
 	void Debug();
 

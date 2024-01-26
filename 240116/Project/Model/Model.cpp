@@ -22,6 +22,12 @@ Model::~Model()
 	meshes.clear();
 }
 
+void Model::Update()
+{
+	Transform::Update();
+	UpdateSockets();
+}
+
 void Model::Render()
 {
 

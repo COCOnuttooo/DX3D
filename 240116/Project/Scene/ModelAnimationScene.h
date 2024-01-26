@@ -13,6 +13,10 @@ public:
 	void Render() override;
 
 	void PostRender() override;
+
+	void PlayNextClip();
+
+	void PlayClip(int num);
 private:
 
 	ModelAnimator* model;

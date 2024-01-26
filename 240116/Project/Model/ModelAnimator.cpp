@@ -9,7 +9,6 @@ ModelAnimator::ModelAnimator(string name)
     {
         CreateTexture();
     }
-    socketRH = new Transform;
     //socketRH->SetParent(this);
 }
 
@@ -20,15 +19,20 @@ ModelAnimator::~ModelAnimator()
     delete buffer;
     texture->Release();
     srv->Release();
-    delete socketRH;
 }
 
 void ModelAnimator::Update()
 {
 
     Model::Update();
-    UpdateFrame();
-    UpdateSockets();
+    if (!isPlay)
+        return;
+    if (clips.size()!= 0)
+    {
+
+        UpdateFrame();
+    }
+    //UpdateSockets();
     //GetTransformByBone("mixamorig:RightHand");
 }
 
@@ -84,10 +88,10 @@ void ModelAnimator::Debug()
     static int clipIndex = 0;
 
     ImGui::Text("ModelAnimator Option");
-    
+    ImGui::Checkbox("IsPlay",&isPlay );
     if (ImGui::SliderInt("ClipIndex", &clipIndex, 0, clips.size() - 1))
     {
-        PlayClip(clipIndex, 1.f,2.f);
+        PlayClip(clipIndex, 1.f,0.2f);
     }
 
     ImGui::SliderInt("Frame Index", (int*)&buffer->data.curFrame.frameIndex, 0, clips[clipIndex]->frameCount - 1);
@@ -97,9 +101,12 @@ void ModelAnimator::Debug()
 
 void ModelAnimator::PlayClip(int clipIndex, float speed, float takeTime)
 {
+    clips[buffer->data.curFrame.clipIndex]->Init();
+    clips[clipIndex]->Init();
     buffer->data.nextFrame.clipIndex = clipIndex;
     buffer->data.nextFrame.speed     = speed;
     buffer->data.takeTime            = takeTime;
+
 
 }
 
@@ -107,19 +114,38 @@ Matrix ModelAnimator::GetTransformByBone(string boneName)
 {
     if (texture == nullptr)
         return XMMatrixIdentity();
-    UINT clipIndex = buffer->data.curFrame.clipIndex;
+    UINT clipIndex  = buffer->data.curFrame.clipIndex;
     UINT frameIndex = buffer->data.curFrame.frameIndex;
+    float time      = buffer->data.curFrame.time;
 
+    Matrix curTransform, nextTransform;
+
+    int nodeIndex = -1;
     for (NodeData node : nodes)
     {
         if (node.name == boneName)
-        {
-            socketRH->GetWorld() = nodeTransforms[clipIndex].transform[frameIndex][node.index] * this->world;
-            return nodeTransforms[clipIndex].transform[frameIndex][node.index];
-        }
+            nodeIndex = node.index;
     }
+    if (nodeIndex == -1)
+        return XMMatrixIdentity();
 
-    return XMMatrixIdentity();
+    curTransform = nodeTransforms[clipIndex].transform[frameIndex][nodeIndex];
+    nextTransform = nodeTransforms[clipIndex].transform[frameIndex + 1][nodeIndex];
+
+    Matrix curAnim = LERP(curTransform, nextTransform, time);
+    clipIndex  = buffer->data.nextFrame.clipIndex;
+    frameIndex = buffer->data.nextFrame.frameIndex;
+    time       = buffer->data.nextFrame.time;
+    if (clipIndex == -1)
+        return curAnim;
+
+     curTransform = nodeTransforms[clipIndex].transform[frameIndex + 0][nodeIndex];
+    nextTransform = nodeTransforms[clipIndex].transform[frameIndex + 1][nodeIndex];
+
+    Matrix nextAnim LERP(curTransform, nextTransform, time);
+
+    
+    return LERP(curAnim, nextAnim, buffer->data.tweenTime);
 }
 
 void ModelAnimator::CreateClipTransform(UINT clipIndex)
@@ -189,8 +215,13 @@ void ModelAnimator::UpdateFrame()
 
     if (motion.curFrame.time >= 1.0f)
     {
+        if (motion.curFrame.frameIndex == 0)
+            clip->Init();
         motion.curFrame.frameIndex = (motion.curFrame.frameIndex + 1) % (clip->frameCount -1);
         motion.curFrame.time = 0.0f;
+        float animRatio = (float)motion.curFrame.frameIndex / clip->frameCount;
+
+        clip->Execute(animRatio);
     }
     if (motion.nextFrame.clipIndex == -1)
         return;

@@ -2,25 +2,25 @@
 #include "ModelExportScene.h"
 ModelExportScene::ModelExportScene()
 {
-	exporter = new ModelExporter("ChickenBlade");
-	exporter->ExportModel();
-	//exporter->ExportAnimation("Hip Hop Dancing");
+	exporter = new ModelExporter("deadpool");
+	//exporter->ExportModel();
+	exporter->ExportAnimation("Goofy Running");
 	//exporter->ExportAnimation("Happy Idle");
-	//exporter->ExportAnimation("Run");
+	//exporter->ExportAnimation("Walk");
 	//exporter->ExportMaterial();
 	//exporter->ExportMesh();
-	//knight = new Model("SpiderMan");
+	knight = new Model("deadpool");
 }
 
 ModelExportScene::~ModelExportScene()
 {
-	delete exporter;
-	//delete knight;
+	//delete exporter;
+	delete knight;
 }
 
 void ModelExportScene::Update()
 {
-	//knight->Update();
+	knight->Update();
 }
 
 void ModelExportScene::PreRender()
@@ -29,10 +29,10 @@ void ModelExportScene::PreRender()
 
 void ModelExportScene::Render()
 {
-	//knight->Render();
+	knight->Render();
 }
 
 void ModelExportScene::PostRender()
 {
-	//knight->Debug();
+	knight->Debug();
 }

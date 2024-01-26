@@ -2,6 +2,7 @@
 #include "ModelClip.h"
 ModelClip::ModelClip()
 {
+	Init();
 }
 
 ModelClip::~ModelClip()
@@ -10,4 +11,32 @@ ModelClip::~ModelClip()
 		delete pair.second;
 
 	keyFrames.clear();
+}
+
+void ModelClip::Init()
+{
+	eventsIterator = events.begin();
+}
+
+void ModelClip::Execute(float ratio)
+{
+	if (events.empty())
+		return;
+
+	if (eventsIterator == events.end())
+		return;
+
+	if (eventsIterator->first > ratio)
+		return;
+
+	eventsIterator->second();
+
+	eventsIterator++;
+}
+
+void ModelClip::AddEvent(float ratio, function<void()> Event)
+{
+	events.emplace(ratio, Event);
+	if (eventsIterator ==events.end())
+		Init();
 }

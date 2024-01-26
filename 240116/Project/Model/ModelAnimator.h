@@ -48,7 +48,8 @@ public:
 	void PlayClip(int clipIndex, float speed = 1.0f, float takeTime = 0.2f);
 
 	Matrix GetTransformByBone(string boneName);
-	Transform* GetSocketRH() { return socketRH; }
+
+	ModelClip* Getclip(UINT index) { return clips[index]; }
 private:
 	void CreateTexture();
 	void CreateClipTransform(UINT clipIndex);
@@ -63,6 +64,7 @@ private:
 	ID3D11Texture2D* texture;
 	ID3D11ShaderResourceView* srv;
 
-	Transform* socketRH;
+
+	bool isPlay = true;
 };
 
