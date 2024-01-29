@@ -2,22 +2,22 @@
 #include "ModelAnimationScene.h"
 ModelAnimationScene::ModelAnimationScene()
 {
-	model = new ModelAnimator("deadpool");
-	model->ReadClip("Goofy Running");
-	//model->ReadClip("BaseAttack");
-	//model->ReadClip("Walk");
+	model = new ModelAnimator("Knight");
+	model->ReadClip("Happy Idle");
+	model->ReadClip("Hip Hop Dancing");
+	model->ReadClip("Run");
 
-	//chicken = new Model("ChickenBlade");
-	//chicken->AttachToBone(model, "mixamorig:RightHand");
+	chicken = new Model("ChickenBlade");
+	chicken->AttachToBone(model, "mixamorig:RightHand");
 
 	//model->Getclip(0)->AddEvent(0.5, bind(&ModelAnimationScene::PlayNextClip, this));
 	//model->Getclip(1)->AddEvent(0.5, bind(&ModelAnimationScene::PlayNextClip, this));
 	//model->Getclip(2)->AddEvent(0.5, bind(&ModelAnimationScene::PlayNextClip, this));
 
 
-	//model->Getclip(0)->AddEvent(0.5, bind(&ModelAnimationScene::PlayClip, this,1));
-	//model->Getclip(1)->AddEvent(0.5, bind(&ModelAnimationScene::PlayClip, this,2));
-	//model->Getclip(2)->AddEvent(0.5, bind(&ModelAnimationScene::PlayClip, this,0));
+	model->Getclip(0)->AddEvent(0.5, bind(&ModelAnimationScene::PlayClip, this,1));
+	model->Getclip(1)->AddEvent(0.5, bind(&ModelAnimationScene::PlayClip, this,2));
+	model->Getclip(2)->AddEvent(0.5, bind(&ModelAnimationScene::PlayClip, this,0));
 }
 
 ModelAnimationScene::~ModelAnimationScene()
@@ -62,5 +62,5 @@ void ModelAnimationScene::PlayNextClip()
 
 void ModelAnimationScene::PlayClip(int num)
 {
-	model->PlayClip(num, 1.0f);
+	model->PlayClip(num, 1.0f, 5.0f);
 }

@@ -96,6 +96,7 @@ void ModelAnimator::Debug()
 
     ImGui::SliderInt("Frame Index", (int*)&buffer->data.curFrame.frameIndex, 0, clips[clipIndex]->frameCount - 1);
     ImGui::SliderFloat("Clip Speed", &buffer->data.curFrame.speed, 0.1f, 10.0f);
+    //ImGui::SliderFloat("Tween time", &buffer->data.tweenTime, 0.1f, 10.0f);
     Model::Debug();
 }
 
