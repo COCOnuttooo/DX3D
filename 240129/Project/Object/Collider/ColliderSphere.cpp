@@ -54,3 +54,56 @@ void ColliderSphere::CreateMesh()
 	mesh = new Mesh(vertices, indices);
 }
 
+bool ColliderSphere::Collision(const IN Ray& ray, OUT HitResult* hitResult)
+{
+	this->Update();
+	Vector3 O = ray.origin;
+	Vector3 D = ray.direction;
+
+	Vector3 P = this->globalPosition;
+	Vector3 X = O - P;
+
+	float a = Vector3::Dot(D, D);
+	float b = 2 * Vector3::Dot(D, X);
+	float c = Vector3::Dot(X, X) - Radius()*Radius();
+
+	if (b* b -  4* a* c >= 0)
+	{
+		if (hitResult)
+		{
+			float t = (-b - sqrt(b * b - 4 * a * c))/ (2*a);
+
+			hitResult->distance = t;
+			hitResult->imapactPoint = O + D * t;
+
+		}
+		return true;
+	}
+
+
+	return false;
+}
+
+bool ColliderSphere::Collision(ColliderBox* other)
+{
+	this->Update();
+	other->Update();
+
+	return false;
+}
+
+bool ColliderSphere::Collision(ColliderSphere* other)
+{
+	 this->Update();
+	other->Update();
+
+	float distance = (this->globalPosition - other->GetGlobalPosition()).Length();
+	float D = this->Radius() + other->Radius();
+	return distance < D;
+}
+
+bool ColliderSphere::Collision(ColliderCapsule* other)
+{
+	return false;
+}
+

@@ -93,3 +93,16 @@ vector<string> Utility::SplitString(string origin, string token)
     return result;
 }
 
+float Utility::Min(const float& value1, const float& value2, const float& value3)
+{
+    
+
+    return min(min(value1,value2),value3);
+}
+
+float Utility::Max(const float& value1, const float& value2, const float& value3)
+{
+    return max(max(value1, value2), value3);
+
+}
+

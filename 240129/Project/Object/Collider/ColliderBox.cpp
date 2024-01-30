@@ -40,3 +40,23 @@ void ColliderBox::CreateMesh()
 
 	mesh = new Mesh(vertices, indices);
 }
+
+bool ColliderBox::Collision(const IN Ray& ray, OUT HitResult* result)
+{
+	return false;
+}
+
+bool ColliderBox::Collision(ColliderBox* other)
+{
+	return false;
+}
+
+bool ColliderBox::Collision(ColliderSphere* other)
+{
+	return false;
+}
+
+bool ColliderBox::Collision(ColliderCapsule* other)
+{
+	return false;
+}

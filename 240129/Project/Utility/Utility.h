@@ -15,4 +15,15 @@ namespace Utility
 	void CreateFolder(string file);
 
 	vector<string> SplitString(string origin, string token);
+
+	float Min(const float& value1, const float& value2, const float& value3);
+	float Max(const float& value1, const float& value2, const float& value3);
+
+
+
+
+
+
+
+
 }
