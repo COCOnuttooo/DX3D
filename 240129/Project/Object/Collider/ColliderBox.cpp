@@ -48,7 +48,19 @@ bool ColliderBox::Collision(const IN Ray& ray, OUT HitResult* result)
 
 bool ColliderBox::Collision(ColliderBox* other)
 {
-	return false;
+	Update();
+	OBB box1 = this->GetOBB();
+	OBB box2 = other->GetOBB();
+
+	Vector3 D = other->globalPosition - this->globalPosition;
+	for (UINT i = 0; i < 3; i++)
+	{
+		if (SeparatedAxis(D, box1.axis[i], box1, box2)) return false;
+		if (SeparatedAxis(D, box2.axis[i], box1,box2)) return false;
+			
+	}
+
+	return true;
 }
 
 bool ColliderBox::Collision(ColliderSphere* other)
@@ -59,4 +71,29 @@ bool ColliderBox::Collision(ColliderSphere* other)
 bool ColliderBox::Collision(ColliderCapsule* other)
 {
 	return false;
+}
+
+ColliderBox::OBB ColliderBox::GetOBB()
+{
+	OBB obbData;
+
+	obbData.halfSize = size * 0.5f * globalScale;
+
+	obbData.axis[0] = this->GetRightVector();
+	obbData.axis[1] = this->GetUpVector();
+	obbData.axis[2] = this->GetForwardVector();
+	return obbData;
+}
+
+bool ColliderBox::SeparatedAxis(Vector3 distance, Vector3 axis, OBB box1, OBB box2)
+{
+	float dist = abs(Vector3::Dot(distance, axis));
+	float sum = 0.0f;
+
+	for (UINT i = 0; i < 3; i++)
+	{
+		sum += abs(Vector3::Dot(box1.axis[i] * box1.halfSize[i], axis));
+		sum += abs(Vector3::Dot(box2.axis[i] * box2.halfSize[i], axis));
+	}
+	return dist > sum;
 }

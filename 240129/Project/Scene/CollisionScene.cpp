@@ -40,15 +40,27 @@ void CollisionScene::Update()
 		colliders[2]->SetColor(1, 0, 0);
 	else
 		colliders[2]->SetColor(0, 1, 0);
-	if (KEY_DOWN(VK_LBUTTON))
-	{
+	//if (KEY_DOWN(VK_LBUTTON))
+	//{
 
-		colliders[0]->translation = hitResult.imapactPoint;
+	//	colliders[0]->translation = hitResult.imapactPoint;
+	//}
+	if (colliders[0]->Collision((ColliderBox*)colliders[1]))
+	{
+		colliders[0]->SetColor(1, 0, 0);
+		colliders[1]->SetColor(1, 0, 0);
+	}
+	else
+	{
+		colliders[0]->SetColor(0, 1, 0);
+		colliders[1]->SetColor(0, 1, 0);
+
 	}
 	for (Collider* collider : colliders)
 	{
 		collider->Update();
 	}
+
 
 	//if (colliders[2]->Collision((ColliderSphere*)colliders[3]))
 	//{
