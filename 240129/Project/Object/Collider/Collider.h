@@ -7,7 +7,7 @@ struct Ray
 
 struct HitResult
 {
-	Vector3 imapactPoint;
+	Vector3 impactPoint;
 	float distance;
 };
 class Collider : public GameObject<Vertex>
@@ -20,7 +20,9 @@ public:
 	virtual ~Collider();
 	void Render();
 
-	virtual bool Collision(const IN Ray& ray,OUT HitResult* result) = 0;
+	bool Collision(Collider* other);
+
+	virtual bool Collision(IN Ray& ray,OUT HitResult* hitResult) = 0;
 	virtual bool Collision(class ColliderBox* other)     = 0;
 	virtual bool Collision(class ColliderSphere* other)  = 0;
 	virtual bool Collision(class ColliderCapsule* other) = 0;

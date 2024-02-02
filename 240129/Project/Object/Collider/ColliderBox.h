@@ -12,7 +12,7 @@ public:
 	ColliderBox(Vector3 size = {1,1,1});
 	~ColliderBox();
 
-	bool Collision(const IN Ray& ray, OUT HitResult* result) override;
+	bool Collision(IN Ray& ray, OUT HitResult* hitResult) override;
 
 	bool Collision(ColliderBox*     other) override;
 	bool Collision(ColliderSphere*  other) override;

@@ -17,6 +17,14 @@ CollisionScene::CollisionScene()
 		colliders.push_back(collider);
 
 	}
+	for (UINT i = 0; i < 2; i++)
+	{
+		Collider* collider = new ColliderCapsule();
+		collider->translation = { i * 2.0f ,10, 0 };
+		collider->SetName("ColliderCapsule" + to_string(i));
+		colliders.push_back(collider);
+
+	}
 	//colliders.push_back(new ColliderSphere);
 	//colliders.push_back(new ColliderSphere);
 	//colliders.push_back(new ColliderBox);
@@ -45,7 +53,7 @@ void CollisionScene::Update()
 
 	//	colliders[0]->translation = hitResult.imapactPoint;
 	//}
-	if (colliders[0]->Collision((ColliderBox*)colliders[1]))
+	if (colliders[0]->Collision(colliders[2]))
 	{
 		colliders[0]->SetColor(1, 0, 0);
 		colliders[1]->SetColor(1, 0, 0);
@@ -56,6 +64,13 @@ void CollisionScene::Update()
 		colliders[1]->SetColor(0, 1, 0);
 
 	}
+	//if (colliders[0]->Collision(ray, &hitResult))
+	//{
+	//	colliders[0]->SetColor(1, 0, 0);
+	//}
+	//else
+	//	colliders[0]->SetColor(0, 1, 0);
+
 	for (Collider* collider : colliders)
 	{
 		collider->Update();

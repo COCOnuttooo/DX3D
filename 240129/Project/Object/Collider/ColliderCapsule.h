@@ -2,20 +2,25 @@
 class ColliderCapsule : public Collider
 {
 public:
-	ColliderCapsule();
+	ColliderCapsule(float radius = 1, float height = 2.0f, UINT sliceCount = 8, UINT stackCount = 16);
 	~ColliderCapsule();
 
 
-	bool Collision(const IN Ray& ray, OUT HitResult* result) override;
+	bool Collision(IN Ray& ray, OUT HitResult* hitResult) override;
 
 	bool Collision(ColliderBox*     other) override;
 	bool Collision(ColliderSphere*  other) override;
 	bool Collision(ColliderCapsule* other) override;
+
+	float Radius() { return radius * Max(globalScale.x, globalScale.y, globalScale.z); }
+
+	float Height() { return height * globalScale.y; }
 private:
-
-
-	// Collider을(를) 통해 상속됨
 	void CreateMesh() override;
+private:
+	float radius, height;
 
+	UINT stackCount, sliceCount;
+	
 };
 
