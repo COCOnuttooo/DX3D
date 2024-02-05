@@ -29,7 +29,11 @@ CollisionScene::CollisionScene()
 	//colliders.push_back(new ColliderSphere);
 	//colliders.push_back(new ColliderBox);
 	//colliders.push_back(new ColliderBox);
-	
+	crossHair = new Quad;
+	crossHair->GetMaterial()->SetDiffuseMap(L"UI/CrossHair.png");
+	crossHair->GetMaterial()->SetShader(L"01_Texture");
+	crossHair->translation = { WIN_WIDTH * 0.5f, WIN_HEIGHT * 0.5f, 0.0f };
+	crossHair->scale = { 100,100,1 };
 }
 
 CollisionScene::~CollisionScene()
@@ -38,30 +42,43 @@ CollisionScene::~CollisionScene()
 	{
 		delete collider;
 	}
+	delete crossHair;
 }
 
 void CollisionScene::Update()
 {
 	static HitResult hitResult;
 	Ray ray = CAMERA->ScreenPointToRay(mousePos);
-	if (colliders[2]->Collision(ray, &hitResult))
-		colliders[2]->SetColor(1, 0, 0);
+	if (colliders[4]->Collision(ray, &hitResult))
+		colliders[4]->SetColor(1, 0, 0);
 	else
-		colliders[2]->SetColor(0, 1, 0);
+		colliders[4]->SetColor(0, 1, 0);
 	//if (KEY_DOWN(VK_LBUTTON))
 	//{
 
 	//	colliders[0]->translation = hitResult.imapactPoint;
 	//}
-	if (colliders[0]->Collision(colliders[2]))
+	//if (colliders[0]->Collision(colliders[2]))
+	//{
+	//	colliders[0]->SetColor(1, 0, 0);
+	//	colliders[1]->SetColor(1, 0, 0);
+	//}
+	//else
+	//{
+	//	colliders[0]->SetColor(0, 1, 0);
+	//	colliders[1]->SetColor(0, 1, 0);
+
+	//}
+
+	if (colliders[4]->Collision(colliders[5]))
 	{
-		colliders[0]->SetColor(1, 0, 0);
-		colliders[1]->SetColor(1, 0, 0);
+		colliders[4]->SetColor(1, 0, 0);
+		colliders[5]->SetColor(1, 0, 0);
 	}
 	else
 	{
-		colliders[0]->SetColor(0, 1, 0);
-		colliders[1]->SetColor(0, 1, 0);
+		colliders[4]->SetColor(0, 1, 0);
+		colliders[5]->SetColor(0, 1, 0);
 
 	}
 	//if (colliders[0]->Collision(ray, &hitResult))
@@ -75,7 +92,8 @@ void CollisionScene::Update()
 	{
 		collider->Update();
 	}
-
+	crossHair->translation = {mousePos.x , WIN_HEIGHT - mousePos.y , 0};
+	crossHair->Update();
 
 	//if (colliders[2]->Collision((ColliderSphere*)colliders[3]))
 	//{
@@ -112,5 +130,8 @@ void CollisionScene::PostRender()
 
 		collider->Debug();
 	}
+	ENVIRONMENT->PostSet();
+	crossHair->Render();
+	crossHair->Debug();
 }
 

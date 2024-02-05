@@ -4,6 +4,7 @@
 Environment::Environment()
 {
 	CreatePerspective();
+	CreateOrthographic();
 
 	mainCamera = new Camera();
 
@@ -17,6 +18,9 @@ Environment::~Environment()
 	delete mainCamera;
 
 	delete persBuffer;
+
+	delete UIViewBuffer;
+	delete orthoBuffer;
 }
 
 void Environment::CreatePerspective()
@@ -24,6 +28,21 @@ void Environment::CreatePerspective()
 	persBuffer = new MatrixBuffer();
 
 	persMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f);
+}
+
+void Environment::CreateOrthographic()
+{
+	orthoMatrix = XMMatrixOrthographicOffCenterLH
+	(
+		0.0f, WIN_WIDTH,
+		0.0f, WIN_HEIGHT,
+		0.0f, 1.0f
+	);
+	orthoBuffer = new MatrixBuffer;
+	orthoBuffer->SetData(orthoMatrix);
+
+	UIViewBuffer = new ViewBuffer;
+
 }
 
 void Environment::Update()
@@ -39,6 +58,16 @@ void Environment::Set()
 	persBuffer->SetVSBuffer(2);
 
 	lightBuffer->SetPSBuffer(0);
+}
+
+void Environment::PostSet()
+{
+	UIViewBuffer->SetVSBuffer(1);
+	orthoBuffer->SetVSBuffer(2);
+
+	//TODO : ALPHA BLEND
+
+
 }
 
 void Environment::Debug()

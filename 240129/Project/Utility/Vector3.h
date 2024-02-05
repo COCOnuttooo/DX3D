@@ -86,7 +86,7 @@ struct Vector3
 		this->y -= other.y;
 		this->z -= other.z;
 	}
-	Vector3 operator+(const Vector3& other)
+	Vector3 operator+(const Vector3& other) const
 	{
 		return Vector3
 		(
@@ -96,7 +96,7 @@ struct Vector3
 		);
 	}
 
-	Vector3 operator-(const Vector3& other)
+	Vector3 operator-(const Vector3& other) const
 	{
 		return Vector3
 		(
@@ -107,7 +107,7 @@ struct Vector3
 	}
 
 
-	Vector3 operator*(const float& value)
+	Vector3 operator*(const float& value) const
 	{
 		return Vector3
 		(
@@ -117,7 +117,7 @@ struct Vector3
 		);
 	}
 
-	Vector3 operator/(const float& value)
+	Vector3 operator/(const float& value) const
 	{
 		return Vector3
 		(
@@ -141,7 +141,7 @@ struct Vector3
 		this->z /= value;
 	}
 
-	bool operator==(const Vector3& other)
+	bool operator==(const Vector3& other) const
 	{
 		return (this->x == other.x) && (this->y == other.y) && (this->z == other.z);
 	}

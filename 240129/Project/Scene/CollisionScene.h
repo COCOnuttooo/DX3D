@@ -17,5 +17,7 @@ public:
 private:
 
 	vector < Collider* > colliders;
+
+	Quad* crossHair;
 };
 

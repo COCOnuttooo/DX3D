@@ -8,10 +8,11 @@ private:
 	~Environment();
 
 	void CreatePerspective();
-
+	void CreateOrthographic();
 public:
 	void Update();
 	void Set();
+	void PostSet();
 
 	void Debug();
 
@@ -22,6 +23,11 @@ public:
 private:
 	Matrix        persMatrix;
 	MatrixBuffer* persBuffer;
+
+	Matrix        orthoMatrix;
+	MatrixBuffer* orthoBuffer;
+
+	ViewBuffer* UIViewBuffer;
 
 	Camera* mainCamera;
 

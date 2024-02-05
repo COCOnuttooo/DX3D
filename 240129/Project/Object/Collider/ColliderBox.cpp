@@ -157,7 +157,7 @@ bool ColliderBox::Collision(ColliderSphere* other)
 
 bool ColliderBox::Collision(ColliderCapsule* other)
 {
-	return false;
+	return other->Collision(this);
 }
 
 ColliderBox::OBB ColliderBox::GetOBB()

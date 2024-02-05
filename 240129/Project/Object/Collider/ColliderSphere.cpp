@@ -104,6 +104,6 @@ bool ColliderSphere::Collision(ColliderSphere* other)
 
 bool ColliderSphere::Collision(ColliderCapsule* other)
 {
-	return false;
+	return other->Collision(this);
 }
 
