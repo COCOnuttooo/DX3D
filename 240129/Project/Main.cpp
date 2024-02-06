@@ -194,7 +194,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_MOUSEMOVE:
         mousePos.x = LOWORD(lParam);
-        mousePos.y = HIWORD(lParam);
+        mousePos.y = WIN_HEIGHT - HIWORD(lParam);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);

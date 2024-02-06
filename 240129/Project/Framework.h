@@ -118,6 +118,9 @@ using namespace GameMath;
 
 #include "Render/State/SamplerState.h"
 #include "Render/State/RasterizerState.h"
+#include "Render/State/BlendState.h"
+
+
 
 #include "Render/State/StateManager.h"
 
@@ -129,6 +132,8 @@ using namespace GameMath;
 #include "Object/Basic/Sphere.h"
 
 #include "Object/Basic/TextureCube.h"
+
+#include "Object/UI/ProgressBar.h"
 
 #include "Object/Landscape/Terrain.h"
 #include "Object/Landscape/TerrainEditor.h"

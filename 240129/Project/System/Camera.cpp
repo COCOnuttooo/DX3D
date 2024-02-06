@@ -59,7 +59,7 @@ void Camera::Update()
 
 		Vector3 delta = mousePos - oldPos;
 
-		rotation.x += delta.y * rotateSpeed;
+		rotation.x -= delta.y * rotateSpeed;
 		rotation.y += delta.x * rotateSpeed;
 
 	}
@@ -131,7 +131,7 @@ Ray Camera::ScreenPointToRay(Vector3 screenPoint)
 	Vector3 point;
 	point.x = (screenPoint.x / screenSize.x) * 2.0f - 1.0f;
 	point.y = (screenPoint.y / screenSize.y) * 2.0f - 1.0f;
-	point.y *= -1;
+	//point.y *= -1;
 	point.z = 1.0f;
 
 	//Inv Projection
@@ -153,4 +153,26 @@ Ray Camera::ScreenPointToRay(Vector3 screenPoint)
 	ray.direction = Vector3(point - globalPosition).GetNormalized();
 
 	return ray;
+}
+
+Vector3 Camera::WorldToScreenPos(Vector3 worldPos)
+{
+	Vector3 screenSize(WIN_WIDTH, WIN_HEIGHT, 1.0f);
+
+	Vector3 screenPos;
+	//Vector3 point;
+	Matrix proj = ENVIRONMENT->GetPersMatrix();
+	//point = XMVector3TransformCoord(worldPos, viewMatrix);
+	//point = XMVector3TransformCoord(point, proj);
+
+	//screenPos.x = screenSize.x * (point.x + 1.0f) / 2.0f;
+	//screenPos.y = screenSize.y * (point.y + 1.0f) / 2.0f;
+
+	screenPos = XMVector3TransformCoord(worldPos, viewMatrix);
+	screenPos = XMVector3TransformCoord(screenPos, proj);
+	screenPos += Vector3(1, 1, 1);
+	screenPos *= 0.5f;
+	screenPos.x *= WIN_WIDTH;
+	screenPos.y *= WIN_HEIGHT;
+	return screenPos;
 }

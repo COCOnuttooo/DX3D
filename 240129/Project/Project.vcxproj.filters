@@ -231,6 +231,12 @@
     <ClInclude Include="Scene\CollisionScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Render\State\BlendState.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\UI\ProgressBar.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -413,6 +419,12 @@
     <ClCompile Include="Scene\CollisionScene.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Render\State\BlendState.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\UI\ProgressBar.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -439,6 +451,7 @@
     <FxCompile Include="_Shader\08_Terrain.hlsl" />
     <FxCompile Include="_Shader\09_ModelAnimator.hlsl" />
     <FxCompile Include="_Shader\10_Collider.hlsl" />
+    <FxCompile Include="_Shader\11_ProgressBar.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />

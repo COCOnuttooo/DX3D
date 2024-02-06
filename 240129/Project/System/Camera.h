@@ -21,6 +21,7 @@ public:
 	void LoadData();
 
 	struct Ray ScreenPointToRay(Vector3 screenPoint);
+	Vector3 WorldToScreenPos(Vector3 worldPos);
 
 private:
 	Matrix      viewMatrix;

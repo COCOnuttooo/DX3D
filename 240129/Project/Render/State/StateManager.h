@@ -9,14 +9,16 @@ private:
 
 	void CreateSampler();
 	void CreateRasterizer();
-
+	void CreateBlendState();
 public:
 
 	void  EnableWireFrame();
 	void DisableWireFrame();
-
+	void EnableAlpha();
+	void DisableAlpha();
 private:
 	SamplerState* sampler;
 
 	vector<RasterizerState*> rs;
+	vector<BlendState*> blendStates;
 };

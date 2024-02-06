@@ -19,5 +19,6 @@ private:
 	vector < Collider* > colliders;
 
 	Quad* crossHair;
+	ProgressBar* hpBar;
 };
 

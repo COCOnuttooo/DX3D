@@ -5,6 +5,7 @@ StateManager::StateManager()
 {
 	CreateSampler();
 	CreateRasterizer();
+	CreateBlendState();
 }
 
 StateManager::~StateManager()
@@ -34,6 +35,18 @@ void StateManager::CreateRasterizer()
 	rs[1]->CreateState();
 }
 
+void StateManager::CreateBlendState()
+{
+	blendStates.emplace_back(new BlendState);
+	blendStates.emplace_back(new BlendState);
+
+	blendStates[0]->SetAlpha(false);
+	blendStates[0]->CreateState();
+
+	blendStates[1]->SetAlpha(true);
+	blendStates[1]->CreateState();
+}
+
 void StateManager::EnableWireFrame()
 {
 	rs[1]->SetState();
@@ -42,4 +55,15 @@ void StateManager::EnableWireFrame()
 void StateManager::DisableWireFrame()
 {
 	rs[0]->SetState();
+}
+
+void StateManager::EnableAlpha()
+{
+	blendStates[1]->SetState();
+}
+
+void StateManager::DisableAlpha()
+{
+	blendStates[0]->SetState();
+
 }

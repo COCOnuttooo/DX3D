@@ -124,3 +124,33 @@ struct MaterialBuffer : public ConstBuffer<MaterialData>
 
 	MaterialData data;
 };
+
+struct FloatValueData
+{
+	float values[4] = {};
+};
+
+struct FloatValueBuffer : public ConstBuffer<FloatValueData>
+{
+	FloatValueBuffer()
+		:ConstBuffer(data)
+	{
+	}
+
+	FloatValueData data;
+};
+
+struct IntValueData
+{
+	int values[4] = {};
+};
+
+struct IntValueBuffer : public ConstBuffer<IntValueData>
+{
+	IntValueBuffer()
+		:ConstBuffer(data)
+	{
+	}
+
+	IntValueData data;
+};

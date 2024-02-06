@@ -34,6 +34,10 @@ CollisionScene::CollisionScene()
 	crossHair->GetMaterial()->SetShader(L"01_Texture");
 	crossHair->translation = { WIN_WIDTH * 0.5f, WIN_HEIGHT * 0.5f, 0.0f };
 	crossHair->scale = { 100,100,1 };
+
+	hpBar = new ProgressBar(L"UI/hp_bar.png", L"UI/hp_bar_BG.png");
+	hpBar->translation = { WIN_WIDTH * 0.5f, WIN_HEIGHT * 0.1 , 0 };
+	hpBar->scale = { 150,25,1 };
 }
 
 CollisionScene::~CollisionScene()
@@ -43,6 +47,7 @@ CollisionScene::~CollisionScene()
 		delete collider;
 	}
 	delete crossHair;
+	delete hpBar;
 }
 
 void CollisionScene::Update()
@@ -92,7 +97,8 @@ void CollisionScene::Update()
 	{
 		collider->Update();
 	}
-	crossHair->translation = {mousePos.x , WIN_HEIGHT - mousePos.y , 0};
+	//crossHair->translation = {mousePos.x , WIN_HEIGHT - mousePos.y , 0};
+	crossHair->translation = mousePos;
 	crossHair->Update();
 
 	//if (colliders[2]->Collision((ColliderSphere*)colliders[3]))
@@ -105,6 +111,11 @@ void CollisionScene::Update()
 	//	colliders[2]->SetColor(0, 1, 0);
 	//	colliders[3]->SetColor(0, 1, 0);
 	//}
+	Vector3 pos = colliders[5]->GetGlobalPosition();
+	pos.y += 2.0f;
+
+	hpBar->translation = CAMERA->WorldToScreenPos(pos);
+	hpBar->Update();
 
 
 }
@@ -130,8 +141,15 @@ void CollisionScene::PostRender()
 
 		collider->Debug();
 	}
+	
 	ENVIRONMENT->PostSet();
+
+	STATE->EnableAlpha();
+	hpBar->Render();
 	crossHair->Render();
 	crossHair->Debug();
+	static float value = 1.0f;
+	ImGui::SliderFloat("Value", &value, 0, 1.0);
+	hpBar->SetValue(value);
 }
 
