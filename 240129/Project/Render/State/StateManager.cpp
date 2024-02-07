@@ -6,6 +6,7 @@ StateManager::StateManager()
 	CreateSampler();
 	CreateRasterizer();
 	CreateBlendState();
+	CreateDepthStencilState();
 }
 
 StateManager::~StateManager()
@@ -14,7 +15,10 @@ StateManager::~StateManager()
 
 	for (RasterizerState* state : rs)
 		delete state;
-
+	for (BlendState* state : blendStates)
+		delete state;
+	for (DepthStencilState* state : depthStencilStates)
+		delete state;
 	rs.clear();
 }
 
@@ -47,6 +51,16 @@ void StateManager::CreateBlendState()
 	blendStates[1]->CreateState();
 }
 
+void StateManager::CreateDepthStencilState()
+{
+	depthStencilStates.emplace_back(new DepthStencilState());
+	depthStencilStates.emplace_back(new DepthStencilState());
+	depthStencilStates.emplace_back(new DepthStencilState());
+
+	depthStencilStates[1]->DepthEnable(false);
+	depthStencilStates[2]->DepthWriteMask(D3D11_DEPTH_WRITE_MASK_ZERO);
+}
+
 void StateManager::EnableWireFrame()
 {
 	rs[1]->SetState();
@@ -66,4 +80,14 @@ void StateManager::DisableAlpha()
 {
 	blendStates[0]->SetState();
 
+}
+
+void StateManager::EnableDepth()
+{
+	depthStencilStates[0]->SetState();
+}
+
+void StateManager::DisableDepth()
+{
+	depthStencilStates[1]->SetState();
 }

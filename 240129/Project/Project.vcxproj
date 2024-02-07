@@ -79,6 +79,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>../;./;_Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -140,6 +141,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Object\Game\Character.h" />
+    <ClInclude Include="Scene\CharacterScene.h" />
+    <ClInclude Include="Render\State\DepthStencilState.h" />
     <ClInclude Include="Object\UI\ProgressBar.h" />
     <ClInclude Include="Render\State\BlendState.h" />
     <ClInclude Include="Scene\CollisionScene.h" />
@@ -216,6 +220,9 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Object\Game\Character.cpp" />
+    <ClCompile Include="Scene\CharacterScene.cpp" />
+    <ClCompile Include="Render\State\DepthStencilState.cpp" />
     <ClCompile Include="Object\UI\ProgressBar.cpp" />
     <ClCompile Include="Render\State\BlendState.cpp" />
     <ClCompile Include="Scene\CollisionScene.cpp" />

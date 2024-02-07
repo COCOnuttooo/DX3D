@@ -145,8 +145,11 @@ void CollisionScene::PostRender()
 	ENVIRONMENT->PostSet();
 
 	STATE->EnableAlpha();
+	STATE->DisableDepth();
 	hpBar->Render();
 	crossHair->Render();
+	STATE->EnableDepth();
+
 	crossHair->Debug();
 	static float value = 1.0f;
 	ImGui::SliderFloat("Value", &value, 0, 1.0);

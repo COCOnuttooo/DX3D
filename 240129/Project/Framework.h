@@ -119,8 +119,7 @@ using namespace GameMath;
 #include "Render/State/SamplerState.h"
 #include "Render/State/RasterizerState.h"
 #include "Render/State/BlendState.h"
-
-
+#include "Render/State/DepthStencilState.h"
 
 #include "Render/State/StateManager.h"
 
@@ -143,6 +142,7 @@ using namespace GameMath;
 #include "Object/Collider/ColliderSphere.h"
 #include "Object/Collider/ColliderCapsule.h"
 
+
 #include "Model/ModelData.h"
 
 #include "Model/ModelExporter.h"
@@ -152,6 +152,7 @@ using namespace GameMath;
 #include "Model/ModelClip.h"
 #include "Model/ModelAnimator.h"
 
+#include "Object/Game/Character.h"
 ////////////////////////////////////////////////
 
 #include "Scene/Scene.h"

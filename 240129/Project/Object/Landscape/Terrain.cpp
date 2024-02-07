@@ -41,10 +41,10 @@ float Terrain::GetHeight(Vector3 position)
 
 	UINT index[4];
 
-	index[0] = (x + 0) + width * (z + 0);
-	index[1] = (x + 1) + width * (z + 0);
-	index[2] = (x + 0) + width * (z + 1);
-	index[3] = (x + 1) + width * (z + 1);
+	index[0] = (x + 0) + width * (height - (z + 2));
+	index[1] = (x + 1) + width * (height - (z + 2));
+	index[2] = (x + 0) + width * (height - (z + 1));
+	index[3] = (x + 1) + width * (height - (z + 1));
 
 	Vector3 vertex[4];
 
