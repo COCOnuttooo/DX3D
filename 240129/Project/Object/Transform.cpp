@@ -34,9 +34,11 @@ void Transform::Debug()
 		ImGui::Checkbox("IsActive", &isActive);
 
 		ImGui::DragFloat3("Scale",       (float*)&scale,       0.01f,    0.01f,  100.0f);
-		ImGui::DragFloat3("Rotation",    (float*)&rotation,    0.01f,    0.01f,  100.0f);
 		ImGui::DragFloat3("Translation", (float*)&translation, 1.00f, -2000.0f, 2000.0f);
-
+		//ImGui::DragFloat3("Rotation",    (float*)&rotation,    0.01f,    0.01f,  100.0f);
+		ImGui::SliderAngle("RotationX", &rotation.x);
+		ImGui::SliderAngle("RotationY", &rotation.y);
+		ImGui::SliderAngle("RotationZ", &rotation.z);
 
 		if (ImGui::Button("Save"))
 			Save();

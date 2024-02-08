@@ -10,7 +10,7 @@ public:
 	void Debug();
 	ModelAnimator* GetModel() { return model; }
 
-private:
+protected:
 	ModelAnimator* model;
 };
 

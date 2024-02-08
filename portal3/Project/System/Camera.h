@@ -15,7 +15,7 @@ public:
 
 	void SaveData();
 	void LoadData();
-
+	void SetViewMatrix(Matrix view) { this->viewMatrix = view; }
 	Ray ScreenPointToRay(Vector3 screenPoint);
 	void SetFixViewMatrix(Matrix view) { this->fixViewMatrix = view; }
 private:

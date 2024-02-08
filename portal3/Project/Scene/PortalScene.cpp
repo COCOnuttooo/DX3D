@@ -166,15 +166,15 @@ void PortalScene::CalculateMirror()
 		//persP1 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP1, 1000);
 		viewMatrix1 = XMMatrixInverse(nullptr,XMMatrixLookAtLH(-cameraPosition1, portalPosition1, upDirection1));// *p1Inverse;
 		//viewMatrix1* 
-		persP1 = viewMatrix1 * XMMatrixPerspectiveFovLH(fov1, WIN_WIDTH / WIN_HEIGHT * portal2->GetSize().x / portal2->GetSize().y, distanceP1, 1000) ;
+		//persP1 = viewMatrix1 * XMMatrixPerspectiveFovLH(fov1, WIN_WIDTH / WIN_HEIGHT * portal2->GetSize().x / portal2->GetSize().y, distanceP1, 1000) ;
 	}
 	else { P1CAMERA->SetFixViewMatrix(XMMatrixIdentity()); }
 	if (P2CAMERA->translation.Length()!= 0)
 	{
 		viewMatrix2 = XMMatrixInverse(nullptr,XMMatrixLookAtLH(-cameraPosition2, portalPosition2, upDirection2));// *p2Inverse;
-		//viewMatrix2 = XMMatrixLookToLH(cameraPosition2, -cameraPosition2, upDirection1);
+		viewMatrix2 = XMMatrixLookToLH(cameraPosition2, -cameraPosition2, upDirection1);
 
-		//P2CAMERA->SetFixViewMatrix(viewMatrix2);
+		P2CAMERA->SetViewMatrix(viewMatrix2);
 		//persP2 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP2, 1000);
 		//
 		persP2 = viewMatrix2 * XMMatrixPerspectiveFovLH(fov2, WIN_WIDTH / WIN_HEIGHT * portal1->GetSize().x / portal1->GetSize().y, distanceP2, 1000);

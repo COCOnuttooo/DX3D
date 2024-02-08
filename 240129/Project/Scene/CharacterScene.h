@@ -11,8 +11,10 @@ public:
 	void Render() override;
 
 	void PostRender() override;
+
+	void SetClip();
 private:
-	Character* player;
+	Knight* player;
 
 	
 

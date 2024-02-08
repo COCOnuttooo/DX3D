@@ -75,6 +75,11 @@ void Camera::Update()
 
 void Camera::Set()
 {
+	if (index == 0)
+	{
+		viewMatrix = XMMatrixInverse(nullptr, world);
+
+	}
 	viewMatrix = XMMatrixInverse(nullptr, world);
 
 	viewBuffer->SetData(viewMatrix, world);

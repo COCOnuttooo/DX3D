@@ -153,6 +153,7 @@ using namespace GameMath;
 #include "Model/ModelAnimator.h"
 
 #include "Object/Game/Character.h"
+#include "Object/Game/Knight.h"
 ////////////////////////////////////////////////
 
 #include "Scene/Scene.h"
