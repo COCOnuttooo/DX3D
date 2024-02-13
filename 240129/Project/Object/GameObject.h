@@ -8,6 +8,7 @@ public:
 	virtual ~GameObject();
 
 	virtual void Render(D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	virtual void RenderInstanced(UINT instanceCount , D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	Material* GetMaterial() { return material; }
 
@@ -47,4 +48,17 @@ inline void GameObject<T>::Render(D3D11_PRIMITIVE_TOPOLOGY topology)
 		DC->DrawIndexed(indices.size(), 0, 0); //Draw Call
 	else
 		DC->Draw(vertices.size(), 0);
+}
+
+template<typename T>
+inline void GameObject<T>::RenderInstanced(UINT instanceCount, D3D11_PRIMITIVE_TOPOLOGY topology)
+{
+	Transform::SetWorld();
+	mesh->IASet(topology);
+	material->Set();
+
+	if (indices.size() > 0)
+		DC->DrawIndexedInstanced(indices.size(),instanceCount, 0, 0, 0); //Draw Call
+	else
+		DC->DrawInstanced(vertices.size(),instanceCount, 0, 0);
 }

@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Scene\InstancingScene.h" />
     <ClInclude Include="Object\Game\Knight.h" />
     <ClInclude Include="Object\Game\Character.h" />
     <ClInclude Include="Scene\CharacterScene.h" />
@@ -221,6 +222,7 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Scene\InstancingScene.cpp" />
     <ClCompile Include="Object\Game\Knight.cpp" />
     <ClCompile Include="Object\Game\Character.cpp" />
     <ClCompile Include="Scene\CharacterScene.cpp" />
@@ -314,6 +316,12 @@
     <Image Include="__Others\small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="_Shader\12_TextureInstancing.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="_Shader\03_DiffuseTexture.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>

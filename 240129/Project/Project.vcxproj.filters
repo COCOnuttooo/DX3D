@@ -249,6 +249,9 @@
     <ClInclude Include="Object\Game\Knight.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\InstancingScene.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -449,6 +452,9 @@
     <ClCompile Include="Object\Game\Knight.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\InstancingScene.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -476,6 +482,7 @@
     <FxCompile Include="_Shader\09_ModelAnimator.hlsl" />
     <FxCompile Include="_Shader\10_Collider.hlsl" />
     <FxCompile Include="_Shader\11_ProgressBar.hlsl" />
+    <FxCompile Include="_Shader\12_TextureInstancing.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />
