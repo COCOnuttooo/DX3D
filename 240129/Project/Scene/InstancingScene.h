@@ -1,6 +1,12 @@
 #pragma once
 class InstancingScene : public Scene
 {
+	struct InstanceData
+	{
+		Matrix transform;
+
+		Vector4 color;
+	};
 public:
 	InstancingScene();
 	~InstancingScene();
@@ -20,7 +26,7 @@ private:
 
 	Quad* quad;
 
-	vector<Matrix> instanceData;
+	vector<InstanceData> instanceData;
 
 	VertexBuffer* instanceBuffer;
 

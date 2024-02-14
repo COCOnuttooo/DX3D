@@ -17,3 +17,10 @@ void ModelMesh::Render()
 
 	DC->DrawIndexed(indices.size(), 0, 0);
 }
+
+void ModelMesh::RenderInstanced(UINT instanceCount)
+{
+	IASet();
+
+	DC->DrawIndexedInstanced(indices.size(),instanceCount, 0, 0, 0);
+}

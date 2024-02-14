@@ -1,8 +1,8 @@
 #pragma once
 
-class Quad : public GameObject<VertexTextureNormal>
+class Quad : public GameObject<VertexTextureNormalTangent>
 {
-	typedef VertexTextureNormal VertexType;
+	typedef VertexTextureNormalTangent VertexType;
 public:
 	Quad(Vector2 size = { 1, 1 });
 	~Quad();

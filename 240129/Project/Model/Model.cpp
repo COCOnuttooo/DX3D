@@ -48,6 +48,18 @@ void Model::Render()
 	}
 }
 
+void Model::RenderInstanced(UINT instanceCount)
+{
+	Transform::SetWorld();
+
+	for (ModelMesh* mesh : meshes)
+	{
+		materials[mesh->GetMaterialIndex()]->Set();
+
+		mesh->RenderInstanced(instanceCount);
+	}
+}
+
 void Model::Debug()
 {
 	Transform::Debug();

@@ -31,7 +31,9 @@ public:
 	Matrix& GetWorld() { return world; }
 
 	Transform* GetParent() { return parent; }
+	bool GetIsActive() { return isActive; }
 
+	void SetIsActive(bool isActive) { this->isActive = isActive; }
 private:
 	void UpdateWorldMatrix();
 

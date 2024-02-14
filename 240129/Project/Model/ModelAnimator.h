@@ -52,17 +52,17 @@ public:
 	Matrix GetTransformByBone(string boneName);
 
 	ModelClip* GetClip(UINT index) { return clips[index]; }
-
+protected:
+	void CreateTexture();
 private:
 	void CreateClipTransform(UINT clipIndex);
-	void CreateTexture();
 
 	void UpdateFrame();
 
-private:
+	FrameBuffer* buffer;
+protected:
 	vector<ModelClip*> clips;
 
-	FrameBuffer* buffer;
 
 	ClipTransform* clipTransforms;
 	ClipTransform* nodeTransforms;

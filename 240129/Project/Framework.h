@@ -53,6 +53,9 @@ using namespace std;
 #define MAX_FRAME 512
 #define MAX_BONE  256
 
+#define MAX_INSTANCE 128
+
+
 #define DEVICE Device::GetInstance()->GetDevice()
 #define DC     Device::GetInstance()->GetDC()
 
@@ -151,7 +154,7 @@ using namespace GameMath;
 #include "Model/Model.h"
 #include "Model/ModelClip.h"
 #include "Model/ModelAnimator.h"
-
+#include "Model/ModelInstancing.h"
 #include "Object/Game/Character.h"
 #include "Object/Game/Knight.h"
 ////////////////////////////////////////////////

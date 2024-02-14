@@ -9,7 +9,7 @@ public:
 	UINT GetMaterialIndex() { return materialIndex; }
 
 	void Render();
-
+	void RenderInstanced(UINT instanceCount);
 private:
 	string name;
 

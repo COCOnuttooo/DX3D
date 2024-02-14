@@ -252,6 +252,15 @@
     <ClInclude Include="Scene\InstancingScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\ModelInstancingScene.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Model\ModelInstancing.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelAnimatorInstancing.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -455,6 +464,15 @@
     <ClCompile Include="Scene\InstancingScene.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\ModelInstancingScene.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Model\ModelInstancing.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelAnimatorInstancing.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -483,6 +501,8 @@
     <FxCompile Include="_Shader\10_Collider.hlsl" />
     <FxCompile Include="_Shader\11_ProgressBar.hlsl" />
     <FxCompile Include="_Shader\12_TextureInstancing.hlsl" />
+    <FxCompile Include="_Shader\13_ModelInstancing.hlsl" />
+    <FxCompile Include="_Shader\14_ModelAnimatorInstancing.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />

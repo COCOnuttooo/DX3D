@@ -1,28 +1,24 @@
 #include "Header.hlsli"
 struct VertexInput
 {
-    float4 pos       : POSITION;
-    float2 uv        : UV;
-    float3 normal    : NORMAL;
-    float3 tangent   : TANGENT;
+    float4 pos : POSITION;
+    float2 uv : UV;
+    float3 normal : NORMAL;
+    float3 tangent : TANGENT;
     
     matrix transform : INSTANCE_TRANSFORM;
-    float4 color     : INSTANCE_COLOR;
-    
+    uint index       : INSTANCE_INDEX;
 };
-
 struct VertexOutput
 {
-    float4 pos       : SV_POSITION;
-    float2 uv        : UV;
-    float3 normal    : NORMAL;
+    float4 pos : SV_POSITION;
+    float2 uv : UV;
+    float3 normal : NORMAL;
     
     float3 cameraDir : CAMERADIR;
     
-    float3 tangent   : TANGENT;
-    float3 binormal  : BINORMAL;
-  
-    float4 color     : COLOR;
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
 };
 
 VertexOutput VS(VertexInput input)
@@ -48,7 +44,7 @@ VertexOutput VS(VertexInput input)
     output.binormal = cross(output.normal, output.tangent);
     
     output.uv = input.uv;
-    output.color = input.color;
+    
     return output;
 }
 
@@ -70,7 +66,7 @@ float4 PS(VertexOutput input) : SV_TARGET
     float diffuseIntensity = saturate(dot(normal, -light)); // N dot L
     
     //albedo = Base Color
-    float4 albedo = diffuseMap.Sample(samp, input.uv) * input.color;
+    float4 albedo = diffuseMap.Sample(samp, input.uv);
 
     //Specular Light
     float3 reflection = normalize(reflect(light, normal));
@@ -88,5 +84,5 @@ float4 PS(VertexOutput input) : SV_TARGET
     //Ambient Light
     float4 ambient = albedo * mAmbient;
     
-    return diffuse  + specular + ambient + mEmissive; //Phong - Shading
+    return diffuse + specular + ambient + mEmissive; //Phong - Shading
 }

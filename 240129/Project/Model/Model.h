@@ -2,12 +2,19 @@
 
 class Model : public Transform
 {
+protected:
+	struct InstanceData
+	{
+		Matrix world = XMMatrixIdentity();
+		UINT index = 0;
+	};
 public:
 	Model(string name);
 	virtual ~Model();
 
 	void Update();
 	void Render();
+	void RenderInstanced(UINT instanceCount);
 	void Debug();
 
 	void SetShader(wstring file);

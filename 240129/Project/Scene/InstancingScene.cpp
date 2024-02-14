@@ -21,8 +21,11 @@ InstancingScene::InstancingScene()
 	{
 		for (float y = 0; y < COUNT; y++)
 		{
-			Matrix transform = XMMatrixTranslation(2 * x, 2 * y, 1);
-			instanceData.emplace_back(XMMatrixTranspose(transform));
+			InstanceData data;
+
+			data.transform = XMMatrixTranspose(XMMatrixTranslation(2 * x, 2 * y, 1));
+			data.color = Vector4(x / COUNT, y / COUNT, (x + y) / (2 * COUNT), 1);
+			instanceData.emplace_back(data);
 		}
 	}
 	instanceBuffer = new VertexBuffer(instanceData);

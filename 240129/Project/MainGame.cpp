@@ -11,6 +11,7 @@
 #include "Scene/CollisionScene.h"
 #include "Scene/CharacterScene.h"
 #include "Scene/InstancingScene.h"
+#include "Scene/ModelInstancingScene.h"
 
 
 MainGame::MainGame()
@@ -30,7 +31,8 @@ MainGame::MainGame()
     //SCENE->Create("Start", new ModelAnimationScene());
     //SCENE->Create("Start", new CollisionScene());
     //SCENE->Create("Start", new CharacterScene());
-    SCENE->Create("Start", new InstancingScene());
+    //SCENE->Create("Start", new InstancingScene());
+    SCENE->Create("Start", new ModelInstancingScene());
 
     SCENE->Add("Grid");
     SCENE->Add("Start");
