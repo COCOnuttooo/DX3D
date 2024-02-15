@@ -3,7 +3,9 @@
 
 ModelInstancingScene::ModelInstancingScene()
 {
-	model = new ModelInstancing("Knight");
+	model = new ModelAnimatorInstancing("Knight");
+	model->ReadClip("Hip Hop Dancing");
+	model->ReadClip("Happy Idle");
 	for (float x = 0; x < 10; x++)
 	{
 		for (float z = 0; z < 10; z++)
@@ -16,16 +18,20 @@ ModelInstancingScene::ModelInstancingScene()
 		
 		}
 	}
+	sky = new SkyBox(L"Landscape/Test.dds");
+
 }
 
 ModelInstancingScene::~ModelInstancingScene()
 {
 	delete model;
+	delete sky;
 }
 
 void ModelInstancingScene::Update()
 {
 	model->Update();
+	sky->Update();
 }
 
 void ModelInstancingScene::PreRender()
@@ -34,6 +40,7 @@ void ModelInstancingScene::PreRender()
 
 void ModelInstancingScene::Render()
 {
+	sky->Render();
 	model->Render();
 }
 

@@ -14,6 +14,6 @@ public:
 
 	void PostRender() override;
 private:
-
-	ModelInstancing* model;
+	SkyBox* sky;
+	ModelAnimatorInstancing* model;
 };

@@ -139,6 +139,7 @@ using namespace GameMath;
 
 #include "Object/Landscape/Terrain.h"
 #include "Object/Landscape/TerrainEditor.h"
+#include "Object/Landscape/SkyBox.h"
 
 #include "Object/Collider/Collider.h"
 #include "Object/Collider/ColliderBox.h"
@@ -155,6 +156,7 @@ using namespace GameMath;
 #include "Model/ModelClip.h"
 #include "Model/ModelAnimator.h"
 #include "Model/ModelInstancing.h"
+#include "Model/ModelAnimatorInstancing.h"
 #include "Object/Game/Character.h"
 #include "Object/Game/Knight.h"
 ////////////////////////////////////////////////

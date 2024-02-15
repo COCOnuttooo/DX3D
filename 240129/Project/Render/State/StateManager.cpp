@@ -31,12 +31,15 @@ void StateManager::CreateRasterizer()
 {
 	rs.emplace_back(new RasterizerState());
 	rs.emplace_back(new RasterizerState());
+	rs.emplace_back(new RasterizerState());
 
 	rs[0]->SetFillMode(D3D11_FILL_SOLID);
 	rs[1]->SetFillMode(D3D11_FILL_WIREFRAME);
+	rs[2]->SetFrontCounterClockWise(true);
 
 	rs[0]->CreateState();
 	rs[1]->CreateState();
+	rs[2]->CreateState();
 }
 
 void StateManager::CreateBlendState()
@@ -91,3 +94,15 @@ void StateManager::DisableDepth()
 {
 	depthStencilStates[1]->SetState();
 }
+
+void StateManager::SetFrontCounterClockWise()
+{
+	rs[2]->SetState();
+}
+
+void StateManager::SetFrontClockWise()
+{
+	rs[0]->SetState();
+}
+
+

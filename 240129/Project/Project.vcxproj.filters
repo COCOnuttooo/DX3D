@@ -258,7 +258,10 @@
     <ClInclude Include="Model\ModelInstancing.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="ModelAnimatorInstancing.h">
+    <ClInclude Include="Model\ModelAnimatorInstancing.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Landscape\SkyBox.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -470,7 +473,10 @@
     <ClCompile Include="Model\ModelInstancing.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="ModelAnimatorInstancing.cpp">
+    <ClCompile Include="Model\ModelAnimatorInstancing.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Landscape\SkyBox.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -503,6 +509,7 @@
     <FxCompile Include="_Shader\12_TextureInstancing.hlsl" />
     <FxCompile Include="_Shader\13_ModelInstancing.hlsl" />
     <FxCompile Include="_Shader\14_ModelAnimatorInstancing.hlsl" />
+    <FxCompile Include="_Shader\15_SkyBox.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />

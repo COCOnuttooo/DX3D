@@ -34,8 +34,8 @@ MainGame::MainGame()
     //SCENE->Create("Start", new InstancingScene());
     SCENE->Create("Start", new ModelInstancingScene());
 
-    SCENE->Add("Grid");
     SCENE->Add("Start");
+    SCENE->Add("Grid");
     //SCENE->Add("Tutorial");
 
 

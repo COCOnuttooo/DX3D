@@ -141,7 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ModelAnimatorInstancing.h" />
+    <ClInclude Include="Model\ModelAnimatorInstancing.h" />
     <ClInclude Include="Model\ModelInstancing.h" />
     <ClInclude Include="Scene\ModelInstancingScene.h" />
     <ClInclude Include="Scene\InstancingScene.h" />
@@ -168,6 +168,7 @@
     <ClInclude Include="Object\Landscape\TerrainEditor.h" />
     <ClInclude Include="Scene\TerrainEditorScene.h" />
     <ClInclude Include="Render\Buffer\StructuredBuffer.h" />
+    <ClInclude Include="Object\Landscape\SkyBox.h" />
     <ClInclude Include="Utility\GameMath.h" />
     <ClInclude Include="Object\Basic\Grid.h" />
     <ClInclude Include="Render\State\RasterizerState.h" />
@@ -225,7 +226,7 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ModelAnimatorInstancing.cpp" />
+    <ClCompile Include="Model\ModelAnimatorInstancing.cpp" />
     <ClCompile Include="Model\ModelInstancing.cpp" />
     <ClCompile Include="Scene\ModelInstancingScene.cpp" />
     <ClCompile Include="Scene\InstancingScene.cpp" />
@@ -251,6 +252,7 @@
     <ClCompile Include="Object\Landscape\TerrainEditor.cpp" />
     <ClCompile Include="Scene\TerrainEditorScene.cpp" />
     <ClCompile Include="Render\Buffer\StructuredBuffer.cpp" />
+    <ClCompile Include="Object\Landscape\SkyBox.cpp" />
     <ClCompile Include="Utility\GameMath.cpp" />
     <ClCompile Include="Object\Basic\Grid.cpp" />
     <ClCompile Include="Render\State\RasterizerState.cpp" />
@@ -400,6 +402,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="_Shader\14_ModelAnimatorInstancing.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="_Shader\15_SkyBox.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>

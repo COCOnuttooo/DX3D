@@ -20,6 +20,9 @@ public:
 	void DisableAlpha();
 	void EnableDepth();
 	void DisableDepth();
+
+	void SetFrontCounterClockWise();
+	void SetFrontClockWise();
 private:
 	SamplerState* sampler;
 

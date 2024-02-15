@@ -22,6 +22,16 @@ void RasterizerState::SetFillMode(D3D11_FILL_MODE value)
 	desc.FillMode = value;
 }
 
+void RasterizerState::SetCullMode(D3D11_CULL_MODE value)
+{
+	desc.CullMode = value;
+}
+
+void RasterizerState::SetFrontCounterClockWise(bool value)
+{
+	desc.FrontCounterClockwise = value;
+}
+
 void RasterizerState::CreateState()
 {
 	DEVICE->CreateRasterizerState(&desc, &state);
