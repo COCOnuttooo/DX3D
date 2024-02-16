@@ -46,5 +46,6 @@ void ModelInstancingScene::Render()
 
 void ModelInstancingScene::PostRender()
 {
-	model->Debug();
+	//model->Debug();
+	//ENVIRONMENT->Debug();
 }

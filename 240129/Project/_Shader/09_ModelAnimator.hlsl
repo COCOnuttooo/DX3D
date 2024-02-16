@@ -1,4 +1,6 @@
 #include "Header.hlsli"
+#include "LightHeader.hlsli"
+
 
 struct VertexOutput
 {
@@ -142,7 +144,7 @@ VertexOutput VS(VertexTextureNormalTangentBlend input)
 float4 PS(VertexOutput input) : SV_TARGET
 {
     //clamp, saturate
-    float3 light = normalize(lightDirection);
+    float3 light = normalize(lights[0].direction);
     
     //Normal Mapping
     float4 normalMapping = normalMap.Sample(samp, input.uv);

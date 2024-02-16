@@ -22,7 +22,7 @@ public:
 	void AttachToBone(class ModelAnimator* model, string boneName);
 
 	void UpdateSockets();
-
+	void UpdateSocketsInstancing();
 private:
 	void ReadMaterial();
 	void ReadMesh();
@@ -37,4 +37,5 @@ protected:
 	map<string, UINT> boneMap;
 
 	map<string, Transform*> sockets;
+	map<string, vector<Transform*>> socketsInstancing;
 };

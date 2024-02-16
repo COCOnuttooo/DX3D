@@ -510,8 +510,10 @@
     <FxCompile Include="_Shader\13_ModelInstancing.hlsl" />
     <FxCompile Include="_Shader\14_ModelAnimatorInstancing.hlsl" />
     <FxCompile Include="_Shader\15_SkyBox.hlsl" />
+    <FxCompile Include="_Shader\16_Light.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />
+    <None Include="_Shader\LightHeader.hlsli" />
   </ItemGroup>
 </Project>

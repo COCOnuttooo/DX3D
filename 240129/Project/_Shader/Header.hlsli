@@ -59,11 +59,7 @@ cbuffer Projection : register(b2)
     matrix proj;
 }
 
-//PS CBuffer
-cbuffer LightBuffer : register(b0)
-{
-    float3 lightDirection;
-}
+
 
 cbuffer MaterialBuffer : register(b1)
 {

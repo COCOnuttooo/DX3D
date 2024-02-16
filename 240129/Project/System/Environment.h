@@ -15,6 +15,7 @@ public:
 	void PostSet();
 
 	void Debug();
+	void DebugLight(int lightIndex);
 
 	Matrix GetPersMatrix() { return persMatrix; }
 

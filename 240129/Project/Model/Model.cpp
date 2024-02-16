@@ -92,6 +92,11 @@ void Model::SetShader(wstring file)
 
 void Model::AttachToBone(ModelAnimator* model, string boneName)
 {
+	if (model->sockets.count(boneName)>0)
+	{
+		this->SetParent(model->sockets[boneName]);
+		return;
+	}
 	Transform* socket = new Transform;
 
 	this->SetParent(socket);
@@ -107,6 +112,18 @@ void Model::UpdateSockets()
 		ModelAnimator* modelAnimator = dynamic_cast<ModelAnimator*>(this);
 
 		socket->GetWorld() = modelAnimator->GetTransformByBone(pair.first) * this->world;
+	}
+}
+
+void Model::UpdateSocketsInstancing()
+{
+	for (pair<string, vector<Transform*>> pair : socketsInstancing)
+	{
+		for (Transform* socket : pair.second)
+		{
+
+			
+		}
 	}
 }
 

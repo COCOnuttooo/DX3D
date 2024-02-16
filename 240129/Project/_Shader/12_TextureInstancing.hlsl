@@ -1,4 +1,5 @@
 #include "Header.hlsli"
+#include "LightHeader.hlsli"
 struct VertexInput
 {
     float4 pos       : POSITION;
@@ -55,7 +56,7 @@ VertexOutput VS(VertexInput input)
 float4 PS(VertexOutput input) : SV_TARGET
 {
     //clamp, saturate
-    float3 light = normalize(lightDirection);
+    float3 light = normalize(lights[0].direction);
     
     //Normal Mapping
     float4 normalMapping = normalMap.Sample(samp, input.uv);

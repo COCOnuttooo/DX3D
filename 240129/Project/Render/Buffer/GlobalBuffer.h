@@ -47,17 +47,42 @@ struct ViewBuffer : public ConstBuffer<ViewData>
 struct LightData
 {
 	Vector3 direction = Vector3(0, -1, 0);
+	int     type = 0;
+
+	Vector4 color = {1,1,1,1};
+	//Point Light
+	Vector3 position  = Vector3(0, 100, 0);
+	float range = 100.0f;
+	//Spot Light
+	float innerRange = 55.0f;
+	float outerRange = 70.0f;
+	//Capsule Light
+
+	float length = 50.0f;
+	int  active = true;
+};
+#define MAX_LIGHT 10
+struct Lights
+{
+	LightData lights[MAX_LIGHT];
+
+
+	int     lightCount   = 1;
+	Vector3 ambientLight = Vector3(0.1f, 0.1f, 0.1f);
+	Vector3 ambientCeil  = Vector3(0.1f, 0.1f, 0.1f);
 	float   padding;
+
+
 };
 
-struct LightBuffer : public ConstBuffer<LightData>
+struct LightBuffer : public ConstBuffer<Lights>
 {
 	LightBuffer()
 		:ConstBuffer(data)
 	{
 	}
 
-	LightData data;
+	Lights data;
 };
 
 

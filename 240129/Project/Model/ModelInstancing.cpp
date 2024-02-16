@@ -39,6 +39,7 @@ void ModelInstancing::Update()
 		drawCount++;
 	}
 	instanceBuffer->UpdateVertex(instanceDatas.data(), drawCount);
+	
 }
 
 void ModelInstancing::Render()
