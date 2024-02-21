@@ -5,7 +5,7 @@ UINT Transform::index = 0;
 
 Transform::Transform()
 {
-	worldBuffer = new MatrixBuffer;
+	worldBuffer = new WorldBuffer;
 	world = XMMatrixIdentity();
 
 	name = "Object" + to_string(index++);
@@ -16,9 +16,9 @@ Transform::~Transform()
 	delete worldBuffer;
 }
 
-void Transform::SetWorld()
+void Transform::SetWorld(bool hasAnimation)
 {
-	worldBuffer->SetData(world);
+	worldBuffer->SetData(world, hasAnimation);
 	worldBuffer->SetVSBuffer(0);
 }
 

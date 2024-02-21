@@ -6,7 +6,7 @@ public:
 	Transform();
 	virtual ~Transform();
 
-	void SetWorld();
+	void SetWorld(bool hasAnimation = false);
 
 	virtual void Update();
 	
@@ -44,7 +44,7 @@ public:
 
 protected:
 	Matrix        world;
-	MatrixBuffer* worldBuffer;
+	WorldBuffer* worldBuffer;
 
 	Transform* parent = nullptr;
 

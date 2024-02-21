@@ -13,7 +13,7 @@ public:
 	virtual ~Model();
 
 	void Update();
-	void Render();
+	void Render(bool hasAnimation = false);
 	void RenderInstanced(UINT instanceCount);
 	void Debug();
 

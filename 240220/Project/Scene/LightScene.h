@@ -23,5 +23,7 @@ private:
 
 	Sphere* sphere;
 
+	Model* bunny;
+
 };
 

@@ -41,7 +41,7 @@ void ModelAnimationScene::PreRender()
 void ModelAnimationScene::Render()
 {
 	model->Render();
-	sword->Render();
+	//sword->Render();
 }
 
 void ModelAnimationScene::PostRender()

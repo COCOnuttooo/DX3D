@@ -11,6 +11,7 @@ struct LightData
     float  range;
     float  inner;
     float  outer;
+    float length;
     int    active;
 };
 
@@ -55,13 +56,18 @@ cbuffer LightBuffer : register(b0)
 
 float3 GetNormal(float3 T, float3 B, float3 N, float2 uv)
 {
-    float4 normalMapping = normalMap.Sample(samp, uv);
+    float3 normal =N;
+    if (hasNormalMap)
+    {
+        float4 normalMapping = normalMap.Sample(samp, uv);
+        
+        normalMapping = normalMapping * 2.0f - 1.0f;
     
-    normalMapping = normalMapping * 2.0f - 1.0f;
+        float3x3 TBN = float3x3(T, B, N);
     
-    float3x3 TBN = float3x3(T, B, N);
+        normal = normalize(mul(normalMapping.xyz, TBN));
+    }
     
-    float3 normal = normalize(mul(normalMapping.xyz, TBN));
     
     return normal;
 }
@@ -71,9 +77,20 @@ LightMaterial GetLightMaterial(LightVertexOutput input)
     LightMaterial material;
     
     material.normal = GetNormal(input.tangent, input.binormal, input.normal, input.uv);
-    material.diffuse = diffuseMap.Sample(samp, input.uv);
     
-    material.specular = specularMap.Sample(samp, input.uv);
+    [flatten]
+    if (hasDiffuseMap)
+        material.diffuse = diffuseMap.Sample(samp, input.uv);
+    else
+        material.diffuse = float4(1, 1, 1, 1);
+    
+    [flatten]
+    if (hasSpecularMap)
+        material.specular = specularMap.Sample(samp, input.uv);
+    else
+        material.specular = float4(0, 0, 0, 1);
+    
+    
     material.viewPos = input.viewPos;
     material.worldPos = input.worldPos;
     
@@ -155,13 +172,13 @@ float4 CalculatePoint(LightMaterial material, LightData data)
 }
 float4 CalculateSpot(LightMaterial material, LightData data)
 {
-    float4 finalColor;
+    float4 finalColor =0;
     
     return finalColor;
 }
 float4 CalculateCapsule(LightMaterial material, LightData data)
 {
-    float4 finalColor;
+    float4 finalColor =0;
     
     return finalColor;
 }
@@ -170,5 +187,24 @@ float4 CalculateLights(LightMaterial material)
 {
     float4 color = 0;
     
+    [unroll(MAX_LIGHT)]
+    for (int i = 0; i < lightCount; i++)
+    {
+        [flatten]
+        if (!lights[i].active)
+            continue;
+        
+        [flatten]
+        if (lights[i].type == 0)
+            color += CalculateDirectional(material, lights[i]);
+        else if (lights[i].type == 1)
+            color += CalculatePoint(material, lights[i]);
+        else if (lights[i].type == 2)
+            color += CalculateSpot(material, lights[i]);
+        else if (lights[i].type == 3)
+            color += CalculateCapsule(material, lights[i]);
+    }
+    
     return color;
 }
+

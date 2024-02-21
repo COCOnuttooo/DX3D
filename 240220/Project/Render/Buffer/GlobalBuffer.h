@@ -15,7 +15,30 @@ struct MatrixBuffer : public ConstBuffer<Matrix>
 
 	Matrix matrix;
 };
+struct WorldData
+{
+	Matrix matrix;
+	int    hasAnimation;
+	Vector3 padding;
+};
 
+struct WorldBuffer : public ConstBuffer<WorldData>
+{
+	WorldBuffer()
+		:ConstBuffer(data)
+	{
+		data.matrix = XMMatrixIdentity();
+		data.hasAnimation = false;
+	}
+
+	void SetData(Matrix value, int hasAnimation = false)
+	{
+		data.matrix		  = XMMatrixTranspose(value);
+		data.hasAnimation = hasAnimation;
+	}
+
+	WorldData data;
+};
 //ViewBuffer
 
 struct ViewData

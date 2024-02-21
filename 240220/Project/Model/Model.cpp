@@ -36,9 +36,9 @@ void Model::Update()
 	UpdateSockets();
 }
 
-void Model::Render()
+void Model::Render(bool hasAnimation)
 {
-	Transform::SetWorld();
+	Transform::SetWorld(hasAnimation);
 
 	for (ModelMesh* mesh : meshes)
 	{

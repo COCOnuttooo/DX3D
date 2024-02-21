@@ -39,7 +39,7 @@ void ModelAnimator::Render()
 
 	DC->VSSetShaderResources(0, 1, &srv);
 
-	Model::Render();
+	Model::Render(true);
 }
 
 void ModelAnimator::Debug()

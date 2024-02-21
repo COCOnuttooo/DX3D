@@ -3,7 +3,7 @@
 
 ModelExportScene::ModelExportScene()
 {
-	exporter = new ModelExporter("Sword");
+	exporter = new ModelExporter("StanfordBunny");
 	exporter->ExportModel();	
 	//exporter->ExportAnimation("Hip Hop Dancing");
 	//exporter->ExportAnimation("Fast Run");
