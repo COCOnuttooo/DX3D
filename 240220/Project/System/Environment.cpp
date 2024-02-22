@@ -111,11 +111,12 @@ void Environment::DebugLight(int lightIndex)
 		}
 		else
 		{
+			if (light.type != 1)
+				ImGui::SliderFloat3("Direction", (float*)&light.direction, -1, 1);
 
 			ImGui::DragFloat3("Position", (float*)&light.position);
 
-			if (light.type == 1)
-				ImGui::SliderFloat("Range", &light.range, 1, 1000);
+			ImGui::SliderFloat("Range", &light.range, 1, 1000);
 			if (light.type == 2)
 			{
 				ImGui::SliderFloat("InnerRange", &light.innerRange, 0, light.outerRange);

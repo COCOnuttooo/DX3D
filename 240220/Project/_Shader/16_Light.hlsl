@@ -7,7 +7,7 @@ LightVertexOutput VS(VertexTextureNormalTangentBlend input)
     
     matrix transform;
     
-    [flatten]
+    [branch]
     if (hasAnimation)
         transform = mul(SkinWorld(input.indices, input.weights), world);
     else

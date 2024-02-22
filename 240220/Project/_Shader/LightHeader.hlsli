@@ -56,7 +56,10 @@ cbuffer LightBuffer : register(b0)
 
 float3 GetNormal(float3 T, float3 B, float3 N, float2 uv)
 {
-    float3 normal =N;
+    T = normalize(T);
+    B = normalize(B);
+    N = normalize(N);
+    float3 normal = N;
     if (hasNormalMap)
     {
         float4 normalMapping = normalMap.Sample(samp, uv);
@@ -78,13 +81,13 @@ LightMaterial GetLightMaterial(LightVertexOutput input)
     
     material.normal = GetNormal(input.tangent, input.binormal, input.normal, input.uv);
     
-    [flatten]
+    [branch]
     if (hasDiffuseMap)
         material.diffuse = diffuseMap.Sample(samp, input.uv);
     else
         material.diffuse = float4(1, 1, 1, 1);
     
-    [flatten]
+    [branch]
     if (hasSpecularMap)
         material.specular = specularMap.Sample(samp, input.uv);
     else
@@ -172,15 +175,87 @@ float4 CalculatePoint(LightMaterial material, LightData data)
 }
 float4 CalculateSpot(LightMaterial material, LightData data)
 {
-    float4 finalColor =0;
+    float3 light = material.worldPos - data.position;
     
-    return finalColor;
+    float lightDistance = length(light);
+    
+    light = normalize(light);
+    
+    float diffuseIntensity = saturate(dot(material.normal, -light));
+    
+    float4 diffuse = material.diffuse * diffuseIntensity * mDiffuse;
+    
+    float3 viewDir = normalize(material.worldPos - material.viewPos);
+    
+    float3 halfVector = normalize(viewDir + light);
+    
+    float specularIntensity = saturate(dot(-halfVector, material.normal));
+    
+    specularIntensity = pow(specularIntensity, shininess);
+    
+    float4 specular = material.specular * specularIntensity * mSpecular;
+    
+    //////////////////////
+    float3 dir = normalize(data.direction);
+    
+    float cosAngle = dot(dir, light);
+    
+    float outer = cos(radians(data.outer));
+    float inner = 1.0f / cos(radians(data.inner));
+    
+    float conAttention = saturate((cosAngle - outer) * inner);
+    
+    conAttention = pow(conAttention, 2);
+    
+    float lightDistanceNormal = 1.0f - saturate(lightDistance / data.range);
+    float attention = pow(lightDistanceNormal, 2);
+    
+    
+    float4 finalColor = diffuse + specular;
+    
+    return finalColor * data.color * attention * conAttention;
 }
 float4 CalculateCapsule(LightMaterial material, LightData data)
 {
-    float4 finalColor =0;
+    float3 dir = normalize(data.direction);
     
-    return finalColor;
+    float3 start = material.worldPos - data.position;
+    
+    float distanceOnLine = dot(start, dir) / data.length;
+    
+    distanceOnLine = saturate(distanceOnLine) * data.length;
+    
+    float3 pointOnLine = data.position + dir * distanceOnLine;
+    
+    float3 light = material.worldPos - pointOnLine;
+    
+    float lightDistance = length(light);
+    
+    light = normalize(light);
+    
+    float diffuseIntensity = saturate(dot(material.normal, -light));
+    
+    float4 diffuse = material.diffuse * diffuseIntensity * mDiffuse;
+    
+    float3 viewDir = normalize(material.worldPos - material.viewPos);
+    
+    float3 halfVector = normalize(viewDir + light);
+    
+    float specularIntensity = saturate(dot(-halfVector, material.normal));
+    
+    specularIntensity = pow(specularIntensity, shininess);
+    
+    float4 specular = material.specular * specularIntensity * mSpecular;
+    
+    //////////////////////
+    
+    float lightDistanceNormal = 1.0f - saturate(lightDistance / data.range);
+    float attention = pow(lightDistanceNormal, 2);
+    
+    
+    float4 finalColor = diffuse + specular;
+    
+    return finalColor * data.color * attention;
 }
 
 float4 CalculateLights(LightMaterial material)
