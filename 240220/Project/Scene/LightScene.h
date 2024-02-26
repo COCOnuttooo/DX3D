@@ -25,5 +25,9 @@ private:
 
 	Model* bunny;
 
+	DepthStencil* depthStencil;
+	RenderTarget* renderTarget;
+
+
 };
 

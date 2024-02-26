@@ -96,16 +96,6 @@ void Device::CreateRenderTargetView()
 
     ////////////
 
-    //ViewPort
-    D3D11_VIEWPORT viewPort;
-    viewPort.Width    = WIN_WIDTH;
-    viewPort.Height   = WIN_HEIGHT;
-    viewPort.TopLeftX = 0.0f;
-    viewPort.TopLeftY = 0.0f;
-    viewPort.MinDepth = 0.0f;
-    viewPort.MaxDepth = 1.0f;
-    
-    deviceContext->RSSetViewports(1, &viewPort);
 }
 
 void Device::ClearRTV()
@@ -118,4 +108,18 @@ void Device::ClearRTV()
 void Device::Present()
 {
     swapChain->Present(0, 0);
+}
+
+void Device::SetViewport(UINT width, UINT height)
+{
+
+    //ViewPort
+    viewPort.Width    = width;
+    viewPort.Height   = height;
+    viewPort.TopLeftX = 0.0f;
+    viewPort.TopLeftY = 0.0f;
+    viewPort.MinDepth = 0.0f;
+    viewPort.MaxDepth = 1.0f;
+
+    deviceContext->RSSetViewports(1, &viewPort);
 }

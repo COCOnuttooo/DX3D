@@ -69,6 +69,7 @@ void MainGame::Update()
 void MainGame::Render()
 {
     ENVIRONMENT->Set();
+    Device::GetInstance()->SetViewport();
 
     SCENE->Render();
 }

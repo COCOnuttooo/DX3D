@@ -8,6 +8,7 @@ public:
 
 	static Texture* Add(wstring file);
 	static Texture* Add(wstring file, wstring key);
+	static Texture* Add(wstring key, ID3D11ShaderResourceView* srv);
 	static void Delete();
 
 	void PSSetShaderResources(UINT slot);

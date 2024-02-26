@@ -21,6 +21,12 @@ LightScene::LightScene()
 	floor->translation.y += 0.1; 
 	bunny = new Model("StanfordBunny");
 	bunny->SetShader(L"16_Light");
+
+	depthStencil = new DepthStencil();
+	renderTarget = new RenderTarget();
+	Texture* texture = Texture::Add(L"Scene", renderTarget->GetSRV());
+
+	floor->GetMaterial()->SetDiffuseMap(texture);
 }
 
 LightScene::~LightScene()
@@ -29,6 +35,10 @@ LightScene::~LightScene()
 	delete knight;
 	delete sphere;
 	delete bunny;
+
+
+	delete depthStencil;
+	delete renderTarget;
 }
 
 void LightScene::Update()
@@ -41,15 +51,19 @@ void LightScene::Update()
 
 void LightScene::PreRender()
 {
+	//renderTarget->Set(depthStencil, Vector4(1,1,0,1));
+
 	
 }
 
 void LightScene::Render()
 {
 	floor->Render();
+
 	knight->Render();
 	sphere->Render();
-	bunny->Render(false);
+	 bunny->Render();
+
 }
 
 void LightScene::PostRender()
