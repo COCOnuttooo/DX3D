@@ -273,6 +273,12 @@
     <ClInclude Include="Render\View\DepthStencil.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\DeferredRenderScene.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryBuffer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -497,6 +503,12 @@
     <ClCompile Include="Render\View\DepthStencil.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\DeferredRenderScene.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryBuffer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -529,6 +541,8 @@
     <FxCompile Include="_Shader\14_ModelAnimatorInstancing.hlsl" />
     <FxCompile Include="_Shader\15_SkyBox.hlsl" />
     <FxCompile Include="_Shader\16_Light.hlsl" />
+    <FxCompile Include="_Shader\17_GrayScale.hlsl" />
+    <FxCompile Include="_Shader\18_Sepia.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />

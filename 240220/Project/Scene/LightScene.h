@@ -18,7 +18,9 @@ public:
 
 private:
 	Quad* floor;
-
+	
+	
+	SkyBox* sky;
 	ModelAnimator* knight;
 
 	Sphere* sphere;
@@ -28,6 +30,7 @@ private:
 	DepthStencil* depthStencil;
 	RenderTarget* renderTarget;
 
-
-};
+	Quad* quad1;
+	Quad* quad2;
+}; 
 

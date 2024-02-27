@@ -19,14 +19,14 @@ RenderTarget::~RenderTarget()
 
 void RenderTarget::Set(DepthStencil* depthStencil, Vector4 clearColor)
 {
-	DC->OMSetRenderTargets(1, &rtv, depthStencil->GetDSV());
 
+	DC->OMSetRenderTargets(1, &rtv, depthStencil->GetDSV());
 	DC->ClearRenderTargetView(rtv, (float*)&clearColor);
 	depthStencil->ClearDSV();
 
 	Device::GetInstance()->SetViewport(width, height);
 
-
+	ENVIRONMENT->Set();
 	
 }
 

@@ -10,8 +10,10 @@ Texture::Texture(ID3D11ShaderResourceView* srv, ScratchImage& image)
 
 Texture::~Texture()
 {
-	 srv->Release();
-	image.Release();
+	if (!path.empty())
+	{
+		srv->Release();
+	}
 }
 
 Texture* Texture::Add(wstring file)
