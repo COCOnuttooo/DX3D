@@ -15,7 +15,20 @@ public:
 
 	void PostRender() override;
 
-private:
 
+	void CreateObjects();
+private:
+	Quad* floor;
+
+	ModelAnimator* knight;
+
+	Sphere* sphere;
+
+	Model* bunny;
+
+	GeometryBuffer* gBuffer;
+
+	Material* material;
+	VertexBuffer* vertexBuffer;
 };
 

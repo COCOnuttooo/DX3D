@@ -56,6 +56,7 @@ void Environment::Set()
 
 	persBuffer->SetData(persMatrix);
 	persBuffer->SetVSBuffer(2);
+	persBuffer->SetPSBuffer(2);
 
 	lightBuffer->SetPSBuffer(0);
 	STATE->DisableAlpha();

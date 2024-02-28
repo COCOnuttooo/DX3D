@@ -104,6 +104,7 @@ using namespace GameMath;
 #include "Render/Buffer/ConstBuffer.h"
 #include "Render/Buffer/GlobalBuffer.h"
 #include "Render/Buffer/StructuredBuffer.h"
+#include "Render/Buffer/GeometryBuffer.h"
 
 #include "Object/Transform.h"
 
@@ -136,6 +137,8 @@ using namespace GameMath;
 #include "Object/Basic/Quad.h"
 #include "Object/Basic/Grid.h"
 #include "Object/Basic/Sphere.h"
+
+
 
 #include "Object/Basic/TextureCube.h"
 

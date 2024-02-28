@@ -15,13 +15,13 @@ public:
 
 
 private:
-	RenderTarget* rtvs[SIZE];
+	class RenderTarget* rtvs[SIZE];
 
-	DepthStencil* depthStencil;
+	class DepthStencil* depthStencil;
 
-	Quad* quads[SIZE + 1];
+	class Quad* quads[SIZE + 1];
 
-	ID3D11ShaderResourceView* srvs[SIZE + 1];
+	class ID3D11ShaderResourceView* srvs[SIZE + 1];
 
 };
 

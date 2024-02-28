@@ -276,7 +276,7 @@
     <ClInclude Include="Scene\DeferredRenderScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="GeometryBuffer.h">
+    <ClInclude Include="Render\Buffer\GeometryBuffer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -506,7 +506,7 @@
     <ClCompile Include="Scene\DeferredRenderScene.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="GeometryBuffer.cpp">
+    <ClCompile Include="Render\Buffer\GeometryBuffer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -543,6 +543,8 @@
     <FxCompile Include="_Shader\16_Light.hlsl" />
     <FxCompile Include="_Shader\17_GrayScale.hlsl" />
     <FxCompile Include="_Shader\18_Sepia.hlsl" />
+    <FxCompile Include="_Shader\20_DeferredRender.hlsl" />
+    <FxCompile Include="_Shader\19_GBuffer.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />

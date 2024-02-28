@@ -20,13 +20,13 @@ private:
 	Quad* floor;
 	
 	
-	SkyBox* sky;
 	ModelAnimator* knight;
 
 	Sphere* sphere;
 
 	Model* bunny;
 
+	SkyBox* sky;
 	DepthStencil* depthStencil;
 	RenderTarget* renderTarget;
 

@@ -66,7 +66,7 @@ cbuffer Projection : register(b2)
 
 
 
-cbuffer MaterialBuffer : register(b1)
+cbuffer MaterialBuffer : register(b4)
 {
     float4 mDiffuse;
     float4 mSpecular;
@@ -184,5 +184,31 @@ matrix SkinWorld(int4 indices, float4 weights)
     return transform;
 }
 
+struct GBufferOutput
+{
+    float4  diffuse : SV_TARGET0;
+    float4 specular : SV_TARGET1;
+    float4   normal : SV_TARGET2;
+    
+};
+#define MIN_SHININESS 0.1f
+#define MAX_SHININESS 50.f
+
+GBufferOutput PackGBuffer(float3 baseColor, float3 normal, float specularIntensity)
+{
+    GBufferOutput output;
+    
+    float specPowNorm = (shininess - MIN_SHININESS) / MAX_SHININESS;
+    
+    
+    output.diffuse  = float4(baseColor, 1.0f);
+    output.specular = float4(specPowNorm, specularIntensity, 0.0f, 1.0f);
+    output.normal   = float4(normal * 0.5f + 0.5f, 1.0f);
+    
+    
+    
+    
+    return output;
+}
 
 #endif
