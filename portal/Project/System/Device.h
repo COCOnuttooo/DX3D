@@ -33,4 +33,7 @@ private:
 	ID3D11DepthStencilView* depthStencilView;
 	ID3D11DepthStencilView* p1DepthStencilView;
 	ID3D11DepthStencilView* p2DepthStencilView;
+	D3D11_VIEWPORT mainViewPort;
+	D3D11_VIEWPORT p1ViewPort;
+	D3D11_VIEWPORT p2ViewPort;
 };

@@ -12,6 +12,7 @@ struct LightData
     float  inner;
     float  outer;
     float length;
+    
     int    active;
 };
 

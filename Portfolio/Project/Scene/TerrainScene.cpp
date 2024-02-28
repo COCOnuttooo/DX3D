@@ -3,11 +3,11 @@
 
 TerrainScene::TerrainScene()
 {
-	terrain = new Terrain(L"HeightMap/HWHeight.png", L"HeightMap/HWAlpha.png");
+	terrain = new Terrain(L"Terrain/Terrain005_2K.png");
+	terrain->GetMaterial()->SetDiffuseMap(L"Terrain/Terrain005_1K_Color.jpg");
+	//terrain->SetSecondDiffuseMap(L"Landscape/Box.png");
 
-	terrain->SetSecondDiffuseMap(L"Landscape/Box.png");
-
-	terrain->GetMaterial()->Load(L"_TextData/Homework.mat");
+	//terrain->GetMaterial()->Load(L"_TextData/Homework.mat");
 	terrain->GetMaterial()->SetShader(L"08_Terrain");
 	//terrain->GetMaterial()->SetDiffuseMap(L"Landscape/FieldStone_DM.tga");
 	//terrain->GetMaterial()->SetNormalMap(L"Landscape/FieldStone_NM.tga");

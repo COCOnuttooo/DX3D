@@ -14,9 +14,9 @@ PortalScene::PortalScene()
 	portal2->translation = Vector3(10, 5, 0);
 	portal1->rotation = Vector3(0, -2*XM_PIDIV4, 0);
 	portal2->rotation = Vector3(0, XM_PIDIV2, 0);
-	Environment::GetInstance()->GetP1Camera()->rotation = Vector3(0, XM_PI, 0);
-	Environment::GetInstance()->GetP2Camera()->rotation = Vector3(0, XM_PI, 0);
-	
+	//Environment::GetInstance()->GetP1Camera()->rotation = Vector3(0, XM_PI, 0);
+	//Environment::GetInstance()->GetP2Camera()->rotation = Vector3(0, XM_PI, 0);
+	//
 	cube = new TextureCube();
 	// cube->translation.y = -5;
 	mainCameraCube = new TextureCube;
@@ -25,8 +25,10 @@ PortalScene::PortalScene()
 	mainCameraCubeHead->translation = Vector3(0, 0, 0.5);
 	mainCameraCubeHead->scale = Vector3(0.5, 0.5, 0.5);
 	mainCameraCube->SetDiffuseMap(L"Landscape/Wall.png");
-	ENVIRONMENT->GetP1Camera()->SetParent(portal2);
-	ENVIRONMENT->GetP2Camera()->SetParent(portal1);
+	//ENVIRONMENT->GetP1Camera()->SetParent(portal2);
+	//ENVIRONMENT->GetP2Camera()->SetParent(portal1);
+	//P1CAMERA->scale = Vector3(-1, 0, -1);
+	//P2CAMERA->scale = Vector3(-1, 0, -1);
 	terrain = new Terrain(L"HeightMap/HeightMap256.png");
 	terrain->translation = Vector3(-100, 0, -100);
 
@@ -71,14 +73,14 @@ void PortalScene::Update()
 	//	mainCameraCube->translation.x = portal1->translation.x;
 
 	//}
-	if (CAMERA->translation.x < portal1->translation.x)
-	{
-		CAMERA->translation.x = portal2->translation.x;
-	}
-	if (CAMERA->translation.x > portal2->translation.x)
-	{
-		CAMERA->translation.x = portal1->translation.x;
-	}
+	//if (CAMERA->translation.x < portal1->translation.x)
+	//{
+	//	CAMERA->translation.x = portal2->translation.x;
+	//}
+	//if (CAMERA->translation.x > portal2->translation.x)
+	//{
+	//	CAMERA->translation.x = portal1->translation.x;
+	//}
 }
 
 void PortalScene::PreRender()
@@ -121,7 +123,7 @@ void PortalScene::CalculateMirror()
 	XMFLOAT4X4 fWorld1;
 
 	XMStoreFloat4x4(&fWorld1, p1CamTransform);
-	Vector3 p1Translation = Vector3(fWorld1._41, fWorld1._42, -fWorld1._43);
+	Vector3 p1Translation = Vector3(-fWorld1._41 , fWorld1._42, -fWorld1._43);
 
 	P1CAMERA->translation = p1Translation;
 
@@ -129,7 +131,7 @@ void PortalScene::CalculateMirror()
 	XMFLOAT4X4 fWorld2;
 
 	XMStoreFloat4x4(&fWorld2, p2CamTransform);
-	Vector3 p2Translation = Vector3(fWorld2._41, fWorld2._42, -fWorld2._43);
+	Vector3 p2Translation = Vector3(-fWorld2._41, fWorld2._42 , -fWorld2._43 );
 
 	P2CAMERA->translation = p2Translation;
 	
@@ -153,28 +155,46 @@ void PortalScene::CalculateMirror()
 	XMMATRIX viewMatrix2;
 	float distanceP1 = P1CAMERA->translation.Length();
 	float distanceP2 = P2CAMERA->translation.Length();
-	if (P1CAMERA->translation.Length() != 0)
-	{
-		viewMatrix1 = XMMatrixLookAtLH(cameraPosition1, portalPosition1, upDirection1);
-		viewMatrix1 = XMMatrixLookToLH(cameraPosition1, -cameraPosition1, upDirection1);
-		//P1CAMERA->SetFixViewMatrix(viewMatrix1);
-		persP1 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP1, 1000);
+	//if (P1CAMERA->translation.Length() != 0)
+	//{
+	//	viewMatrix1 = XMMatrixLookAtLH(cameraPosition1, portalPosition1, upDirection1);
+	//	viewMatrix1 = XMMatrixLookToLH(cameraPosition1, -cameraPosition1, upDirection1);
+	//	//P1CAMERA->SetFixViewMatrix(viewMatrix1);
+	//	persP1 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP1, 1000);
 
-	}
-	else { P1CAMERA->SetFixViewMatrix(XMMatrixIdentity()); }
-	if (P2CAMERA->translation.Length()!= 0)
-	{
-		viewMatrix2 = XMMatrixLookAtLH(cameraPosition2, portalPosition2, upDirection2);
-		viewMatrix2 = XMMatrixLookToLH(cameraPosition2, -cameraPosition2, upDirection1);
+	//}
+	//else { P1CAMERA->SetFixViewMatrix(XMMatrixIdentity()); }
+	//if (P2CAMERA->translation.Length()!= 0)
+	//{
+	//	viewMatrix2 = XMMatrixLookAtLH(cameraPosition2, portalPosition2, upDirection2);
+	//	viewMatrix2 = XMMatrixLookToLH(cameraPosition2, -cameraPosition2, upDirection1);
 
-		//P2CAMERA->SetFixViewMatrix(viewMatrix2);
-		persP2 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP2, 1000);
+	//	//P2CAMERA->SetFixViewMatrix(viewMatrix2);
+	//	persP2 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP2, 1000);
 
-	}
-	else { P2CAMERA->SetFixViewMatrix(XMMatrixIdentity()); }
+	//}
+	//else { P2CAMERA->SetFixViewMatrix(XMMatrixIdentity()); }
 
 	//P1CAMERA->SetFixViewMatrix(XMMatrixIdentity());
 	//P2CAMERA->SetFixViewMatrix(XMMatrixIdentity());
+
+}
+
+void PortalScene::TestCalculateMirror()
+{
+	Vector3 s1vec = Vector3(-1,1,-1);
+	Vector3 r1vec = portal1->rotation;
+	Vector3 t1vec = portal1->translation;
+
+	Matrix S1 = XMMatrixScaling(s1vec.x, s1vec.y, s1vec.z);
+
+	Matrix R1 = XMMatrixRotationRollPitchYaw(r1vec.x, r1vec.y, r1vec.z);
+	 
+	Matrix T1 = XMMatrixTranslation(t1vec.x, t1vec.y,t1vec.z);
+
+	Matrix world1 = S1 * R1 * T1;
+
+
 
 }
 

@@ -30,8 +30,8 @@ void PortalQuad::Render()
 {
 	edge->Render();
 	GameObject::Render();
-	cameraBox->Render();
-	cameraHead->Render();
+	//cameraBox->Render();
+	//cameraHead->Render();
 }
 
 void PortalQuad::Update()

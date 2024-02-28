@@ -126,14 +126,27 @@ void Device::CreateRenderTargetView()
 
     //VIEWPORT
     D3D11_VIEWPORT viewPort;
-    viewPort.Width = WIN_WIDTH;
-    viewPort.Height = WIN_HEIGHT;
-    viewPort.TopLeftX = 0.0f;
-    viewPort.TopLeftY = 0.0f;
-    viewPort.MinDepth = 0.0f;
-    viewPort.MaxDepth = 1.0f;
+    mainViewPort.Width = WIN_WIDTH;
+    mainViewPort.Height = WIN_HEIGHT;
+    mainViewPort.TopLeftX = 0.0f;
+    mainViewPort.TopLeftY = 0.0f;
+    mainViewPort.MinDepth = 0.0f;
+    mainViewPort.MaxDepth = 1.0f;
 
-    deviceContext->RSSetViewports(1, &viewPort);
+    p1ViewPort.Width = WIN_WIDTH;
+    p1ViewPort.Height = WIN_HEIGHT;
+    p1ViewPort.TopLeftX = 0.0f;
+    p1ViewPort.TopLeftY = 0.0f;
+    p1ViewPort.MinDepth = 0.0f;
+    p1ViewPort.MaxDepth = 1.0f;
+
+    p2ViewPort.Width = WIN_WIDTH;
+    p2ViewPort.Height = WIN_HEIGHT;
+    p2ViewPort.TopLeftX = 0.0f;
+    p2ViewPort.TopLeftY = 0.0f;
+    p2ViewPort.MinDepth = 0.0f;
+    p2ViewPort.MaxDepth = 1.0f;
+    deviceContext->RSSetViewports(1, &mainViewPort);
 }
 
 void Device::ClearRTV()
@@ -159,18 +172,24 @@ void Device::Present()
 
 void Device::SetMainRTV()
 {
+    deviceContext->RSSetViewports(1, &mainViewPort);
+
     deviceContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 
 }
 
 void Device::SetP1RTV()
 {
+    deviceContext->RSSetViewports(1, &p1ViewPort);
+
     deviceContext->OMSetRenderTargets(1, &p1RTV, p1DepthStencilView);
 
 }
 
 void Device::SetP2RTV()
 {
+    deviceContext->RSSetViewports(1, &p2ViewPort);
+
     deviceContext->OMSetRenderTargets(1, &p2RTV, p2DepthStencilView);
 
 }
