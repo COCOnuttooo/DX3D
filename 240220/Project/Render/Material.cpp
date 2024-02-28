@@ -29,7 +29,7 @@ void Material::Set()
 	vertexShader->SetShader();
 	 pixelShader->SetShader();
 
-	 buffer->SetPSBuffer(1);
+	 buffer->SetPSBuffer(4);
 
 	 //SRV
 	 if (diffuseMap != nullptr)
@@ -53,6 +53,14 @@ void Material::SetDiffuseMap(wstring file)
 	diffuseMap = Texture::Add(file);
 
 	buffer->data.hasDiffuseMap = true;
+}
+
+void Material::SetDiffuseMap(Texture* texture)
+{
+	diffuseMap = texture;
+
+	buffer->data.hasDiffuseMap = true;
+
 }
 
 void Material::SetSpecularMap(wstring file)

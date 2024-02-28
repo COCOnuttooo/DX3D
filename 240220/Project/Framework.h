@@ -49,6 +49,7 @@ using namespace std;
 
 #define WIN_WIDTH  1280.0f
 #define WIN_HEIGHT  720.0f
+#define WIN_CENTER Vector3(WIN_WIDTH* 0.5f, WIN_HEIGHT*0.5f, 0.0f)
 
 #define MAX_FRAME 512
 #define MAX_BONE  256
@@ -103,6 +104,7 @@ using namespace GameMath;
 #include "Render/Buffer/ConstBuffer.h"
 #include "Render/Buffer/GlobalBuffer.h"
 #include "Render/Buffer/StructuredBuffer.h"
+#include "Render/Buffer/GeometryBuffer.h"
 
 #include "Object/Transform.h"
 
@@ -126,12 +128,17 @@ using namespace GameMath;
 
 #include "Render/State/StateManager.h"
 
+#include "Render/View/DepthStencil.h"
+#include "Render/View/RenderTarget.h"
+
 #include "Object/GameObject.h"
 
 #include "Object/Basic/Cube.h"
 #include "Object/Basic/Quad.h"
 #include "Object/Basic/Grid.h"
 #include "Object/Basic/Sphere.h"
+
+
 
 #include "Object/Basic/TextureCube.h"
 

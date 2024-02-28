@@ -1,10 +1,9 @@
 #pragma once
-
-class LightScene : public Scene
+class DeferredRenderScene : public Scene
 {
 public:
-	LightScene();
-	~LightScene();
+	DeferredRenderScene();
+	~DeferredRenderScene();
 
 
 	// Scene을(를) 통해 상속됨
@@ -16,21 +15,20 @@ public:
 
 	void PostRender() override;
 
+
+	void CreateObjects();
 private:
 	Quad* floor;
-	
-	
+
 	ModelAnimator* knight;
 
 	Sphere* sphere;
 
 	Model* bunny;
 
-	SkyBox* sky;
-	DepthStencil* depthStencil;
-	RenderTarget* renderTarget;
+	GeometryBuffer* gBuffer;
 
-	Quad* quad1;
-	Quad* quad2;
-}; 
+	Material* material;
+	VertexBuffer* vertexBuffer;
+};
 

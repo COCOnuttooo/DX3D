@@ -42,6 +42,7 @@ void Camera::Set()
 
 	viewBuffer->SetData(viewMatrix, world);
 	viewBuffer->SetVSBuffer(1);
+	viewBuffer->SetPSBuffer(1);
 }
 
 void Camera::Debug()

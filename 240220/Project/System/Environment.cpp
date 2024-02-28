@@ -56,8 +56,11 @@ void Environment::Set()
 
 	persBuffer->SetData(persMatrix);
 	persBuffer->SetVSBuffer(2);
+	persBuffer->SetPSBuffer(2);
 
 	lightBuffer->SetPSBuffer(0);
+	STATE->DisableAlpha();
+	STATE->EnableDepth();
 }
 
 void Environment::PostSet()
@@ -66,7 +69,8 @@ void Environment::PostSet()
 	orthoBuffer->SetVSBuffer(2);
 
 	//TODO : ALPHA BLEND
-
+	STATE->EnableAlpha();
+	STATE->DisableDepth();
 
 }
 

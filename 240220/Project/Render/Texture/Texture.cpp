@@ -10,8 +10,10 @@ Texture::Texture(ID3D11ShaderResourceView* srv, ScratchImage& image)
 
 Texture::~Texture()
 {
-	 srv->Release();
-	image.Release();
+	if (!path.empty())
+	{
+		srv->Release();
+	}
 }
 
 Texture* Texture::Add(wstring file)
@@ -92,6 +94,16 @@ Texture* Texture::Add(wstring file, wstring key)
 	textures.emplace(key, new Texture(tempSRV, tempImage));
 
 	textures[key]->path = path;
+
+	return textures[key];
+}
+
+Texture* Texture::Add(wstring key, ID3D11ShaderResourceView* srv)
+{
+	if (textures.count(key) > 0)
+		return textures[key];
+	ScratchImage image;
+	textures.emplace(key, new Texture(srv, image));
 
 	return textures[key];
 }

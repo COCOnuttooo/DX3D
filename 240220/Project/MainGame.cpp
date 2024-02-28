@@ -13,6 +13,7 @@
 #include "Scene/InstancingScene.h"
 #include "Scene/ModelInstancingScene.h"
 #include "Scene/LightScene.h"
+#include "Scene/DeferredRenderScene.h"
 
 
 MainGame::MainGame()
@@ -34,7 +35,8 @@ MainGame::MainGame()
     //SCENE->Create("Start", new CharacterScene());
     //SCENE->Create("Start", new InstancingScene());
     //SCENE->Create("Start", new ModelInstancingScene());
-    SCENE->Create("Start", new LightScene());
+    //SCENE->Create("Start", new LightScene());
+    SCENE->Create("Start", new DeferredRenderScene());
 
     SCENE->Add("Start");
     SCENE->Add("Grid");
@@ -69,6 +71,7 @@ void MainGame::Update()
 void MainGame::Render()
 {
     ENVIRONMENT->Set();
+    Device::GetInstance()->SetViewport();
 
     SCENE->Render();
 }
@@ -105,7 +108,7 @@ void MainGame::PostRender()
         else
             SCENE->Remove("Grid");
     }
-
+    ENVIRONMENT->PostSet();
     SCENE->PostRender();
 
     ENVIRONMENT->Debug();
