@@ -57,7 +57,9 @@ void Environment::Set()
 void Environment::SetP1(Matrix persMat)
 {
 	p1Camera->Set();
-	SetPersMatrix(persMat);
+	//SetPersMatrix(persMat);
+	persMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT * 0.5, 0.1f, 1000.0f);
+
 	persBuffer->SetData(persMatrix);
 	persBuffer->SetVSBuffer(2);
 
@@ -67,7 +69,8 @@ void Environment::SetP1(Matrix persMat)
 void Environment::SetP2(Matrix persMat)
 {
 	p2Camera->Set();
-	SetPersMatrix(persMat);
+	//SetPersMatrix(persMat);
+	persMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, WIN_WIDTH / WIN_HEIGHT * 0.5, 0.1f, 1000.0f);
 
 	persBuffer->SetData(persMatrix);
 	persBuffer->SetVSBuffer(2);

@@ -39,6 +39,8 @@ void MainGame::Update()
 
 void MainGame::Render()
 {
+    Device::GetInstance()->SetMainRTV();
+
     ENVIRONMENT->Set();
 
     SCENE->Render();
@@ -70,7 +72,6 @@ void MainGame::PreRender()
 
 
     }
-    Device::GetInstance()->SetMainRTV();
 
 }
 

@@ -15,4 +15,5 @@ public:
 	void PostRender() override;
 private:
 	ModelExporter* exporter;
+	Model* model;
 };

@@ -15,6 +15,7 @@ public:
 
 	virtual void PostRender() override;
 	void CalculateMirror();
+	void TestCalculateMirror();
 	// Scene을(를) 통해 상속됨
 	virtual void P1ReRender() override;
 	virtual void P2ReRender() override;

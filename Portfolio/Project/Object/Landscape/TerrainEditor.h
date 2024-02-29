@@ -48,7 +48,7 @@ private:
 
 private:
 	const float MAX_HEIGHT = 20.0f;
-	const UINT  MAX_SIZE   = 256;
+	const UINT  MAX_SIZE   = 1024;
 
 	UINT width = MAX_SIZE, height = MAX_SIZE;
 

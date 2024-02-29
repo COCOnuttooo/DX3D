@@ -37,12 +37,12 @@ void Camera::Update()
 	{
 		if (KEY_PRESS('A'))
 		{
-			translation += -GetRightVector() * moveSpeed * DELTA_TIME;
+			translation += -Vector3(GetRightVector().x,0, GetRightVector().z) * moveSpeed * DELTA_TIME;
 		}
 
 		if (KEY_PRESS('D'))
 		{
-			translation += +GetRightVector() * moveSpeed * DELTA_TIME;
+			translation += +Vector3(GetRightVector().x,0, GetRightVector().z) * moveSpeed * DELTA_TIME;
 		}
 
 		if (KEY_PRESS('Q'))
@@ -56,12 +56,12 @@ void Camera::Update()
 		}
 		if (KEY_PRESS('S'))
 		{
-			translation += -GetForwardVector() * moveSpeed * DELTA_TIME;
+			translation += -Vector3(GetForwardVector().x,0, GetForwardVector().z) * moveSpeed * DELTA_TIME;
 		}
 
 		if (KEY_PRESS('W'))
 		{
-			translation += +GetForwardVector() * moveSpeed * DELTA_TIME;
+			translation += +Vector3(GetForwardVector().x,0, GetForwardVector().z) * moveSpeed * DELTA_TIME;
 		}
 		Vector3 delta = mousePos - oldPos;
 
@@ -83,6 +83,7 @@ void Camera::Set()
 
 void Camera::Debug()
 {
+	Transform::Debug();
 	string str = "Camera" + to_string(thisCount) + " Options";
 	if (ImGui::TreeNode(str.c_str()))
 	{

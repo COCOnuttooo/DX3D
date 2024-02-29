@@ -14,6 +14,7 @@ public:
 	void PostRender() override;
 
 private:
+	Terrain* terrain;
 	Onix* onix;
 };
 

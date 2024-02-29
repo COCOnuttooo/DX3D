@@ -139,7 +139,7 @@ void Terrain::CreateMesh()
         Vector3 v01 = vertices[index1].pos - vertices[index0].pos;
         Vector3 v02 = vertices[index2].pos - vertices[index0].pos;
 
-        Vector3 normal = Vector3::Cross(v01, v02).GetNormalized();
+        Vector3 normal = Vector3::Cross(v02, v01).GetNormalized();
 
         vertices[index0].normal += normal;
         vertices[index1].normal += normal;

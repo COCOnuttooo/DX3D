@@ -11,13 +11,17 @@ PortalScene::PortalScene()
 	portal2->SetCamera(P1CAMERA);
 	portal1->SetCameraDiffuse(L"Landscape/Fieldstone_DM.tga");
 	portal1->translation = Vector3(-10, 5, 0);
-	portal2->translation = Vector3(10, 5, 0);
+	portal2->translation = Vector3(-10, 5, 0);
 	portal1->rotation = Vector3(0, -2*XM_PIDIV4, 0);
 	portal2->rotation = Vector3(0, XM_PIDIV2, 0);
+	
 	Environment::GetInstance()->GetP1Camera()->rotation = Vector3(0, XM_PI, 0);
 	Environment::GetInstance()->GetP2Camera()->rotation = Vector3(0, XM_PI, 0);
 	
 	cube = new TextureCube();
+	cube2 = new TextureCube();
+	cube2->SetDiffuseMap(L"Landscape/Dirt.png");
+	cube2->translation.x = 5;
 	// cube->translation.y = -5;
 	mainCameraCube = new TextureCube;
 	mainCameraCubeHead = new TextureCube;
@@ -42,6 +46,7 @@ PortalScene::~PortalScene()
 	delete portal1;
 	delete portal2;
 	delete cube;
+	delete cube2;
 	delete testQuad;
 	delete terrain;
 	delete mainCameraCube;
@@ -57,6 +62,7 @@ void PortalScene::Update()
 	portal1->Update();
 	portal2->Update();
 	cube->Update();
+	cube2->Update();
 	testQuad->Update();
 	terrain->Update();
 	mainCameraCube->Update();
@@ -71,19 +77,20 @@ void PortalScene::Update()
 	//	mainCameraCube->translation.x = portal1->translation.x;
 
 	//}
-	if (CAMERA->translation.x < portal1->translation.x)
-	{
-		CAMERA->translation.x = portal2->translation.x;
-	}
-	if (CAMERA->translation.x > portal2->translation.x)
-	{
-		CAMERA->translation.x = portal1->translation.x;
-	}
+	//if (CAMERA->translation.x < portal1->translation.x)
+	//{
+	//	CAMERA->translation.x = portal2->translation.x;
+	//}
+	//if (CAMERA->translation.x > portal2->translation.x)
+	//{
+	//	CAMERA->translation.x = portal1->translation.x;
+	//}
 }
 
 void PortalScene::PreRender()
 {
 	cube->Render();
+	cube2->Render();
 	//terrain->Render();
 	//portal1->Render();
 	//portal2->Render();
@@ -93,6 +100,7 @@ void PortalScene::Render()
 {
 	//terrain->Render();
 	cube->Render();
+	cube2->Render();
 	portal1->Render();
 	portal2->Render();
 	mainCameraCube->Render();
@@ -138,11 +146,17 @@ void PortalScene::CalculateMirror()
 	//P1CAMERA->rotation = Vector3(p1Rotation.x, p1Rotation.y + XM_PI, p1Rotation.z);
 	//P2CAMERA->rotation = Vector3(p2Rotation.x, p2Rotation.y + XM_PI, p2Rotation.z);
 
+	//XMVECTOR cameraPosition1 = XMVectorSet(P1CAMERA->translation.x, P1CAMERA->translation.y, P1CAMERA->translation.z, 0); // 카메라 위치
+	//XMVECTOR cameraPosition2 = XMVectorSet(P2CAMERA->translation.x, P2CAMERA->translation.y, P2CAMERA->translation.z, 0); // 카메라 위치
 	XMVECTOR cameraPosition1 = XMVectorSet(P1CAMERA->translation.x, P1CAMERA->translation.y, P1CAMERA->translation.z, 0); // 카메라 위치
 	XMVECTOR cameraPosition2 = XMVectorSet(P2CAMERA->translation.x, P2CAMERA->translation.y, P2CAMERA->translation.z, 0); // 카메라 위치
+	//XMVECTOR cameraPosition1 = XMVectorSet(P1CAMERA->GetGlobalPosition().x, P1CAMERA->GetGlobalPosition().y, P1CAMERA->GetGlobalPosition().z, 0); // 카메라 위치
+	//XMVECTOR cameraPosition2 = XMVectorSet(P2CAMERA->GetGlobalPosition().x, P2CAMERA->GetGlobalPosition().y, P2CAMERA->GetGlobalPosition().z, 0); // 카메라 위치
 	XMVECTOR portalPosition1 = XMVectorSet(0, 0, 0, 0); // 포탈 위치
-	XMVECTOR portalPosition2 = XMVectorSet(0, 0, 0, 0); // 포탈 위치
-	
+	XMVECTOR portalPosition2 = XMVectorSet(0, 0, 0, 0); // 포탈 위치	
+	//XMVECTOR portalPosition1 = portal2->GetGlobalPosition(); // 포탈 위치
+	//XMVECTOR portalPosition2 = portal1->GetGlobalPosition(); // 포탈 위치
+	//
 	XMVECTOR upDirection1 = portal2->GetUpVector();
 	XMVECTOR upDirection2 = portal1->GetUpVector();
 
@@ -164,23 +178,27 @@ void PortalScene::CalculateMirror()
 		//P1CAMERA->SetFixViewMatrix(viewMatrix1);
 
 		//persP1 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP1, 1000);
-		viewMatrix1 = XMMatrixInverse(nullptr,XMMatrixLookAtLH(cameraPosition1, portalPosition1, upDirection1));// *p1Inverse;
-		
-		persP1 = viewMatrix1*  XMMatrixPerspectiveFovLH(fov1, WIN_WIDTH / WIN_HEIGHT * portal2->GetSize().x / portal2->GetSize().y, distanceP1, 1000) ;
+		viewMatrix1 = XMMatrixInverse(nullptr, XMMatrixLookAtLH(cameraPosition1, portalPosition1, upDirection1));// *p1Inverse;
+		viewMatrix1 = XMMatrixLookAtLH(-cameraPosition1, portalPosition1, upDirection1);// *p1Inverse;
+		//viewMatrix1*
+		persP1 =  XMMatrixPerspectiveFovLH(fov1, WIN_WIDTH / WIN_HEIGHT * portal2->GetSize().x / portal2->GetSize().y, 10* distanceP1, 1000) ;
 	}
 	else { P1CAMERA->SetFixViewMatrix(XMMatrixIdentity()); }
 	if (P2CAMERA->translation.Length()!= 0)
 	{
-		viewMatrix2 = XMMatrixInverse(nullptr,XMMatrixLookAtLH(cameraPosition2, portalPosition2, upDirection2));// *p2Inverse;
+		//viewMatrix2 = XMMatrixInverse(nullptr, XMMatrixLookAtLH(cameraPosition2, portalPosition2, upDirection2));// *p2Inverse;
+		viewMatrix2 = XMMatrixLookAtLH(-cameraPosition2, portalPosition2, upDirection2);// *p2Inverse;
 		//viewMatrix2 = XMMatrixLookToLH(cameraPosition2, -cameraPosition2, upDirection1);
 
 		//P2CAMERA->SetFixViewMatrix(viewMatrix2);
-		//persP2 = XMMatrixPerspectiveOffCenterLH(-2.5, 2.5, -2.5, 2.5, distanceP2, 1000);
-		persP2 = viewMatrix2* XMMatrixPerspectiveFovLH(fov2, WIN_WIDTH / WIN_HEIGHT * portal1->GetSize().x / portal1->GetSize().y, distanceP2, 1000);
+		//persP2 = viewMatrix2* XMMatrixPerspectiveOffCenterLH(-2.5 * WIN_WIDTH / WIN_HEIGHT, 2.5 * WIN_WIDTH / WIN_HEIGHT, -5, 5, distanceP2, 1000);
+		//viewMatrix2*
+		persP2 =  XMMatrixPerspectiveFovLH(fov2, WIN_WIDTH / WIN_HEIGHT * portal1->GetSize().x / portal1->GetSize().y,  distanceP2, 1000);
 
 	}
 	else { P2CAMERA->SetFixViewMatrix(XMMatrixIdentity()); }
-
+	//P1CAMERA->translation = Vector3(0, 0, 0);
+	//P2CAMERA->translation = Vector3(0, 0, 0);
 	//P1CAMERA->SetFixViewMatrix(XMMatrixIdentity());
 	//P2CAMERA->SetFixViewMatrix(XMMatrixIdentity());
 
