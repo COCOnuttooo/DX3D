@@ -19,6 +19,7 @@ public:
 	Vector3 GetGlobalRotation() { return globalRotation; }
 	Vector3 GetGlobalPosition() { return globalPosition; }
 
+
 	Vector3 GetRightVector()   { return right; }
 	Vector3 GetUpVector()      { return up; }
 	Vector3 GetForwardVector() { return forward; }

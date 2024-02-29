@@ -60,7 +60,7 @@ void Environment::Set()
 
 	lightBuffer->SetPSBuffer(0);
 	STATE->DisableAlpha();
-	STATE->EnableDepth();
+	STATE->EnableDepth();	
 }
 
 void Environment::PostSet()

@@ -1,0 +1,28 @@
+포트폴리오 구현 기술
+
+인스턴싱 (롱스톤 몸체 인스턴싱)
+
+terrain editor
+
+peeking (범위 표시)
+
+particle(폭발 effect)(예정)
+
+deferred render
+
+혹은 reflection refraction
+
+HP Bar(UI, Depthstencil on off)
+
+Model Export
+Animation Extport
+
+Light
+
+Weather
+
+Shadow
+
+
+
+

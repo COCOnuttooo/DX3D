@@ -14,6 +14,7 @@
 #include "Scene/ModelInstancingScene.h"
 #include "Scene/LightScene.h"
 #include "Scene/DeferredRenderScene.h"
+#include "Scene/FrustumCullingScene.h"
 
 
 MainGame::MainGame()
@@ -36,7 +37,8 @@ MainGame::MainGame()
     //SCENE->Create("Start", new InstancingScene());
     //SCENE->Create("Start", new ModelInstancingScene());
     //SCENE->Create("Start", new LightScene());
-    SCENE->Create("Start", new DeferredRenderScene());
+    //SCENE->Create("Start", new DeferredRenderScene());
+    SCENE->Create("Start", new FrustumCullingScene());
 
     SCENE->Add("Start");
     SCENE->Add("Grid");

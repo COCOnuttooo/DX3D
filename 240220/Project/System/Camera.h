@@ -26,6 +26,16 @@ public:
 	struct Ray ScreenPointToRay(Vector3 screenPoint);
 	Vector3 WorldToScreenPos(Vector3 worldPos);
 	void SetTarget(Transform* target) { this->target = target; }
+	//Frustum
+public:
+	bool PointInFrustum(Vector3 point);
+	bool SphereInFrustum(Vector3 center, float radius);
+
+private:
+	void CalculateFrustum();
+
+
+
 private:
 	Matrix      viewMatrix;
 	ViewBuffer* viewBuffer;
@@ -50,4 +60,9 @@ private:
 	Vector3 focusOffset;
 
 	Matrix rotMatrix;
+
+	//Frustum Culling
+	XMVECTOR planes[6];
+
+	float a, b, c, d;
 };
