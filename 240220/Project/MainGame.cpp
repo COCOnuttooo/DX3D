@@ -15,6 +15,8 @@
 #include "Scene/LightScene.h"
 #include "Scene/DeferredRenderScene.h"
 #include "Scene/FrustumCullingScene.h"
+#include "Scene/BillboardScene.h"
+#include "Scene/ParticleScene.h"
 
 
 MainGame::MainGame()
@@ -38,10 +40,12 @@ MainGame::MainGame()
     //SCENE->Create("Start", new ModelInstancingScene());
     //SCENE->Create("Start", new LightScene());
     //SCENE->Create("Start", new DeferredRenderScene());
-    SCENE->Create("Start", new FrustumCullingScene());
+    //SCENE->Create("Start", new FrustumCullingScene());
+    //SCENE->Create("Start", new BillboardScene());
+    SCENE->Create("Start", new ParticleScene());
 
-    SCENE->Add("Start");
     SCENE->Add("Grid");
+    SCENE->Add("Start");
     //SCENE->Add("Tutorial");
 
 
@@ -123,6 +127,8 @@ void MainGame::PostRender()
 
 void MainGame::Initialize()
 {
+
+    srand((unsigned int)time(NULL));
           Device::GetInstance();
      Environment::GetInstance();
     StateManager::GetInstance();

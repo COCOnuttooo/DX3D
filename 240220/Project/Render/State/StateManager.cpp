@@ -48,10 +48,17 @@ void StateManager::CreateBlendState()
 	blendStates.emplace_back(new BlendState);
 
 	blendStates[0]->SetAlpha(false);
-	blendStates[0]->CreateState();
+	//blendStates[0]->CreateState();
 
 	blendStates[1]->SetAlpha(true);
-	blendStates[1]->CreateState();
+	//blendStates[1]->CreateState();
+
+	//AlphaToCoverage
+	blendStates.emplace_back(new BlendState);
+	blendStates[2]->SetAlphaToCoverage(true);
+	//blendStates[2]->CreateState();
+	blendStates.emplace_back(new BlendState);
+	blendStates[3]->SetAdditive();
 }
 
 void StateManager::CreateDepthStencilState()
@@ -79,6 +86,17 @@ void StateManager::EnableAlpha()
 	blendStates[1]->SetState();
 }
 
+void StateManager::EnableAlphaToCoverage()
+{
+	blendStates[2]->SetState();
+
+}
+
+void StateManager::EnableAdditive()
+{
+	blendStates[3]->SetState();
+}
+
 void StateManager::DisableAlpha()
 {
 	blendStates[0]->SetState();
@@ -103,6 +121,11 @@ void StateManager::SetFrontCounterClockWise()
 void StateManager::SetFrontClockWise()
 {
 	rs[0]->SetState();
+}
+
+void StateManager::DepthWriteMaskZero()
+{
+	depthStencilStates[2]->SetState();
 }
 
 

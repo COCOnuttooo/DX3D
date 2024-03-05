@@ -23,3 +23,20 @@ Vector3 GameMath::ClosestPointOnLine(const Vector3& start, const Vector3& end, c
     return start + line * t;
 
 }
+
+float GameMath::Random(const float& min, const float& max)
+{
+    if (min > max)
+        Random(max, min);
+    float normal = ((float)rand() / RAND_MAX);
+
+    return min + (max - min) * normal;
+
+}
+int GameMath::Random(const int& min, const int& max)
+{
+    if (min > max)
+        Random(max, min);
+
+    return min + rand() % (max - min);
+}

@@ -112,6 +112,7 @@ using namespace GameMath;
 #include "Render/Shader/VertexShader.h"
 #include "Render/Shader/PixelShader.h"
 #include "Render/Shader/ComputeShader.h"
+#include "Render/Shader/GeometryShader.h"
 
 #include "System/Camera.h"
 #include "System/Environment.h"
@@ -152,6 +153,10 @@ using namespace GameMath;
 #include "Object/Collider/ColliderBox.h"
 #include "Object/Collider/ColliderSphere.h"
 #include "Object/Collider/ColliderCapsule.h"
+
+#include "Object/Effect/ParticleEditor.h"
+#include "Object/Effect/Particle.h"
+#include "Object/Effect/Sprite.h"
 
 
 #include "Model/ModelData.h"

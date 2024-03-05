@@ -14,6 +14,8 @@ public:
 
 	virtual void Render(D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST) override;
 
+	Vector2 GetSize() { return Vector2(width, height); }
+
 private:
 	void CreateMesh() override;
 

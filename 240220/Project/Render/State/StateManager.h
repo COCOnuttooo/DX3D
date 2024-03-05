@@ -17,12 +17,17 @@ public:
 	void  EnableWireFrame();
 	void DisableWireFrame();
 	void EnableAlpha();
+	void EnableAlphaToCoverage();
+	void EnableAdditive();
+
 	void DisableAlpha();
 	void EnableDepth();
 	void DisableDepth();
 
 	void SetFrontCounterClockWise();
 	void SetFrontClockWise();
+
+	void DepthWriteMaskZero();
 private:
 	SamplerState* sampler;
 
