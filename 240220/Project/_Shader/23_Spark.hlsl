@@ -1,25 +1,36 @@
 #include "LightHeader.hlsli"
 
+
+struct VertexParticle
+{
+    float4 pos      : POSITION;
+    float2 size     : SIZE;
+    float3 velocity : VELOCITY;
+};
 struct VertexOutput //GeometryInput //VS -> GS -> RS -> PS
 {
-    float4 pos : POSITION0;
-    float2 size : SIZE;
-    matrix invView : INVVIEW;
-    matrix view : VIEW;
+    float4 pos        : POSITION0;
+    float2 size       : SIZE;
+    matrix invView    :INVVIEW;
+    matrix view       : VIEW;
     matrix projection : PROJECTION;
     
     
     
 };
-
-VertexOutput VS(VertexTexture input)
+cbuffer SparkBuffer : register(b10)
+{
+    float time;
+    float duration;
+}
+VertexOutput VS(VertexParticle input)
 {
     VertexOutput output;
     
-    output.pos = input.pos;
-    output.size = input.uv;
-    output.invView = invView;
-    output.view = view;
+    output.pos        = input.pos + float4(input.velocity, 0.0f) * time;
+    output.size       = input.size;
+    output.invView    = invView;
+    output.view       = view;
     output.projection = proj;
     
     return output;
@@ -74,15 +85,20 @@ inout TriangleStream<GeometryOutput> output)
     }
 };
 
-cbuffer SpriteBuffer : register(b10)
+cbuffer StratColorBuffer : register(b11)
 {
-    float2 maxFrame;
-    float2 curFrame;
+    float4 startColor;
 }
+
+cbuffer EndColorBuffer : register(b12)
+{
+    float4 endColor;
+}
+
 float4 PS(GeometryOutput input) : SV_TARGET
 {
-    float2 uv = (input.uv + curFrame) / maxFrame;
+    float4 color = lerp(startColor, endColor, time / duration);
     
-    return diffuseMap.Sample(samp, uv) * mDiffuse;
+    return diffuseMap.Sample(samp, input.uv) * color * mDiffuse;
     
 }

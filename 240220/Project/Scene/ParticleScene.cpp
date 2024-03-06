@@ -3,21 +3,23 @@
 
 ParticleScene::ParticleScene()
 {
-	sprite = new Sprite(L"Effect/greenCore_4x4.png", Vector2(30, 30), 4, 4, true);
-	//sprite->Play(Vector3(0, 0, 0));
+	particle = new Snow(L"Effect/Snow.png");
+	//particle = new Sprite(L"Effect/greenCore_4x4.png", Vector2(50, 50), 4, 4, true);
+	particle->Play(Vector3(0,0,0));
+	//particle->Play(Vector3(0, 0, 0));
 
 	collider = new ColliderSphere(50);
 }
 
 ParticleScene::~ParticleScene()
 {
-	delete sprite;
+	delete particle;
 	delete collider;
 }
 
 void ParticleScene::Update()
 {
-	sprite->Update();
+	particle->Update();
 	collider->Update();
 	if (KEY_DOWN(VK_LBUTTON))
 	{
@@ -27,10 +29,11 @@ void ParticleScene::Update()
 
 		if (collider->Collision(ray, &hitResult))
 		{
-			sprite->Play(hitResult.impactPoint);
+			particle->Play(hitResult.impactPoint);
 		}
 	}
 }
+
 
 void ParticleScene::PreRender()
 {
@@ -38,10 +41,11 @@ void ParticleScene::PreRender()
 
 void ParticleScene::Render()
 {
-	sprite->Render();
+	particle->Render();
 	collider->Render();
 }
 
 void ParticleScene::PostRender()
 {
+	particle->Debug();
 }

@@ -157,6 +157,9 @@ using namespace GameMath;
 #include "Object/Effect/ParticleEditor.h"
 #include "Object/Effect/Particle.h"
 #include "Object/Effect/Sprite.h"
+#include "Object/Effect/Spark.h"
+#include "Object/Effect/Rain.h"
+#include "Object/Effect/Snow.h"
 
 
 #include "Model/ModelData.h"

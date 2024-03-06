@@ -300,6 +300,15 @@
     <ClInclude Include="Scene\ParticleScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Object\Effect\Spark.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Effect\Rain.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Effect\Snow.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -551,6 +560,15 @@
     <ClCompile Include="Scene\ParticleScene.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Object\Effect\Spark.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Effect\Rain.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Effect\Snow.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -588,7 +606,10 @@
     <FxCompile Include="_Shader\20_DeferredRender.hlsl" />
     <FxCompile Include="_Shader\19_GBuffer.hlsl" />
     <FxCompile Include="_Shader\21_Billboard.hlsl" />
+    <FxCompile Include="_Shader\23_Spark.hlsl" />
     <FxCompile Include="_Shader\22_Sprite.hlsl" />
+    <FxCompile Include="_Shader\24_Rain.hlsl" />
+    <FxCompile Include="_Shader\25_Snow.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />

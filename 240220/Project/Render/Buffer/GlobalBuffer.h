@@ -202,3 +202,28 @@ struct IntValueBuffer : public ConstBuffer<IntValueData>
 
 	IntValueData data;
 };
+
+
+struct WeatherData
+{
+	Vector3 velocity = { 0,-1,0 };
+	float   distance = 100.0f;
+
+	Vector4 color = { 1,1,1,1 };
+
+	Vector3 origin = {};
+	float   time = 0.0f;
+
+	Vector3 size = { 50,50,50 };
+	float   turbulence = 0.1f;
+};
+
+struct WeatherBuffer : public ConstBuffer<WeatherData>
+{
+	WeatherBuffer()
+		:ConstBuffer(data)
+	{
+	}
+
+	WeatherData data;
+};

@@ -21,7 +21,7 @@ void Particle::Render()
 	if (isAdditive)
 		STATE->EnableAdditive();
 	else
-		STATE->EnableAlphaToCoverage();
+		STATE->EnableAlpha();
 
 	vertexBuffer->IASetBuffer(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 

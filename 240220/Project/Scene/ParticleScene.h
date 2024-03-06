@@ -11,7 +11,7 @@ public:
 	void PostRender() override;
 private:
 
-	Sprite* sprite;
+	Particle* particle;
 	
 	Collider* collider;
 
