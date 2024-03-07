@@ -144,6 +144,8 @@
     <ClInclude Include="Object\Effect\Particle.h" />
     <ClInclude Include="Object\Effect\ParticleEditor.h" />
     <ClInclude Include="Object\Effect\Rain.h" />
+    <ClInclude Include="System\Reflection.h" />
+    <ClInclude Include="System\Refraction.h" />
     <ClInclude Include="Scene\ParticleScene.h" />
     <ClInclude Include="Render\Shader\GeometryShader.h" />
     <ClInclude Include="Scene\BillboardScene.h" />
@@ -226,6 +228,7 @@
     <ClInclude Include="Render\Shader\VertexShader.h" />
     <ClInclude Include="Utility\Time.h" />
     <ClInclude Include="Utility\Vector3.h" />
+    <ClInclude Include="Scene\WaterScene.h" />
     <ClInclude Include="_Include\dirent\dirent.h" />
     <ClInclude Include="_Include\imconfig.h" />
     <ClInclude Include="_Include\imgui.h" />
@@ -244,6 +247,8 @@
     <ClCompile Include="Object\Effect\Particle.cpp" />
     <ClCompile Include="Object\Effect\ParticleEditor.cpp" />
     <ClCompile Include="Object\Effect\Rain.cpp" />
+    <ClCompile Include="System\Reflection.cpp" />
+    <ClCompile Include="System\Refraction.cpp" />
     <ClCompile Include="Scene\ParticleScene.cpp" />
     <ClCompile Include="Render\Shader\GeometryShader.cpp" />
     <ClCompile Include="Scene\BillboardScene.cpp" />
@@ -321,6 +326,7 @@
     <ClCompile Include="Render\Texture\Texture.cpp" />
     <ClCompile Include="Utility\Keyboard.cpp" />
     <ClCompile Include="Utility\Time.cpp" />
+    <ClCompile Include="Scene\WaterScene.cpp" />
     <ClCompile Include="_Include\imgui.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -503,6 +509,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="_Shader\25_Snow.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="_Shader\26_Reflection.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>

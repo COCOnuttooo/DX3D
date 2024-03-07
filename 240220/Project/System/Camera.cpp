@@ -24,10 +24,7 @@ void Camera::Update()
 {
 	Transform::Update();
 	if (target == nullptr)
-	{
 		FreeMode();
-
-	}
 	else
 		TargetMode();
 	CalculateFrustum();
@@ -44,6 +41,13 @@ void Camera::Set()
 	viewBuffer->SetData(viewMatrix, world);
 	viewBuffer->SetVSBuffer(1);
 	viewBuffer->SetPSBuffer(1);
+}
+
+void Camera::SetView()
+{
+	Transform::Update();
+
+	Set();
 }
 
 void Camera::Debug()

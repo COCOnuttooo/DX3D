@@ -15,6 +15,8 @@ public:
 	void Update();
 	void Set();
 
+	void SetView();
+
 	void Debug();
 
 	void   FreeMode();
@@ -26,6 +28,8 @@ public:
 	struct Ray ScreenPointToRay(Vector3 screenPoint);
 	Vector3 WorldToScreenPos(Vector3 worldPos);
 	void SetTarget(Transform* target) { this->target = target; }
+
+	ViewBuffer* GetViewBuffer() { return viewBuffer; }
 	//Frustum
 public:
 	bool PointInFrustum(Vector3 point);

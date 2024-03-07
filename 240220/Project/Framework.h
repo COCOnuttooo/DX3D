@@ -140,6 +140,9 @@ using namespace GameMath;
 #include "Object/Basic/Sphere.h"
 
 
+#include "System/Refraction.h"
+#include "System/Reflection.h"
+
 
 #include "Object/Basic/TextureCube.h"
 
