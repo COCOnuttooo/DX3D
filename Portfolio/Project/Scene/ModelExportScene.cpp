@@ -3,10 +3,10 @@
 
 ModelExportScene::ModelExportScene()
 {
-	string name = "DragonHead";
+	string name = "Knight";
 	exporter = new ModelExporter(name);
-	exporter->ExportModel();	
-	//exporter->ExportAnimation("Hip Hop Dancing");
+	//exporter->ExportModel();	
+	exporter->ExportAnimation("Getting Up");
 	//exporter->ExportAnimation("Fast Run");
 	//exporter->ExportAnimation("Happy Idle");
 	model = new Model(name);

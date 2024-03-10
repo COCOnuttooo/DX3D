@@ -321,6 +321,15 @@
     <ClInclude Include="Object\Landscape\Water.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Object\Effect\WindEffect.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Onix\Onix.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Effect\MeteorEffect.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -593,6 +602,15 @@
     <ClCompile Include="Object\Landscape\Water.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Object\Effect\WindEffect.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Onix\Onix.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Effect\MeteorEffect.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -637,6 +655,7 @@
     <FxCompile Include="_Shader\26_Reflection.hlsl" />
     <FxCompile Include="_Shader\27_Refraction.hlsl" />
     <FxCompile Include="_Shader\28_Water.hlsl" />
+    <FxCompile Include="_Shader\EffectTest.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />

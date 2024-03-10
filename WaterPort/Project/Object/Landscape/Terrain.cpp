@@ -102,8 +102,8 @@ void Terrain::CreateMesh()
 			vertex.pos = Vector3(x, 0, height - z - 1);
 			//vertex.pos = { x, 0, z };
 			
-			vertex.uv.x = (float)x / (width  - 1);
-			vertex.uv.y = (float)z / (height - 1);
+			vertex.uv.x = (float)x  / (width  - 1);
+			vertex.uv.y = (float)z  / (height - 1);
 
 			UINT index = x + width * z;
 

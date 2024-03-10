@@ -3,35 +3,57 @@
 
 ParticleScene::ParticleScene()
 {
-	particle = new Snow(L"Effect/Snow.png");
+	target = new ColliderSphere();
+	
+	meteorEffect = new MeteorEffect(target);
+	meteorEffect->Play();
+	//particle = new Snow(L"Effect/Snow.png");
 	//particle = new Sprite(L"Effect/greenCore_4x4.png", Vector2(50, 50), 4, 4, true);
-	particle->Play(Vector3(0,0,0));
+
 	//particle->Play(Vector3(0, 0, 0));
 
 	collider = new ColliderSphere(50);
+	collider->scale *= 3;
+	rock = new Model("Rock");
+	rock->rotation.y = XM_PI;
+	//rock->rotation.y = XM_PI;
+	//rock->scale *= 0.1;
+	//rock->translation.y = 0.5;
+	rock->SetParent(target);
+	onix = new Onix;
+	onix->SetTarget(target);
+	//particle->Stop();
 }
 
 ParticleScene::~ParticleScene()
 {
-	delete particle;
+	delete rock;
+	delete meteorEffect;
 	delete collider;
+	delete target;
+	delete onix;
 }
 
 void ParticleScene::Update()
 {
-	particle->Update();
-	collider->Update();
-	if (KEY_DOWN(VK_LBUTTON))
+	if (KEY_DOWN(VK_SPACE))
 	{
-		Ray ray = CAMERA->ScreenPointToRay(mousePos);
-
-		HitResult hitResult;
-
-		if (collider->Collision(ray, &hitResult))
-		{
-			particle->Play(hitResult.impactPoint);
-		}
+		isPlay = true;
 	}
+	if (!isPlay)
+	{
+		return;
+	}
+
+	meteorEffect->Update();
+	collider->Update();
+	target->translation += target->GetForwardVector() * DELTA_TIME * 5;
+	target->Update();
+	rock->Update();
+	onix->Update();
+
+
+
 }
 
 
@@ -41,11 +63,15 @@ void ParticleScene::PreRender()
 
 void ParticleScene::Render()
 {
-	particle->Render();
-	collider->Render();
+	//collider->Render();
+	//target->Render();
+	rock->Render();
+	meteorEffect->Render();
+	onix->Render();
 }
 
 void ParticleScene::PostRender()
 {
-	particle->Debug();
+	target->Debug();
+	rock->Debug();
 }

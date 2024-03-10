@@ -50,7 +50,7 @@ SurfaceData UnpackGBuffer(int2 location)
 {
     SurfaceData output;
     
-    int3 location3 = float3(location, 0);
+    int3 location3 = int3(location, 0);
     float depth = depthTex.Load(location3).x;
     
     output.linearDeapth = ConvertDepthToLinear(depth);

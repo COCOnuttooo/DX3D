@@ -146,7 +146,7 @@ void SolarScene::Initialize()
 	//planets[11]->SetParent(planets[6]);
 	//planets[11]->rotationSpeed.y = 10;
 
-	disc = new Disc(1, 2, 50);
+	disc = new Disc(0, 2, 50);
 	disc->GetMaterial()->SetDiffuseMap(L"SolarSystem/saturnringcolor.jpg");
 	disc->scale.x = planets[6]->scale.x * 0.2;
 	disc->scale.y = planets[6]->scale.x * 0.2;

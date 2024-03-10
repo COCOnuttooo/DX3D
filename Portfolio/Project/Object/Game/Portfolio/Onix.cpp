@@ -12,8 +12,9 @@ Onix::Onix()
 			dests.push_back(dest);
 		}
 		ColliderSphere* sphere = new ColliderSphere;
-		sphere->translation.z = -i * 2;
 		sphere->scale *= (1 - 0.08 * i);
+		sphere->scale *= 10;
+		sphere->translation.z = -i * 2 * sphere->scale.x;
 		sphere->SetParent(parent);
 		if (i == 0)
 		{
@@ -42,6 +43,7 @@ Onix::Onix()
 		}
 		bodies.push_back(sphere);
 	}
+	SetDirection(Vector3(0,10,0));
 }
 
 Onix::~Onix()
@@ -59,7 +61,13 @@ void Onix::Update()
 {
 
 	//Input();
+	Pattern1();
 	BodyMove();
+	//if (bodies[0]->translation.y >= 20)
+	//{
+	//	SetDirection(target->GetGlobalPosition());
+	//	moveSpeed = 10.0f;
+	//}
 	//Stay();
 	head->Update();
 	for (auto& i : bodies)
@@ -85,6 +93,12 @@ void Onix::SpinMove()
 void Onix::Debug()
 {
 	head->Debug();
+	if (ImGui::TreeNode("Onix"))
+	{
+		ImGui::Text("Pos :   %f,   %f,   %f", bodies[0]->rotation.x, bodies[0]->rotation.y, bodies[0]->rotation.z);
+
+		ImGui::TreePop();
+	}
 }
 
 
@@ -92,17 +106,8 @@ void Onix::BodyMove()
 {
 	//distanceBetweenBody = 2.0f;
 	//// 첫 번째 링크의 움직임 (기존 구현 유지)
-	////float speed = 3.0f; // 초당 이동 속도
-	////bodies[0]->translation.z = 5 * sin(time);
-	////bodies[0]->translation.y = 5 * cos(time);
-	////bodies[0]->translation.x += speed * DELTA_TIME;
-	time += DELTA_TIME;
-	bodies[0]->rotation.y = time * 2;
-	bodies[0]->rotation.x = time * 1;
-	bodies[0]->rotation.z = time * 1;
-	bodies[0]->translation += bodies[0]->GetForwardVector() * 10 * DELTA_TIME;
 
-	// bodies[0]의 회전을 업데이트하여 원형 경로를 따라 이동
+
 	// 나머지 링크들의 움직임 업데이트
 	for (int i = 1; i < bodies.size(); i++)
 	{
@@ -166,33 +171,56 @@ void Onix::Input()
 
 	}
 }
-//void Onix::Move()
+//void Onix::SetDirection(Vector3 dest)
 //{
-//	distanceBetweenBody = 2.0f;
-//	// 첫 번째 링크의 움직임을 멈춤 (머리 고정)
-//	// time += DELTA_TIME; // 시간 증가는 나머지 링크들의 움직임에만 영향을 미침
-//
-//	// 첫 번째 링크(머리)의 위치를 고정
-//	// bodies[0]->translation.z, y, x를 변경하지 않음
-//
-//	// 나머지 링크들의 움직임 업데이트
-//	time += DELTA_TIME;
-//	for (int i = 1; i < bodies.size(); i++)
-//	{
-//		Vector3 targetPosition = bodies[i - 1]->translation; // 목표 위치: 바로 앞 링크의 위치
-//		Vector3 currentPosition = bodies[i]->translation; // 현재 위치
-//
-//		// 링크별로 시간 오프셋을 적용하여 자연스러운 움직임 생성
-//		float localTimeOffset = i * 0.5f; // 링크마다 다른 시간 오프셋을 적용
-//		float localTime = time + localTimeOffset; // 전역 시간에 오프셋 적용
-//
-//		// 거리를 유지하며 이동하기
-//		float distance = bodies[i]->scale.x + bodies[i - 1]->scale.x;
-//		Vector3 direction = (targetPosition - currentPosition).GetNormalized(); // 목표 방향
-//		Vector3 dynamicOffset = Vector3(0, 0.5f * sin(localTime), 0.5f * cos(localTime)); // 시간에 따라 변하는 동적 오프셋
-//		Vector3 newPosition = targetPosition - direction * distance + dynamicOffset; // 목표 위치에서 일정 거리 떨어진 위치에 동적 오프셋 적용
-//
-//		// newPosition을 사용하여 이동 처리
-//		bodies[i]->translation = newPosition;
-//	}
+//	//dest = Vector3(1, 0, -10);
+//	Vector3 dir = dest - bodies[0]->translation;
+//	dir = dir.GetNormalized();
+//	bodies[0]->rotation.y = atan2f(dir.z, dir.x);
+//	float axisValue = sqrt(dir.z * dir.z + dir.x * dir.x);
+//	bodies[0]->rotation.x = -atan2f(dir.y,axisValue );
 //}
+void Onix::SetDirection(Vector3 dest)
+{
+	Vector3 dir = dest - bodies[0]->translation;
+
+	// 방향 벡터를 정규화
+	dir = dir.GetNormalized();
+
+	bodies[0]->rotation.y = atan2f(dir.x, dir.z);
+
+	float axisValue = sqrt(dir.x * dir.x + dir.z * dir.z);
+	bodies[0]->rotation.x = -atan2f(dir.y, axisValue);
+
+}
+
+void Onix::Pattern1()
+{
+	//if (state != ONIXIDLE)
+	//{
+	//	return;
+	//}
+	if (state == ONIXIDLE)
+	{
+		SetDirection(Vector3(bodies[0]->translation.x, bodies[0]->translation.y +10, bodies[0]->translation.z));
+		moveSpeed = 30.0f;
+
+		state = PATTERN1;
+	}
+	if (bodies[0]->translation.y >= 300)
+	{
+		SetDirection(target->translation);
+		moveSpeed = 60.0f;
+	}
+	if (bodies[0]->translation.y < -200)
+	{
+		SetDirection(Vector3(bodies[0]->translation.x, bodies[0]->translation.y + 10, bodies[0]->translation.z));
+		moveSpeed = 30.0f;
+	}
+	bodies[0]->translation += bodies[0]->GetForwardVector() * moveSpeed * DELTA_TIME;
+
+}
+
+void Onix::Pattern2()
+{
+}

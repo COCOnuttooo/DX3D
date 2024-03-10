@@ -10,7 +10,7 @@ struct VertexInput
     
     int4 indices   : BLENDINDICES;
     float4 weights : BLENDWEIGHTS;
-    
+
     matrix transform : INSTANCE_TRANSFORM;
     uint   index     : INSTANCE_INDEX;
     
@@ -18,13 +18,13 @@ struct VertexInput
 };
 struct VertexOutput
 {
-    float4 pos : SV_POSITION;
-    float2 uv : UV;
+    float4 pos    : SV_POSITION;
+    float2 uv     : UV;
     float3 normal : NORMAL;
     
     float3 cameraDir : CAMERADIR;
     
-    float3 tangent : TANGENT;
+    float3 tangent  : TANGENT;
     float3 binormal : BINORMAL;
 };
 

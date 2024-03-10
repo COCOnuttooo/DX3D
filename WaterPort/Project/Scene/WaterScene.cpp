@@ -11,7 +11,7 @@ WaterScene::WaterScene()
 	//floor->GetMaterial()->SetShader(L"27_Refraction");
 
 	water = new Water(L"Landscape/Wave.dds");
-	sky = new SkyBox(L"Landscape/Space.dds");
+	sky = new SkyBox(L"Landscape/Texture2.dds");
 }
 
 WaterScene::~WaterScene()

@@ -43,8 +43,8 @@ MainGame::MainGame()
     //SCENE->Create("Start", new DeferredRenderScene());
     //SCENE->Create("Start", new FrustumCullingScene());
     //SCENE->Create("Start", new BillboardScene());
-    //SCENE->Create("Start", new ParticleScene());
-    SCENE->Create("Start", new WaterScene());
+    SCENE->Create("Start", new ParticleScene());
+    //SCENE->Create("Start", new WaterScene());
 
     SCENE->Add("Grid");
     SCENE->Add("Start");

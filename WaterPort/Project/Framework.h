@@ -47,8 +47,8 @@ using namespace DirectX;
 using namespace std;
 
 
-#define WIN_WIDTH  1280.0f
-#define WIN_HEIGHT  720.0f
+#define WIN_WIDTH  1280.0f 
+#define WIN_HEIGHT  720.0f 
 #define WIN_CENTER Vector3(WIN_WIDTH* 0.5f, WIN_HEIGHT*0.5f, 0.0f)
 
 #define MAX_FRAME 512
@@ -166,6 +166,8 @@ using namespace GameMath;
 #include "Object/Effect/Spark.h"
 #include "Object/Effect/Rain.h"
 #include "Object/Effect/Snow.h"
+#include "Object/Effect/WindEffect.h"
+#include "Object/Effect/MeteorEffect.h"
 
 
 #include "Model/ModelData.h"
@@ -180,6 +182,7 @@ using namespace GameMath;
 #include "Model/ModelAnimatorInstancing.h"
 #include "Object/Game/Character.h"
 #include "Object/Game/Knight.h"
+#include "Object/Onix/Onix.h"
 
 
 ////////////////////////////////////////////////

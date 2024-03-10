@@ -136,7 +136,7 @@ void Camera::TargetMode()
 			rotation.x = 0;
 
 		if (rotation.y >= 360)
-			rotation.y = 0;
+			rotation.y -= 360;
 		else if (rotation.y <= 0)
 			rotation.y = 0;
 	}

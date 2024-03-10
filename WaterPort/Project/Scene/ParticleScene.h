@@ -10,8 +10,11 @@ public:
 	void Render() override;
 	void PostRender() override;
 private:
-
-	Particle* particle;
+	bool isPlay = false;
+	Model* rock;
+	Onix* onix;
+	Collider* target;
+	MeteorEffect* meteorEffect;
 	
 	Collider* collider;
 

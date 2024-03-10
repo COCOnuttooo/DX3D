@@ -14,7 +14,11 @@ public:
 	void PostRender() override;
 
 private:
+	bool isPlaying = false;
+	Knight* player;
+	Sphere* target;
 	Terrain* terrain;
 	Onix* onix;
+	Quad* plane;
 };
 
