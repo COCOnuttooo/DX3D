@@ -12,6 +12,13 @@ WaterScene::WaterScene()
 
 	water = new Water(L"Landscape/Wave.dds");
 	sky = new SkyBox(L"Landscape/Space.dds");
+	shadow = new Shadow(2048,2048);
+
+	LightData& light = ENVIRONMENT->GetLightBuffer()->data.lights[0];
+
+	light.position = { 0,3, -3 };
+	light.type = 1;
+	light.range = 2000;
 }
 
 WaterScene::~WaterScene()
@@ -20,7 +27,8 @@ WaterScene::~WaterScene()
 	delete knight;
 	delete sphere;
 	delete bunny;
-
+	delete shadow;
+	delete colSphere;
 	//delete reflection;
 	//delete refraction;
 	delete water;
@@ -36,8 +44,8 @@ void WaterScene::Update()
 	knight->Update();
 	sphere->Update();
 	bunny->Update();
-
-	water->Update();
+	colSphere->Update();
+	//water->Update();
 	//reflection->Update();
 	//refraction->Update();
 }
@@ -46,14 +54,19 @@ void WaterScene::PreRender()
 {
 	//reflection->SetPreRender();
 	//refraction->SetPreRender();
-	water->SetReflection();
-	sky->Render();
-	knight->Render();
-	sphere->Render();
-	bunny->Render();
+	//water->SetReflection();
+	//sky->Render();
+	//knight->Render();
+	//sphere->Render();
+	//bunny->Render();
 
-	water->SetRefraction();
+	//water->SetRefraction();
+	//sky->Render();
+	//knight->Render();
+	//sphere->Render();
+	//bunny->Render();
 	sky->Render();
+	shadow->SetPreRender();
 	knight->Render();
 	sphere->Render();
 	bunny->Render();
@@ -64,11 +77,11 @@ void WaterScene::PreRender()
 void WaterScene::Render()
 {
 	sky->Render();
-	water->Render();
+	//water->Render();
 	//reflection->SetRender();
 	//refraction->SetRender();
-
-	//floor->Render();
+	shadow->SetRender();
+	floor->Render();
 	knight->Render();
 	sphere->Render();
 	bunny->Render();
@@ -81,12 +94,15 @@ void WaterScene::PostRender()
 	//sphere->Debug();
 	//bunny->Debug();
 	//floor->Debug();
-	water->Debug();
+	//water->Debug();
 	//refraction->Debug();
+	shadow->PostRender();
+	colSphere->Debug();
 }
 
 void WaterScene::CreateObjects()
 {
+	colSphere = new ColliderSphere();
 	floor = new Quad();
 	floor->SetName("Floor");
 	floor->scale *= 30;
@@ -102,9 +118,9 @@ void WaterScene::CreateObjects()
 	sphere->GetMaterial()->SetNormalMap(L"Landscape/FieldStone_NM.tga");
 	floor->translation.y += 0.1;
 	bunny = new Model("StanfordBunny");
+	bunny->SetParent(colSphere);
 
-
-	floor->GetMaterial()->SetShader(L"16_Light");
+	floor->GetMaterial()->SetShader(L"29_Shadow");
 	knight->SetShader(L"16_Light");
 	sphere->GetMaterial()->SetShader(L"16_Light");
 	bunny->SetShader(L"16_Light");

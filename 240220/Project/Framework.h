@@ -142,7 +142,7 @@ using namespace GameMath;
 
 #include "System/Refraction.h"
 #include "System/Reflection.h"
-
+#include "System/Shadow.h"
 
 
 #include "Object/Basic/TextureCube.h"

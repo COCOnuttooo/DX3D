@@ -20,7 +20,7 @@ public:
 	Matrix GetPersMatrix() { return persMatrix; }
 
 	Camera* GetMainCamera() { return mainCamera; }
-
+	LightBuffer* GetLightBuffer() { return lightBuffer; }
 private:
 	Matrix        persMatrix;
 	MatrixBuffer* persBuffer;

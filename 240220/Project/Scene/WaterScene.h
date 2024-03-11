@@ -20,13 +20,14 @@ private:
 	ModelAnimator* knight;
 
 	Sphere* sphere;
-
+	ColliderSphere* colSphere;
 	Model* bunny;
 
 	//Reflection* reflection;
 	//Refraction* refraction;
 	Water* water;
 	SkyBox* sky;
+	Shadow* shadow;
 	//Material* material;
 	//VertexBuffer* vertexBuffer;
 
