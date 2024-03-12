@@ -118,10 +118,10 @@ void WaterScene::CreateObjects()
 	sphere->GetMaterial()->SetNormalMap(L"Landscape/FieldStone_NM.tga");
 	floor->translation.y += 0.1;
 	bunny = new Model("StanfordBunny");
-	bunny->SetParent(colSphere);
+	knight->SetParent(colSphere);
 
 	floor->GetMaterial()->SetShader(L"29_Shadow");
-	knight->SetShader(L"16_Light");
+	//knight->SetShader(L"16_Light");
 	sphere->GetMaterial()->SetShader(L"16_Light");
 	bunny->SetShader(L"16_Light");
 }

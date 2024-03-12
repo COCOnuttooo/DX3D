@@ -2,10 +2,10 @@
 #include "MeteorEffect.h"
 MeteorEffect::MeteorEffect(Transform* target)
 {
-	particle = new WindEffect(L"Effect/Snow.png", target, 1, 150, Vector3(166 / 255.0f, 106 / 255.f, 10 / 255.f) ,    0.7);
-	particle2 = new WindEffect(L"Effect/Snow.png", target, 1, 300, Vector3(114 / 255.0f, 25 / 255.f, 25 / 255.f) ,    0.9);
-	particle3 = new WindEffect(L"Effect/Snow.png", target, 1.2, 200, Vector3(100 / 255.f, 100 / 255.f, 100 / 255.f) , 0.9);
-	particle4 = new WindEffect(L"Effect/Snow.png", target, 2, 50, Vector3(0.f, 0.f, 0.f)                            , 0.7);
+	particle =  new ComputingEffect(L"Effect/Snow.png", target, 1, 150, Vector3(166 / 255.0f, 106 / 255.f, 10 / 255.f) ,    0.7);
+	particle2 = new ComputingEffect(L"Effect/Snow.png", target, 1, 300, Vector3(114 / 255.0f, 25 / 255.f, 25 / 255.f) ,    0.9);
+	particle3 = new ComputingEffect(L"Effect/Snow.png", target, 1.2, 200, Vector3(100 / 255.f, 100 / 255.f, 100 / 255.f) , 0.9);
+	particle4 = new ComputingEffect(L"Effect/Snow.png", target, 2, 50, Vector3(0.f, 0.f, 0.f)                            , 0.7);
 }
 
 MeteorEffect::~MeteorEffect()

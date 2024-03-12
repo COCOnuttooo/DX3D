@@ -113,6 +113,8 @@ using namespace GameMath;
 #include "Render/Shader/PixelShader.h"
 #include "Render/Shader/ComputeShader.h"
 #include "Render/Shader/GeometryShader.h"
+#include "Render/Shader/DomainShader.h"
+#include "Render/Shader/HullShader.h"
 
 #include "System/Camera.h"
 #include "System/Environment.h"

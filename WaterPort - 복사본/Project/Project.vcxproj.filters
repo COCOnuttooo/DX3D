@@ -330,6 +330,12 @@
     <ClInclude Include="Object\Effect\MeteorEffect.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Meteor.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Effect\ComputingEffect.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -611,6 +617,12 @@
     <ClCompile Include="Object\Effect\MeteorEffect.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Meteor.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Effect\ComputingEffect.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="__Others\Project.rc">
@@ -656,6 +668,7 @@
     <FxCompile Include="_Shader\27_Refraction.hlsl" />
     <FxCompile Include="_Shader\28_Water.hlsl" />
     <FxCompile Include="_Shader\EffectTest.hlsl" />
+    <FxCompile Include="_Shader\CalculatePos.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />

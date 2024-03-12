@@ -18,6 +18,7 @@
 #include "Scene/BillboardScene.h"
 #include "Scene/ParticleScene.h"
 #include "Scene/WaterScene.h"
+#include "Scene/TessellationScene.h"
 
 
 MainGame::MainGame()
@@ -44,7 +45,8 @@ MainGame::MainGame()
     //SCENE->Create("Start", new FrustumCullingScene());
     //SCENE->Create("Start", new BillboardScene());
     //SCENE->Create("Start", new ParticleScene());
-    SCENE->Create("Start", new WaterScene());
+    //SCENE->Create("Start", new WaterScene());
+    SCENE->Create("Start", new TessellationScene());
 
     SCENE->Add("Grid");
     SCENE->Add("Start");

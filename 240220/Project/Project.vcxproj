@@ -141,6 +141,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Render\Shader\HullShader.h" />
+    <ClInclude Include="Render\Shader\DomainShader.h" />
     <ClInclude Include="Object\Effect\Particle.h" />
     <ClInclude Include="Object\Effect\ParticleEditor.h" />
     <ClInclude Include="Object\Effect\Rain.h" />
@@ -187,6 +189,7 @@
     <ClInclude Include="Object\Effect\Sprite.h" />
     <ClInclude Include="Object\Effect\Spark.h" />
     <ClInclude Include="Object\Effect\Snow.h" />
+    <ClInclude Include="Scene\TessellationScene.h" />
     <ClInclude Include="Utility\GameMath.h" />
     <ClInclude Include="Object\Basic\Grid.h" />
     <ClInclude Include="Render\State\RasterizerState.h" />
@@ -246,6 +249,8 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Render\Shader\HullShader.cpp" />
+    <ClCompile Include="Render\Shader\DomainShader.cpp" />
     <ClCompile Include="Object\Effect\Particle.cpp" />
     <ClCompile Include="Object\Effect\ParticleEditor.cpp" />
     <ClCompile Include="Object\Effect\Rain.cpp" />
@@ -291,6 +296,7 @@
     <ClCompile Include="Object\Effect\Sprite.cpp" />
     <ClCompile Include="Object\Effect\Spark.cpp" />
     <ClCompile Include="Object\Effect\Snow.cpp" />
+    <ClCompile Include="Scene\TessellationScene.cpp" />
     <ClCompile Include="Utility\GameMath.cpp" />
     <ClCompile Include="Object\Basic\Grid.cpp" />
     <ClCompile Include="Render\State\RasterizerState.cpp" />

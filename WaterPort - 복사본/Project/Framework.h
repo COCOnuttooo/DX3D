@@ -167,6 +167,7 @@ using namespace GameMath;
 #include "Object/Effect/Rain.h"
 #include "Object/Effect/Snow.h"
 #include "Object/Effect/WindEffect.h"
+#include "Object/Effect/ComputingEffect.h"
 #include "Object/Effect/MeteorEffect.h"
 
 
