@@ -268,3 +268,23 @@ struct PosBuffer : public ConstBuffer<PosData>
 
 	PosData data;
 };
+
+
+struct AdditionalCumputeData
+{
+	float tailLength = 1.0f;
+	Vector3 randomRot = {};
+	UINT drawCount = 1;
+	Vector3 padding;
+
+};
+
+struct AdditionalCumputeBuffer : public ConstBuffer<AdditionalCumputeData>
+{
+	AdditionalCumputeBuffer()
+		:ConstBuffer(data)
+	{
+	}
+
+	AdditionalCumputeData data;
+};

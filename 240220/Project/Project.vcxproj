@@ -190,6 +190,7 @@
     <ClInclude Include="Object\Effect\Spark.h" />
     <ClInclude Include="Object\Effect\Snow.h" />
     <ClInclude Include="Scene\TessellationScene.h" />
+    <ClInclude Include="TerrainLOD.h" />
     <ClInclude Include="Utility\GameMath.h" />
     <ClInclude Include="Object\Basic\Grid.h" />
     <ClInclude Include="Render\State\RasterizerState.h" />
@@ -297,6 +298,7 @@
     <ClCompile Include="Object\Effect\Spark.cpp" />
     <ClCompile Include="Object\Effect\Snow.cpp" />
     <ClCompile Include="Scene\TessellationScene.cpp" />
+    <ClCompile Include="TerrainLOD.cpp" />
     <ClCompile Include="Utility\GameMath.cpp" />
     <ClCompile Include="Object\Basic\Grid.cpp" />
     <ClCompile Include="Render\State\RasterizerState.cpp" />

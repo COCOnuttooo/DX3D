@@ -47,7 +47,7 @@ void ParticleScene::Update()
 
 	meteorEffect->Update();
 	collider->Update();
-	target->translation += target->GetForwardVector() * DELTA_TIME * 5;
+	//target->translation += target->GetForwardVector() * DELTA_TIME * 5;
 	target->Update();
 	rock->Update();
 	onix->Update();

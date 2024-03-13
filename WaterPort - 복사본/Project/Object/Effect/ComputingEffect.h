@@ -23,6 +23,7 @@ private:
 	WeatherBuffer* buffer;
 	Transform* target;
 	PosBuffer* posBuffer;
+	AdditionalCumputeBuffer* computeBuffer;
 	ComputeShader* computeShader;
 
 	struct PosDesc

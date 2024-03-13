@@ -14,6 +14,7 @@ public:
 	static class   PixelShader*  AddPS(wstring file);
 	static class ComputeShader*  AddCS(wstring file);
 	static class GeometryShader* AddGS(wstring file);
+	static class DomainShader*   AddDS(wstring file);
 
 	wstring GetPath() { return path; }
 
