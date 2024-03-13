@@ -7,6 +7,12 @@ ParticleScene::ParticleScene()
 	
 	meteorEffect = new MeteorEffect(target);
 	meteorEffect->Play();
+	meteorEffect2 = new MeteorEffect(target);
+	meteorEffect2->Play();
+	meteorEffect3 = new MeteorEffect(target);
+	meteorEffect3->Play();
+	meteorEffect4 = new MeteorEffect(target);
+	meteorEffect4->Play();
 	//particle = new Snow(L"Effect/Snow.png");
 	//particle = new Sprite(L"Effect/greenCore_4x4.png", Vector2(50, 50), 4, 4, true);
 
@@ -29,6 +35,9 @@ ParticleScene::~ParticleScene()
 {
 	delete rock;
 	delete meteorEffect;
+	delete meteorEffect2;
+	delete meteorEffect3;
+	delete meteorEffect4;
 	delete collider;
 	delete target;
 	delete onix;
@@ -46,8 +55,11 @@ void ParticleScene::Update()
 	}
 
 	meteorEffect->Update();
+	meteorEffect2->Update();
+	meteorEffect3->Update();
+	meteorEffect4->Update();
 	collider->Update();
-	//target->translation += target->GetForwardVector() * DELTA_TIME * 5;
+	target->translation += target->GetForwardVector() * DELTA_TIME * 5;
 	target->Update();
 	rock->Update();
 	onix->Update();
@@ -67,6 +79,9 @@ void ParticleScene::Render()
 	//target->Render();
 	rock->Render();
 	meteorEffect->Render();
+	meteorEffect2->Render();
+	meteorEffect3->Render();
+	meteorEffect4->Render();
 	onix->Render();
 }
 

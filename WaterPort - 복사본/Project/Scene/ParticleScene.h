@@ -15,6 +15,9 @@ private:
 	Onix* onix;
 	Collider* target;
 	MeteorEffect* meteorEffect;
+	MeteorEffect* meteorEffect2;
+	MeteorEffect* meteorEffect3;
+	MeteorEffect* meteorEffect4;
 	
 	Collider* collider;
 

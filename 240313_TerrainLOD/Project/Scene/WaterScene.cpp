@@ -43,6 +43,7 @@ WaterScene::~WaterScene()
 	delete shadow;
 
 	delete terrain;
+	delete collider;
 }
 
 void WaterScene::Update()
@@ -56,7 +57,7 @@ void WaterScene::Update()
 	knight->Update();
 	sphere->Update();
 	 bunny->Update();
-
+	 collider->Update();
 	 sky->Update();
 }
 
@@ -112,6 +113,7 @@ void WaterScene::PostRender()
 	shadow->PostRender();
 
 	knight->Debug();
+	collider->Debug();
 }
 
 void WaterScene::CreateObjects()
@@ -135,8 +137,8 @@ void WaterScene::CreateObjects()
 	sphere->GetMaterial()->SetSpecularMap(L"Landscape/FieldStone_SM.tga");
 
 	bunny = new Model("StanfordBunny");
-
-
+	collider = new ColliderSphere();
+	knight->SetParent(collider);
 	 floor->GetMaterial()->SetShader(L"29_Shadow");
 	 	 		   knight->SetShader(L"16_Light");
 	sphere->GetMaterial()->SetShader(L"16_Light");

@@ -217,7 +217,7 @@ void Onix::Pattern1()
 		windEffect->SetTailLength(0.8);
 
 		SetDirection(target->translation);
-		moveSpeed = 100.0f;
+		moveSpeed = 30.0f;
 	}
 	if (bodies[0]->translation.y < -100)
 	{

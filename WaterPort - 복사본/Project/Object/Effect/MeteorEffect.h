@@ -10,7 +10,7 @@ public:
 	void Stop();
 private:
 	bool isActive = false;
-	Particle* particle;
+	Particle* particle1;
 	Particle* particle2;
 	Particle* particle3;
 	Particle* particle4;

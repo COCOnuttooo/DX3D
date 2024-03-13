@@ -15,7 +15,7 @@ public:
 
 private:
 	Quad* floor;
-
+	Collider* collider;
 	ModelAnimator* knight;
 
 	Sphere* sphere;
