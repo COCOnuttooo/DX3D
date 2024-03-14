@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ComputingEffectInstancing.h" />
     <ClInclude Include="Object\Effect\ComputingEffect.h" />
     <ClInclude Include="Meteor.h" />
     <ClInclude Include="Object\Effect\MeteorEffect.h" />
@@ -256,6 +257,7 @@
     <ClInclude Include="__Others\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ComputingEffectInstancing.cpp" />
     <ClCompile Include="Object\Effect\ComputingEffect.cpp" />
     <ClCompile Include="Meteor.cpp" />
     <ClCompile Include="Object\Effect\MeteorEffect.cpp" />

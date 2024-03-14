@@ -336,6 +336,9 @@
     <ClInclude Include="Object\Effect\ComputingEffect.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="ComputingEffectInstancing.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -621,6 +624,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Object\Effect\ComputingEffect.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputingEffectInstancing.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
