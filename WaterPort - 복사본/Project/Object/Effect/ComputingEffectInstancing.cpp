@@ -1,9 +1,20 @@
 #include "Framework.h"
 #include "ComputingEffectInstancing.h"
+UINT ComputingEffectInstancing::dataCounts = 0;
+UINT ComputingEffectInstancing::instanceIndex = 0;
+StructuredBuffer* ComputingEffectInstancing::structuredBuffer = nullptr;
+vector<vector<PosDesc>> ComputingEffectInstancing::inputs = {};
+vector<vector<PosDesc>> ComputingEffectInstancing::outputs = {};
+vector<Transform*> ComputingEffectInstancing::targets = {};
+vector<UINT> ComputingEffectInstancing::indexes = {};
+StructuredBuffer* ComputingEffectInstancing::indexStructuredBuffer = nullptr;
+StructuredBuffer* ComputingEffectInstancing::weatherStructuredBuffer = nullptr;
+StructuredBuffer* ComputingEffectInstancing::computeStructuredBuffer = nullptr;
 
 ComputingEffectInstancing::ComputingEffectInstancing(wstring file, Transform* target, float tailLength, UINT drawCount, Vector3 color, float turbulence)
     :target(target), tailLength(tailLength)
 {
+    targets.emplace_back(target);
     if (drawCount <= MAX_COUNT)
         this->drawCount = drawCount;
     else
@@ -34,7 +45,15 @@ ComputingEffectInstancing::~ComputingEffectInstancing()
     delete buffer;
     delete posBuffer;
     delete computeBuffer;
+}
+
+void ComputingEffectInstancing::Delete()
+{
     delete structuredBuffer;
+    delete indexStructuredBuffer;
+    delete weatherStructuredBuffer;
+    delete computeStructuredBuffer;
+
 }
 
 void ComputingEffectInstancing::Update()
@@ -43,44 +62,14 @@ void ComputingEffectInstancing::Update()
     {
         return;
     }
+    
+    buffers[index]->data.time = Time::Delta();
+    buffers[index]->data.velocity = -target->GetForwardVector();
+    buffers[index]->data.origin = target->GetGlobalPosition();
+    buffers[index]->data.size = target->scale;
 
-    buffer->data.time = Time::Delta();
-    buffer->data.velocity = -target->GetForwardVector();
-    buffer->data.origin = target->GetGlobalPosition();
-    buffer->data.size = target->scale;
-
-    //for (UINT i = 0; i < drawCount; i++)
-    //{
-    //    Vector3 tempPos = Vector3(posBuffer->data.pos[i].x, posBuffer->data.pos[i].y, posBuffer->data.pos[i].z);
-    //    Vector3 velocity;
-    //    Vector3 normal = tempPos - buffer->data.origin;
-    //    Vector3 tangent = XMVector3Cross(normal, buffer->data.velocity);
-    //    velocity = XMVector3Cross(tangent, normal);
-    //    velocity = velocity.GetNormalized();
-    //    float angle = Vector3(XMVector3Dot(buffer->data.velocity.GetNormalized(), Vector3(tempPos - buffer->data.origin).GetNormalized())).y;
-    //    if (angle > buffer->data.turbulence)
-    //        velocity = buffer->data.velocity;
-
-    //    tempPos += 3 * DELTA_TIME * velocity * buffer->data.size * tailLength;
-    //    posBuffer->data.pos[i] = Vector4(tempPos.x, tempPos.y, tempPos.z, 0);
-    //    if ((tempPos - buffer->data.origin).Length() >= 3 * Max(buffer->data.size.x, buffer->data.size.y, buffer->data.size.z) * tailLength)
-    //    {
-    //        Vector3 pos;
-    //        Vector3 rot;
-    //        do
-    //        {
-    //            rot = Vector3(Random(-1.0f, 1.0f), Random(-1.0f, 1.0f), Random(-1.0f, 1.0f)).GetNormalized();
-    //        } while (Vector3(XMVector3Dot(rot, buffer->data.velocity)).x > 0);
-    //        //pos.x = Random(buffer->data.origin.x-buffer->data.size.x, buffer->data.origin.x+buffer->data.size.x);
-    //        //pos.y = Random(buffer->data.origin.y-buffer->data.size.y, buffer->data.origin.y+buffer->data.size.y);
-    //        //pos.z = Random(buffer->data.origin.z-buffer->data.size.z, buffer->data.origin.z+buffer->data.size.z);
-    //        pos = rot * buffer->data.size.Length() + buffer->data.origin;
-    //        posBuffer->data.pos[i] = Vector4(pos.x, pos.y, pos.z, 0);
-    //    }
-    //}
-
-    structuredBuffer->UpdateInput(input.data());
-    CalculatePos();
+    //structuredBuffer->UpdateInput(input.data());
+    //CalculatePos();
     //vertexBuffer->UpdateVertex(vertices.data(), vertices.size());
 }
 
@@ -90,8 +79,8 @@ void ComputingEffectInstancing::Render()
     {
         return;
     }
-    buffer->SetVSBuffer(10);
-    posBuffer->SetVSBuffer(11);
+    buffers[index]->SetVSBuffer(10);
+    posBuffers[index]->SetVSBuffer(11);
     Particle::Render();
 }
 
@@ -146,21 +135,31 @@ void ComputingEffectInstancing::CalculatePos()
 
 }
 
+void ComputingEffectInstancing::CalculatePosInstanced()
+{
+    structuredBuffer->UpdateInput(inputs.data());
+
+}
+
 void ComputingEffectInstancing::CreateCompute()
 {
     input.resize(drawCount);
     output.resize(drawCount);
+    inputs.emplace_back(input);
+    outputs.emplace_back(output);
+    dataCounts += input.size();
+    index = instanceIndex++;
     if (structuredBuffer)
     {
         delete structuredBuffer;
     }
     structuredBuffer = new StructuredBuffer
     {
-        input.data(),
+        inputs.data(),
         sizeof(PosDesc),
-        (UINT)input.size(),
+        dataCounts,
         sizeof(PosDesc),
-        (UINT)output.size()
+        dataCounts
     };
 }
 

@@ -336,7 +336,7 @@
     <ClInclude Include="Object\Effect\ComputingEffect.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="ComputingEffectInstancing.h">
+    <ClInclude Include="Object\Effect\ComputingEffectInstancing.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -626,7 +626,7 @@
     <ClCompile Include="Object\Effect\ComputingEffect.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="ComputingEffectInstancing.cpp">
+    <ClCompile Include="Object\Effect\ComputingEffectInstancing.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -675,6 +675,7 @@
     <FxCompile Include="_Shader\28_Water.hlsl" />
     <FxCompile Include="_Shader\EffectTest.hlsl" />
     <FxCompile Include="_Shader\CalculatePos.hlsl" />
+    <FxCompile Include="_Shader\CalculatePosInstancing.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_Shader\Header.hlsli" />
